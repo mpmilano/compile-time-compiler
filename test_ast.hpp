@@ -15,7 +15,6 @@ namespace ast{
 		template<typename Children, std::size_t size>
 		constexpr auto visit(const for_each&, Children (&rest)[size]){
 			visit_children(*this,rest);
-			std::cout << "for each" << std::endl;
 			return err_result("testing");
 		}
 		

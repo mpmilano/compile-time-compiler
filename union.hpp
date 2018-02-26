@@ -86,7 +86,7 @@ template<typename T1, typename... T> struct Union :
 	template<typename target>
 		constexpr auto& get_(){
 		Union_elem<target>* _this = this;
-		assert(_this->is_this_elem);
+		//assert(_this->is_this_elem);
 		return *_this;
 	}
 
@@ -153,7 +153,6 @@ template<typename T1, typename... T> struct Union :
 
 	constexpr std::size_t which() const {
 		auto ret = _which(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
-		if (ret > (sizeof...(T) + 1)) assert(ret <= (sizeof...(T) + 1));
 		return ret;
 	}
 	

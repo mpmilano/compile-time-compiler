@@ -18,25 +18,25 @@ template<std::size_t depth_max, std::size_t child_max, typename... options>
 struct tree{
 	Union<options...> _this;
 	using child_tree = tree<depth_max - 1, child_max, options...>;
-	Option<child_tree> children[child_max];
+	Option<child_tree> children[child_max] = {Option<child_tree>{}};
 
 	constexpr void initialize_children(){
 		for (std::size_t i = 0; i < child_max; ++i){
 			auto& child = children[i];
 			child = Option<child_tree>{};
-			assert(child.is_null());
-			assert(child.internal.which() < 2);
+			//assert(child.is_null());
+			//assert(child.internal.which() < 2);
 		}
 	}
 	
 	template<typename Arg>
 	constexpr tree(Arg a):
-		_this{a},children{{}}{
+		_this{a}{
 			initialize_children();
 		}
 
 	constexpr tree():
-		_this{},children{{Option<child_tree>{}}}{
+		_this{}{
 			initialize_children();
 		}
 
@@ -62,14 +62,10 @@ struct tree{
 		for (Option<child_tree>& child : children){
 			if (child.is_null()) {
 				child = t;
-				std::cout << "child added: " << child.internal.which() << std::endl;
 				return *this;
 			}
-			else {
-				std::cout << "add child: " << child.internal.which() << std::endl;
-			}
 		}
-		throw "I guess we are out of room";
+		return *this;
 	}
 };
 
@@ -147,7 +143,6 @@ struct is_in<target,cand,t...> :
 					 typename = std::enable_if_t<!is_in<T , ## x>::value>* \
 					 >																														\
 	constexpr auto visit(T& t, Children (&rest)[size]){										\
-		std::cout << typeid(t).name() << std::endl;													\
 		return visit_children(*this,rest);																	\
 	}																																			\
 																																				\

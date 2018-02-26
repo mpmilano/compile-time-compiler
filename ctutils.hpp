@@ -39,8 +39,8 @@ struct Option{
 	}
 
 	constexpr bool is_null() const {
-		assert(internal.is_initialized);
-		assert(internal.which() < 2);
+		//assert(internal.is_initialized);
+		//assert(internal.which() < 2);
 		return internal.which() == 0;
 	}
 
@@ -58,8 +58,8 @@ struct Option{
 
 template<std::size_t length>
 struct ctstring{
-	constexpr ctstring():data{{0}}{}
-	char data[length];
+	constexpr ctstring(){}
+	char data[length] = {0};
 };
 
 using string = ctstring<2048>;

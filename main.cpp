@@ -13,9 +13,9 @@ int main(){
 	std::cout << tu.template get<double>() + tu.template get<2>()<< std::endl;
 
 	Option<int> o;
-	assert(o.internal.which() == 0);
+	//assert(o.internal.which() == 0);
 	o = 3;
-	assert(o.internal.which() == 1);
+	//assert(o.internal.which() == 1);
 
 	constexpr auto result{visit_test(
 			ast::top_ast{ast::plus{}}
