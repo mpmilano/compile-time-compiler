@@ -1,10 +1,10 @@
 #pragma once
 #include "ctutils.hpp"
 
-template<std::size_t depth_max, std::size_t child_max, typename... options>
+template<std::size_t depth_max, std::size_t child_max, template<typename> class... options>
 struct tree;
 
-template<std::size_t child_max, typename... options>
+template<std::size_t child_max, template<typename> class... options>
 struct tree<0,child_max, options...>{
 
 	template<typename... T>
@@ -14,31 +14,35 @@ struct tree<0,child_max, options...>{
 	constexpr auto map(F &&){return ok_result();}
 };
 
-template<std::size_t depth_max, std::size_t child_max, typename... options>
+template<std::size_t depth_max,
+				 std::size_t child_max,
+				 /* We fill in the parent for each node directly.*/
+				 template<typename> class... options>
 struct tree{
-	Union<options...> _this;
+	Union<options<tree>...> _this;
 	using child_tree = tree<depth_max - 1, child_max, options...>;
-	Option<child_tree> children[child_max] = {Option<child_tree>{}};
+	using child_tree_array = child_tree*[child_max];
+	child_tree_array children = {nullptr};
 
-	constexpr void initialize_children(){
-		for (std::size_t i = 0; i < child_max; ++i){
-			auto& child = children[i];
-			child = Option<child_tree>{};
-			//assert(child.is_null());
-			//assert(child.internal.which() < 2);
+	struct provide_children{
+		tree &t;
+		constexpr provide_children(tree &t):t(t){}
+		template<typename N>
+		constexpr auto operator()(N& n){
+			//return n.provide_children(t.children);
+			return ok_result();
 		}
-	}
+	};
 	
 	template<typename Arg>
-	constexpr tree(Arg a):
-		_this{a}{
-			initialize_children();
-		}
+	constexpr tree(Arg a):_this{a}{
+		_this.map(provide_children{*this});
+	}
 
 	constexpr tree():
 		_this{}{
-			initialize_children();
-		}
+		_this.map(provide_children{*this});
+	}
 
 	template<typename F>
 	struct map_specialize{
@@ -53,56 +57,59 @@ struct tree{
 	
 	template<typename F>
 	constexpr auto map(F &&f){
-		map_specialize<F> ms{f,*this};
-		return _this.map(ms);
-	}
-
-	template<typename T>
-	constexpr auto add_child(T t){
-		for (Option<child_tree>& child : children){
-			if (child.is_null()) {
-				child = t;
-				return *this;
-			}
-		}
-		return *this;
+		return _this.map(map_specialize<F>{f,*this});
 	}
 };
 
 namespace ast {
-	
-	struct transaction {
-		constexpr transaction(){}
+
+	template<typename Owner>
+	struct _transaction {
+		constexpr _transaction(){}
+		template<typename Child, std::size_t size>
+		constexpr auto provide_children(Child(&)[size]){
+		}
 	};
 
-	
-	struct plus {
-		constexpr plus(){}
+	template<typename Owner>
+	struct _plus {
+		constexpr _plus(){}
+		template<typename Child, std::size_t size>
+		constexpr auto provide_children(Child(&)[size]){
+		}
 	};
-
-	struct for_each {
-		constexpr for_each(){}
+	
+	template<typename Owner>
+	struct _for_each {
+		constexpr _for_each(){}
+		template<typename Child, std::size_t size>
+		constexpr auto provide_children(Child(&)[size]){
+		}
 	};
 
 	using maxval = std::integral_constant<std::size_t,3>;
 	template<std::size_t value>
-	using ast = tree<value,maxval::value,transaction,plus,for_each>;
+	using ast = tree<value,maxval::value,_transaction,_plus,_for_each>;
 	using top_ast = ast<maxval::value>;
+
+	using for_each = _for_each<top_ast>;
+	using plus = _plus<top_ast>;
+	using transaction = _transaction<top_ast>;
 	
 	template<typename Implementor> struct Visitor {
 		
 		struct recur{
 			Implementor& i;
-			template<typename T>
-			constexpr auto operator()(T && t){
-				return i.visit(t);
+			template<typename T, typename U>
+			constexpr auto operator()(T && t, U& u){
+				return i.visit(t, u);
 			}
 		};
 
 		template<typename Children, std::size_t size>
 		static constexpr auto visit_children(Implementor &i, Children (&children)[size]){
 			for (auto& child : children){
-				if (child.map(recur{i}).status == result::status::error){
+				if (child && child->map(recur{i}).status == result::status::error){
 					return err_result("");
 				}
 			}
@@ -118,7 +125,7 @@ namespace ast {
 			}
 		};
 		
-		template<std::size_t a, std::size_t b, typename... T>
+		template<std::size_t a, std::size_t b, template<typename> class... T>
 		static constexpr auto visit(Implementor &i, tree<a,b,T...> &t){
 			return t.map(vst{i});
 		}
@@ -139,14 +146,14 @@ struct is_in<target,cand,t...> :
 	>{};
 
 #define IMPLEMENTED_CASES(x...)																					\
-	template<typename T, typename Children, std::size_t size,							\
-					 typename = std::enable_if_t<!is_in<T , ## x>::value>* \
+	template<template<typename> class T, typename U, typename Children, std::size_t size, \
+					 typename = std::enable_if_t<!is_in<T<top_ast> , ## x>::value>* \
 					 >																														\
-	constexpr auto visit(T& t, Children (&rest)[size]){										\
+	constexpr auto visit(T<U>& t, Children (&rest)[size]){								\
 		return visit_children(*this,rest);																	\
 	}																																			\
 																																				\
-	template<std::size_t d, std::size_t w, typename... o>									\
+	template<std::size_t d, std::size_t w, template<typename> class... o>				\
 	constexpr auto visit(tree<d,w,o...> &t){															\
 		return visit(*this, t);																							\
 	}

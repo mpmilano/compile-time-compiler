@@ -60,7 +60,7 @@ template<typename T1, typename... T> struct Union :
 	
 	template<typename F>
 	constexpr auto map(F&& f){
-		using R = std::result_of_t<F(T1)>;
+		using R = decltype(f(*(T1*)nullptr));
 		R out_param;
 		Union_elem<T1>::map(f,out_param);
 		(Union_elem<T>::map(f,out_param),...);

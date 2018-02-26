@@ -19,8 +19,8 @@ int main(){
 
 	constexpr auto result{visit_test(
 			ast::top_ast{ast::plus{}}
-			.add_child(
+			/*.add_child(
 				ast::transaction{})
-			.add_child(ast::for_each{}))};
+				.add_child(ast::for_each{})*/)};
 	std::cout << result << std::endl;
 }
