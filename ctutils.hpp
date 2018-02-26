@@ -15,11 +15,11 @@ struct Option{
 	constexpr Option(T t):internal{t}{}
 	constexpr Option():internal(nullptr){}
 	
-	template<typename F>
-	constexpr auto map(F &&f);
+	template<typename F, typename Accum>
+	constexpr Accum* fold(F &&f, Accum* accum);
 
-	template<typename F>
-	constexpr auto map(F &&f) const;
+	template<typename F, typename Accum>
+	constexpr Accum* fold(F &&f, Accum* accum) const;
 	template<typename F>
 	constexpr auto match(F &&f){
 		switch (internal.which()){
@@ -60,6 +60,13 @@ template<std::size_t length>
 struct ctstring{
 	constexpr ctstring(){}
 	char data[length] = {0};
+
+	constexpr ctstring& operator=(const ctstring& o){
+		for (auto i = 0u; i < length; ++i){
+			data[i] = o.data[i];
+		}
+		return *this;
+	}
 };
 
 using string = ctstring<2048>;
@@ -97,15 +104,17 @@ constexpr result err_result(const char (&)[size]){
 }
 
 template<typename T>
-template<typename F>
-constexpr auto Option<T>::map(F &&f){
-	if (internal.which() == 1) return f(internal.template get<1>());
-	else return ok_result();
+template<typename F, typename Accum>
+constexpr Accum* Option<T>::fold(F &&f, Accum* accum){
+	if (internal.which() == 1) return f(internal.template get<1>(),
+																			accum);
+	else return accum;
 };
 
 template<typename T>
-template<typename F>
-constexpr auto Option<T>::map(F &&f) const {
-	if (internal.which() == 1) return f(internal.template get<1>());
-	else return ok_result();
+template<typename F, typename Accum>
+constexpr Accum* Option<T>::fold(F &&f, Accum* accum) const {
+	if (internal.which() == 1)
+		return f(internal.template get<1>(),accum);
+	else return accum;
 };

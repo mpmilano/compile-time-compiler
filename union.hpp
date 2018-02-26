@@ -22,6 +22,12 @@ template<typename T> struct Union_elem {
 	constexpr void map(F &&f, R& r){
 		if (is_this_elem) r = f(t);
 	}
+
+	template<typename F, typename Accum>
+	constexpr Accum* fold(F &&f, Accum *a){
+		if (is_this_elem) return f(t,a);
+		else return a;
+	}
 	
 };
 
@@ -41,6 +47,13 @@ template<> struct Union_elem<std::nullptr_t> {
 	constexpr void map(F &&f, R& r){
 		if (is_this_elem) r = f(t);
 	}
+
+	template<typename F, typename R, typename Accum>
+	constexpr Accum* fold(F &&f, Accum *ac){
+		if (is_this_elem) return f(t,ac);
+		else return ac;
+	}
+
 	
 };
 
@@ -60,11 +73,34 @@ template<typename T1, typename... T> struct Union :
 	
 	template<typename F>
 	constexpr auto map(F&& f){
-		using R = decltype(f(*(T1*)nullptr));
+		using R = std::decay_t<decltype(f(*(T1*)nullptr))>;
 		R out_param;
-		Union_elem<T1>::map(f,out_param);
-		(Union_elem<T>::map(f,out_param),...);
+		Union_elem<T1>::map(std::forward<F>(f),out_param);
+		(Union_elem<T>::map(std::forward<F>(f),out_param),...);
 		return out_param;
+	}
+
+	template<typename F, typename Accum>
+		constexpr Accum* _fold(F&& , Accum* acc){
+		return acc;
+	}
+	
+
+	template<typename F, typename Accum, typename Tf, typename...Ts>
+		constexpr Accum* _fold(F&& f, Accum* acc){
+		return _fold<F,Accum,Ts...>
+			(std::forward<F>(f),
+			 Tf::fold(
+				 std::forward<F>(f),acc));
+	}
+	
+	template<typename F, typename Accum>
+		constexpr Accum* fold(F&& f, Accum* acc){
+
+		return _fold<F,Accum,Union_elem<T>...>
+			(std::forward<F>(f),
+			 Union_elem<T1>::fold(
+				 std::forward<F>(f),acc));
 	}
 
 	constexpr Union& operator=(const Union &u){

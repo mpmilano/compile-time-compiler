@@ -13,12 +13,22 @@ namespace ast{
 		using super::visit;
 		using super::visit_children;
 		
-		template<typename Parent, typename Children, std::size_t size>
-		constexpr auto visit(const _for_each<Parent>&, Children (&rest)[size]){
-			visit_children(*this,rest);
-			return err_result("testing");
+		template<typename Parent, typename Children, std::size_t size, typename Ac>
+		constexpr Ac* visit(const _skip<Parent>&, Children (&rest)[size],Ac* a){
+			auto r = super::visit_children(*this,rest,a);
+			std::cout << "setting data" << std::endl;
+			(r)->data[0] = 'c';
+			return r;
+		}
+
+		template<typename Parent, typename Children, std::size_t size, typename Ac>
+		constexpr Ac* visit(const _plus<Parent>&, Children (&rest)[size],Ac* a){
+			auto r = super::visit_children(*this,rest,a);
+			std::cout << "setting data" << std::endl;
+			(r)->data[0] = 'c';
+			return r;
 		}
 		
-		IMPLEMENTED_CASES(for_each);
+		IMPLEMENTED_CASES(skip,plus);
 	};
 }

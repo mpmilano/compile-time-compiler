@@ -4,7 +4,8 @@
 #include <iostream>
 
 constexpr auto visit_test(ast::top_ast a){
-	return ast::noop_visitor{}.visit(a);
+	string s[1] = {string{}};
+	return *ast::noop_visitor{}.visit(a,s);
 }
 
 int main(){
@@ -17,10 +18,8 @@ int main(){
 	o = 3;
 	//assert(o.internal.which() == 1);
 
-	constexpr auto result{visit_test(
-			ast::top_ast{ast::plus{}}
-			/*.add_child(
-				ast::transaction{})
-				.add_child(ast::for_each{})*/)};
-	std::cout << result << std::endl;
+	using namespace ast;
+	auto result{visit_test(
+			top_ast{plus{skip{},skip{}}})};
+	std::cout << result.data << std::endl;
 }

@@ -10,8 +10,8 @@ struct tree<0,child_max, options...>{
 	template<typename... T>
 	constexpr tree(const T&...){}
 	
-	template<typename F>
-	constexpr auto map(F &&){return ok_result();}
+	template<typename F, typename Accum>
+	constexpr Accum* fold(F &&, Accum *r){return r;}
 };
 
 template<std::size_t depth_max,
@@ -25,38 +25,37 @@ struct tree{
 	child_tree_array children = {nullptr};
 
 	struct provide_children{
-		tree &t;
-		constexpr provide_children(tree &t):t(t){}
+		constexpr provide_children(){}
 		template<typename N>
-		constexpr auto operator()(N& n){
-			//return n.provide_children(t.children);
-			return ok_result();
+		constexpr auto* operator()(N& n, tree* t){
+			n.provide_children(t->children);
+			return t;
 		}
 	};
 	
 	template<typename Arg>
 	constexpr tree(Arg a):_this{a}{
-		_this.map(provide_children{*this});
+		_this.fold(provide_children{},this);
 	}
 
 	constexpr tree():
 		_this{}{
-		_this.map(provide_children{*this});
+		_this.fold(provide_children{},this);
 	}
 
 	template<typename F>
-	struct map_specialize{
+	struct fold_specialize{
 		F& f;
 		tree& closure;
-		constexpr map_specialize(F& f, tree& c):f(f),closure(c){}
-		template<typename Arg>
-		constexpr auto operator()(Arg&& arg){
-			return f(arg,closure.children);
+		constexpr fold_specialize(F& f, tree& c):f(f),closure(c){}
+		template<typename Arg, typename Accum>
+		constexpr Accum* operator()(Arg&& arg, Accum *accum){
+			return f(arg,closure.children,accum);
 		}
 	};
 	
-	template<typename F>
-	constexpr auto map(F &&f){
-		return _this.map(map_specialize<F>{f,*this});
+	template<typename F, typename Accum>
+	constexpr Accum* fold(F &&f, Accum* accum){
+		return _this.fold(fold_specialize<F>{f,*this},accum);
 	}
 };

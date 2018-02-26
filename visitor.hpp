@@ -5,34 +5,48 @@ template<typename Implementor> struct Visitor {
 		
 		struct recur{
 			Implementor& i;
-			template<typename T, typename U>
-			constexpr auto operator()(T && t, U& u){
-				return i.visit(t, u);
+			template<typename T, typename U, typename Acc>
+			constexpr Acc* operator()(T && t, U& u, Acc* acc){
+				return i.visit(std::forward<T>(t), u, acc);
 			}
 		};
 
-		template<typename Children, std::size_t size>
-		static constexpr auto visit_children(Implementor &i, Children (&children)[size]){
-			for (auto& child : children){
-				if (child && child->map(recur{i}).status == result::status::error){
-					return err_result("");
-				}
-			}
-			return ok_result();
+	template<typename Children, std::size_t size, typename Accum>
+	static constexpr Accum*
+	visit_children(Implementor &i, Children *children, Accum *accum) {
+		if constexpr (size == 0) return accum;
+		else {
+			auto *child = children[0];
+			if (child)
+				return Visitor::visit_children<Children, size-1>
+					(i,children + 1, child->fold(recur{i},accum));
+			else return accum;
 		}
+	}
 
+	template<typename Children, std::size_t size, typename Accum>
+	static constexpr Accum*
+	visit_children(Implementor &i, Children (&children)[size], Accum *accum) {
+		auto *child = children[0];
+		if (child)
+			return Visitor::visit_children<Children, size-1>
+				(i,children + 1, child->fold(recur{i},accum));
+		else return accum;
+	}
+	
 		struct vst{
 			Implementor &i;
 			constexpr vst(Implementor& i):i{i}{}
-			template<typename T, typename Children, std::size_t size>
-			constexpr auto operator()(T & t, Children (&children)[size]){
-				return i.visit(t,children);
+			template<typename T, typename Children, std::size_t size, typename Accum>
+			constexpr Accum* operator()(T & t, Children (&children)[size], Accum *ac){
+				return i.visit(t,children,ac);
 			}
 		};
 		
-		template<std::size_t a, std::size_t b, template<typename> class... T>
-		static constexpr auto visit(Implementor &i, tree<a,b,T...> &t){
-			return t.map(vst{i});
+	template<std::size_t a, std::size_t b, typename Accum,
+					 template<typename> class... T>
+	static constexpr Accum* visit(Implementor &i, tree<a,b,T...> &t, Accum *ac){
+		return t.fold(vst{i},ac);
 		}
 		
 	};
@@ -51,14 +65,16 @@ struct is_in<target,cand,t...> :
 	>{};
 
 #define IMPLEMENTED_CASES(x...)																					\
-	template<template<typename> class T, typename U, typename Children, std::size_t size, \
+	template<template<typename> class T, typename U,											\
+					 typename Children, std::size_t size,	typename Accum,					\
 					 typename = std::enable_if_t<!is_in<T<top_ast> , ## x>::value>* \
 					 >																														\
-	constexpr auto visit(T<U>& t, Children (&rest)[size]){								\
-		return visit_children(*this,rest);																	\
+	constexpr Accum* visit(T<U>& t, Children (&rest)[size], Accum *accum){	\
+		return visit_children(*this,rest,accum);				\
 	}																																			\
 																																				\
-	template<std::size_t d, std::size_t w, template<typename> class... o>				\
-	constexpr auto visit(tree<d,w,o...> &t){															\
-		return visit(*this, t);																							\
+	template<std::size_t d, std::size_t w, typename Accum,								\
+					 template<typename> class... o>																\
+	constexpr Accum* visit(tree<d,w,o...> &t, Accum *a){									\
+		return visit(*this, t,a);																						\
 	}
