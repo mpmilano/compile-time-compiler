@@ -20,8 +20,12 @@ struct tree{
 	using child_tree = tree<depth_max - 1, child_max, options...>;
 	Option<child_tree> children[child_max];
 
-	template<typename... Args>
-	constexpr tree(Args&&... args):children{{Option<child_tree>{args...}}}{}
+	template<typename Arg>
+	constexpr tree(Arg a):
+		_this{a},children{{Option<child_tree>{}}}{}
+
+	constexpr tree():
+		_this{},children{{Option<child_tree>{}}}{}
 
 	template<typename F>
 	struct map_specialize{

@@ -16,18 +16,25 @@ struct Option{
 	
 	template<typename F>
 	constexpr auto map(F &&f);
-	template<typename F>
-	constexpr auto match(F &&f){
-		if (internal.is_left) return (internal.left);
-		else return f(&internal.right);
-	}
 
 	template<typename F>
-	constexpr auto map(F &&f) const ;
+	constexpr auto map(F &&f) const;
+	template<typename F>
+	constexpr auto match(F &&f){
+		switch (internal.which()){
+		case 0: return f(internal.template get<0>());
+		case 1: return f(&internal.template get<1>());
+		default: throw "impossible";
+		}
+	}
+	
 	template<typename F>
 	constexpr auto match(F &&f) const {
-		if (internal.is_left) return f((T*)internal.left);
-		else return f(&internal.right);
+		switch (internal.which()){
+		case 0: return f(internal.template get<0>());
+		case 1: return f(&internal.template get<1>());
+		default: throw "impossible";
+		}
 	}
 };
 
@@ -46,6 +53,8 @@ struct result {
 			};
 	constexpr result(status s)
 		:status(s){}
+	constexpr result()
+		:status(status::ok){}
 	status status;
 	Option<string> message;
 	
@@ -58,13 +67,13 @@ constexpr result ok_result(){
 template<typename T>
 template<typename F>
 constexpr auto Option<T>::map(F &&f){
-	if (!internal.is_left) return f(internal.right);
+	if (internal.which() == 1) return f(internal.template get<1>());
 	else return ok_result();
 };
 
 template<typename T>
 template<typename F>
 constexpr auto Option<T>::map(F &&f) const {
-	if (!internal.is_left) return f(internal.right);
+	if (internal.which() == 1) return f(internal.template get<1>());
 	else return ok_result();
 };

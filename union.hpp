@@ -3,142 +3,102 @@
 #include <vector>
 #include <type_traits>
 
-template<typename...> struct Union;
-template<typename LEFT, typename RIGHT>
-struct Union<LEFT,RIGHT> {
-	LEFT left;
-	RIGHT right;
-	bool is_left;
-	constexpr Union(LEFT left):left{left},is_left{true},right{}{}	
-	constexpr Union(RIGHT right):left{},right{right},is_left{false}{}
-	constexpr Union():is_left(false){}
-	constexpr void operator=(const Union &u){
-		is_left = u.is_left;
-		if (is_left) left = u.left;
-		else right = u.right;
-	}
+template<typename T> struct Union_elem {
+	T t;
+	bool is_this_elem;
+	template<typename U>
+	constexpr Union_elem(U u):t{},is_this_elem{false}{}
+	constexpr Union_elem(T t):t{t},is_this_elem{true}{}
+	constexpr Union_elem():t{},is_this_elem{false}{}
 
-	template<typename l, typename r>
-	static constexpr std::size_t which(const Union<l,r> &o){
-		return o.which();
+	template<typename F, typename R>
+	void map(F &&f, R& r){
+		if (is_this_elem) r = f(t);
 	}
 	
-	template<typename... T>
-	static constexpr std::size_t which(T&&... t){
-		return 0;
-	}
+};
+
+template<typename T1, typename... T> struct Union :
+	public Union_elem<T1>, public Union_elem<T>...{
+	template<typename U>
+		constexpr Union(U u):
+		Union_elem<T1>(u),Union_elem<T>(u)...{}
+
+	constexpr Union():
+		Union_elem<T1>(),Union_elem<T>()...{}
 	
-	constexpr std::size_t which() const {
-		if (is_left) return 0;
-		else {
-			return which(right) + 1;
-		}
-	}
-
-	template<std::size_t index, typename T>
-	static constexpr RIGHT& get(T& right){
-		static_assert(index == 0, "Error: variant size exceeded");
-		return right;
-	}
-
-	template<std::size_t index, typename l, typename r>
-	static constexpr auto& get(Union<l,r>& o){
-		return o.template get<index>();
-	}
-
-	template<std::size_t index>
-	constexpr auto& get(){
-		if constexpr (index == 0) return left;
-		else return get<index-1>(right);
-	}
-
-	
-	template<typename target, typename T>
-	static constexpr RIGHT& get(T& right){
-		static_assert(std::is_same<target,RIGHT>::value,
-									"Error: variant size exceeded");
-		return right;
-	}
-
-	template<typename target, typename l, typename r>
-	static constexpr auto& get(Union<l,r>& o){
-		return o.template get<target>();
-	}
-
-	template<typename target>
-	constexpr auto& get(){
-		if constexpr (std::is_same<target,LEFT>::value) return left;
-		else return get<target>(right);
-	}
-
-	
-	template<std::size_t index, typename T>
-	static constexpr const RIGHT& get(const T& right){
-		static_assert(index == 0, "Error: variant size exceeded");
-		return right;
-	}
-
-	template<std::size_t index, typename l, typename r>
-	static constexpr const auto& get(const Union<l,r>& o){
-		return o.template get<index>();
-	}
-
-	template<std::size_t index>
-	constexpr const auto& get() const {
-		if constexpr (index == 0) return left;
-		else return get<index-1>(right);
-	}
-
-	
-	template<typename target, typename T>
-	static constexpr const RIGHT& get(const T& right){
-		static_assert(std::is_same<target,RIGHT>::value,
-									"Error: variant size exceeded");
-		return right;
-	}
-
-	template<typename target, typename l, typename r>
-	static constexpr const auto& get(const Union<l,r>& o){
-		return o.template get<target>();
-	}
-
-	template<typename target>
-	constexpr const auto& get() const {
-		if constexpr (std::is_same<target,LEFT>::value) return left;
-		else return get<target>(right);
-	}
-
-	template<typename F, typename T>
-	static constexpr auto map(F&& f, T&& t){
-		return f(t);
-	}
-
-	template<typename F, typename l, typename r>
-	static constexpr auto map(F&& f, Union<l,r> &&o){
-		return o.map(f);
-	}
-
 	template<typename F>
 	constexpr auto map(F&& f){
-		if (is_left) return f(left);
-		else return map(f,right);
+		using R = std::result_of_t<F(T1)>;
+		R out_param;
+		Union_elem<T1>::map(f,out_param);
+		(Union_elem<T>::map(f,out_param),...);
+		return out_param;
 	}
 
-	constexpr void operator=(const LEFT &_left){
-		is_left = true;
-		left = _left;
+	template<typename target, typename cand1, typename... candn>
+		constexpr auto& get(Union_elem<cand1> &c1, Union_elem<candn>&... c2){
+		if constexpr (std::is_same<target,cand1>::value){
+				return c1.t;
+			}
+		else return get<target>(c2...);
 	}
 
-	constexpr void operator=(const RIGHT &_right){
-		is_left = false;
-		right = _right;
+	template<typename target>
+		constexpr auto& get(){
+		return get<target>(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
 	}
+
+	template<typename target, typename cand1, typename... candn>
+		constexpr const auto& get(Union_elem<cand1> &c1, Union_elem<candn>&... c2) const {
+		if constexpr (std::is_same<target,cand1>::value){
+				return c1.t;
+			}
+		else return get<target>(c2...);
+	}
+
+	template<typename target>
+		constexpr const auto& get() const {
+		return get<target>(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
+	}
+
+	
+	template<std::size_t target, typename cand1, typename... candn>
+		constexpr auto& get(Union_elem<cand1> &c1, Union_elem<candn>&... c2){
+		if constexpr (target == 0){
+				return c1.t;
+			}
+		else return get<target-1>(c2...);
+	}
+
+	template<std::size_t target>
+		constexpr auto& get(){
+		return get<target>(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
+	}
+
+	template<std::size_t target, typename cand1, typename... candn>
+		constexpr const auto& get(Union_elem<cand1> &c1, Union_elem<candn>&... c2) const{
+		if constexpr (target == 0){
+				return c1.t;
+			}
+		else return get<target-1>(c2...);
+	}
+
+	template<std::size_t target>
+		constexpr const auto& get() const {
+		return get<target>(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
+	}
+
+
+	template<typename cand1, typename... candn>
+	std::size_t which(Union_elem<cand1> &c1, Union_elem<candn>&... c2) const {
+		if (c1.is_this_elem) return 0;
+		else return 1 + which(c2...);
+	}
+
+	std::size_t which() const {
+		return which(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
+	}
+	
 };
 
-template<typename LEFT, typename... rest>
-struct Union<LEFT,rest...> : public Union<LEFT, Union<rest...>>{
-	using super = Union<LEFT, Union<rest...>>;
-	constexpr Union(LEFT l):super{l}{}
-	template<typename... Args>
-		constexpr Union(Args&&... args):super{Union<rest...>{args...}}{}
-};
