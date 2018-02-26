@@ -1,4 +1,5 @@
 #pragma once
+#include "visitor.hpp"
 #include "ast.hpp"
 #include <iostream>
 #include <typeinfo>
