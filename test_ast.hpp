@@ -1,6 +1,9 @@
 #pragma once
 #include "ast.hpp"
 #include <iostream>
+#include <typeinfo>
+
+
 
 namespace ast{
 	struct noop_visitor : public Visitor<noop_visitor> {
@@ -10,20 +13,12 @@ namespace ast{
 		using super::visit_children;
 		
 		template<typename Children, std::size_t size>
-		constexpr auto visit(const transaction&, Children (&rest)[size]){
-			std::cout << "oh boy" << std::endl;
-			return visit_children(*this,rest);
+		constexpr auto visit(const for_each&, Children (&rest)[size]){
+			visit_children(*this,rest);
+			std::cout << "for each" << std::endl;
+			return err_result("testing");
 		}
 		
-		template<typename T, typename Children, std::size_t size>
-		constexpr auto visit(T& , Children (&rest)[size]){
-			//std::cout << "default case" << std::endl;
-			return visit_children(*this,rest);
-		}
-
-		template<std::size_t d, std::size_t w, typename... o>
-		constexpr auto visit(tree<d,w,o...> &t){
-			return visit(*this, t);
-		}
+		IMPLEMENTED_CASES(for_each);
 	};
 }

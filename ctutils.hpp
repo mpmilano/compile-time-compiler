@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <type_traits>
+#include <iostream>
 #include "union.hpp"
 
 
@@ -36,6 +37,23 @@ struct Option{
 		default: throw "impossible";
 		}
 	}
+
+	constexpr bool is_null() const {
+		assert(internal.is_initialized);
+		assert(internal.which() < 2);
+		return internal.which() == 0;
+	}
+
+	constexpr auto operator=(const Option &t2){
+		internal.operator=(t2.internal);
+		return *this;
+	}
+
+	constexpr auto operator=(const T &t2){
+		internal.operator=(t2);
+		return *this;
+	}
+	
 };
 
 template<std::size_t length>
@@ -60,8 +78,22 @@ struct result {
 	
 };
 
+auto& operator<<(std::ostream& o, result r){
+	switch(r.status){
+	case result::status::ok :
+		return o << "ok";
+	case result::status::error:
+		return o << "error";
+	}
+}
+
 constexpr result ok_result(){
 	return result{result::status::ok};
+}
+
+template<std::size_t size>
+constexpr result err_result(const char (&)[size]){
+	return result{result::status::error};
 }
 
 template<typename T>

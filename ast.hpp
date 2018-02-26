@@ -20,12 +20,25 @@ struct tree{
 	using child_tree = tree<depth_max - 1, child_max, options...>;
 	Option<child_tree> children[child_max];
 
+	constexpr void initialize_children(){
+		for (std::size_t i = 0; i < child_max; ++i){
+			auto& child = children[i];
+			child = Option<child_tree>{};
+			assert(child.is_null());
+			assert(child.internal.which() < 2);
+		}
+	}
+	
 	template<typename Arg>
 	constexpr tree(Arg a):
-		_this{a},children{{Option<child_tree>{}}}{}
+		_this{a},children{{}}{
+			initialize_children();
+		}
 
 	constexpr tree():
-		_this{},children{{Option<child_tree>{}}}{}
+		_this{},children{{Option<child_tree>{}}}{
+			initialize_children();
+		}
 
 	template<typename F>
 	struct map_specialize{
@@ -42,6 +55,21 @@ struct tree{
 	constexpr auto map(F &&f){
 		map_specialize<F> ms{f,*this};
 		return _this.map(ms);
+	}
+
+	template<typename T>
+	constexpr auto add_child(T t){
+		for (Option<child_tree>& child : children){
+			if (child.is_null()) {
+				child = t;
+				std::cout << "child added: " << child.internal.which() << std::endl;
+				return *this;
+			}
+			else {
+				std::cout << "add child: " << child.internal.which() << std::endl;
+			}
+		}
+		throw "I guess we are out of room";
 	}
 };
 
@@ -78,7 +106,9 @@ namespace ast {
 		template<typename Children, std::size_t size>
 		static constexpr auto visit_children(Implementor &i, Children (&children)[size]){
 			for (auto& child : children){
-				child.map(recur{i});
+				if (child.map(recur{i}).status == result::status::error){
+					return err_result("");
+				}
 			}
 			return ok_result();
 		}
@@ -98,6 +128,34 @@ namespace ast {
 		}
 		
 	};
+
+	
+template<typename target, typename... t> struct is_in;
+
+template<typename target> struct is_in<target> : public std::false_type {};
+
+template<typename target, typename cand, typename... t>
+struct is_in<target,cand,t...> :
+	public std::integral_constant<
+	bool,
+	std::is_same<target,cand>::value ||
+	is_in<target,t...>::value
+	>{};
+
+#define IMPLEMENTED_CASES(x...)																					\
+	template<typename T, typename Children, std::size_t size,							\
+					 typename = std::enable_if_t<!is_in<T , ## x>::value>* \
+					 >																														\
+	constexpr auto visit(T& t, Children (&rest)[size]){										\
+		std::cout << typeid(t).name() << std::endl;													\
+		return visit_children(*this,rest);																	\
+	}																																			\
+																																				\
+	template<std::size_t d, std::size_t w, typename... o>									\
+	constexpr auto visit(tree<d,w,o...> &t){															\
+		return visit(*this, t);																							\
+	}
+
 	
 }
 
