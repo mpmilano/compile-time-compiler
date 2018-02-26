@@ -12,7 +12,7 @@ template<typename T> struct Union_elem {
 	constexpr Union_elem():t{},is_this_elem{false}{}
 
 	template<typename F, typename R>
-	void map(F &&f, R& r){
+	constexpr void map(F &&f, R& r){
 		if (is_this_elem) r = f(t);
 	}
 	
@@ -91,12 +91,12 @@ template<typename T1, typename... T> struct Union :
 
 
 	template<typename cand1, typename... candn>
-	std::size_t which(Union_elem<cand1> &c1, Union_elem<candn>&... c2) const {
+	constexpr std::size_t which(Union_elem<cand1> &c1, Union_elem<candn>&... c2) const {
 		if (c1.is_this_elem) return 0;
 		else return 1 + which(c2...);
 	}
 
-	std::size_t which() const {
+	constexpr std::size_t which() const {
 		return which(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
 	}
 	

@@ -33,7 +33,7 @@ struct tree{
 		tree& closure;
 		constexpr map_specialize(F& f, tree& c):f(f),closure(c){}
 		template<typename Arg>
-		auto operator()(Arg&& arg){
+		constexpr auto operator()(Arg&& arg){
 			return f(arg,closure.children);
 		}
 	};
@@ -70,7 +70,7 @@ namespace ast {
 		struct recur{
 			Implementor& i;
 			template<typename T>
-			auto operator()(T && t){
+			constexpr auto operator()(T && t){
 				return i.visit(t);
 			}
 		};
@@ -87,7 +87,7 @@ namespace ast {
 			Implementor &i;
 			constexpr vst(Implementor& i):i{i}{}
 			template<typename T, typename Children, std::size_t size>
-			auto operator()(T & t, Children (&children)[size]){
+			constexpr auto operator()(T & t, Children (&children)[size]){
 				return i.visit(t,children);
 			}
 		};

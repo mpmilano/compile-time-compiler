@@ -11,7 +11,7 @@ namespace ast{
 		
 		template<typename Children, std::size_t size>
 		constexpr auto visit(const transaction&, Children (&rest)[size]){
-			//std::cout << "oh boy" << std::endl;
+			std::cout << "oh boy" << std::endl;
 			return visit_children(*this,rest);
 		}
 		
