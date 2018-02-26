@@ -1,35 +1,53 @@
 #include <vector>
 #include <type_traits>
 
-template<typename T1, typename T2>
+template<typename LEFT, typename RIGHT>
 struct Union {
-	T1 t1;
-	T2 t2;
-	bool is_t1;
-	constexpr Union(T1 t1):t1{t1},is_t1{true},t2{}{}	
-	constexpr Union(T2 t2):t1{},t2{t2},is_t1{false}{}
+	LEFT left;
+	RIGHT right;
+	bool is_left;
+	constexpr Union(LEFT left):left{left},is_left{true},right{}{}	
+	constexpr Union(RIGHT right):left{},right{right},is_left{false}{}
 	constexpr void operator=(const Union &u){
-		is_t1 = u.is_t1;
-		if (is_t1) t1 = u.t1;
-		else t2 = u.t2;
+		is_left = u.is_left;
+		if (is_left) left = u.left;
+		else right = u.right;
 	}
 
-	constexpr void operator=(const T1 &_t1){
-		is_t1 = true;
-		t1 = _t1;
+	constexpr void operator=(const LEFT &_left){
+		is_left = true;
+		left = _left;
 	}
 
-	constexpr void operator=(const T2 &_t2){
-		is_t1 = false;
-		t2 = _t2;
+	constexpr void operator=(const RIGHT &_right){
+		is_left = false;
+		right = _right;
 	}
 };
 
-template<typename T, std::size_t max_depth>
-struct FakeTree;
-
 template<typename T>
-struct FakeTree<T,0>{};
+struct Option{
+	
+	Union<std::nullptr_t, T> internal;
+	constexpr Option(T t):internal{t}{}
+	constexpr Option():internal(nullptr){}
+	
+	template<typename F>
+	constexpr auto map(F &&f);
+	template<typename F>
+	constexpr auto match(F &&f){
+		if (internal.is_left) return (internal.left);
+		else return f(&internal.right);
+	}
+
+	template<typename F>
+	constexpr auto map(F &&f) const ;
+	template<typename F>
+	constexpr auto match(F &&f) const {
+		if (internal.is_left) return f((T*)internal.left);
+		else return f(&internal.right);
+	}
+};
 
 template<std::size_t length>
 struct ctstring{
@@ -39,39 +57,59 @@ struct ctstring{
 
 using string = ctstring<2048>;
 
-enum class result_status{
-	ok,error
-		};
 
-using result = Union<string,result_status>;
+struct result {
+	enum class status{
+		ok,error
+			};
+	constexpr result(status s)
+		:status(s){}
+	status status;
+	Option<string> message;
+	
+};
+
+constexpr result ok_result(){
+	return result{result::status::ok};
+}
+
+template<typename T>
+template<typename F>
+constexpr auto Option<T>::map(F &&f){
+	if (!internal.is_left) return f(internal.right);
+	else return ok_result();
+};
+
+template<typename T>
+template<typename F>
+constexpr auto Option<T>::map(F &&f) const {
+	if (!internal.is_left) return f(internal.right);
+	else return ok_result();
+};
+
+template<typename T, std::size_t max_depth>
+struct FakeTree;
+
+template<typename T>
+struct FakeTree<T,0>{};
 
 template<typename T, std::size_t max_depth>
 struct FakeTree {
 	using child = FakeTree<T,max_depth-1>;
-	using child_t = Union<child, std::nullptr_t >;
+	using child_t = Option<child>;
 	using depth = std::integral_constant<std::size_t, max_depth>;
 
 	constexpr FakeTree(){};
 	
-	child_t _left{nullptr};
+	child_t _left;
 	T field;
-	child_t _right{nullptr};
+	child_t _right;
 
 	template<typename F>
 	/* */
 	constexpr result run_on_left(F f){
-		/*
-			static_assert(std::is_same<result,
-			std::result_of<
-			F(child*)> >::value,
-			"Type error" );
-			apparently not the type I wanted...
-		*/
 		static_assert(max_depth > 1);
-		if (_left.is_t1) {
-			return f(&_left.t1);
-		}
-		else return f(_left.t2);
+		return _left.map(f);
 	}
 
 	constexpr child_t& left()  {
@@ -107,9 +145,9 @@ constexpr result phase1(test_tree& input){
 	input.left() = FakeTree<tmp,2>{};
 	struct on_left {
 		constexpr on_left(){}
-		constexpr result operator()(test_tree::child* left){
-			left->field.field = 3;
-			return result{result_status::ok};
+		constexpr result operator()(test_tree::child& left){
+			left.field.field = 3;
+			return ok_result();
 		}
 	};
 	return input.run_on_left(on_left{});
@@ -127,17 +165,14 @@ constexpr pair<result, test_tree> phases (test_tree input){
 	return pair<result,test_tree>(res, input);
 }
 
-
-
-
 int main(){
 
 	constexpr auto res = phases(test_tree{});
-	if constexpr (res.left.is_t1){
-			static_assert(!res.left.is_t1,"An error occurred");
+	if constexpr (res.left.status == result::status::error){
+			static_assert(res.left.status == result::status::ok,"An error occurred");
 		}
 	else {
-		return res.right.left().t1.field.field;
+		return res.right.left().match([](auto *ptr){return ptr->field.field;});
 	}
 	
 }
