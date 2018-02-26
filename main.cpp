@@ -1,91 +1,7 @@
-#include <vector>
-#include <type_traits>
-
-template<typename LEFT, typename RIGHT>
-struct Union {
-	LEFT left;
-	RIGHT right;
-	bool is_left;
-	constexpr Union(LEFT left):left{left},is_left{true},right{}{}	
-	constexpr Union(RIGHT right):left{},right{right},is_left{false}{}
-	constexpr void operator=(const Union &u){
-		is_left = u.is_left;
-		if (is_left) left = u.left;
-		else right = u.right;
-	}
-
-	constexpr void operator=(const LEFT &_left){
-		is_left = true;
-		left = _left;
-	}
-
-	constexpr void operator=(const RIGHT &_right){
-		is_left = false;
-		right = _right;
-	}
-};
-
-template<typename T>
-struct Option{
-	
-	Union<std::nullptr_t, T> internal;
-	constexpr Option(T t):internal{t}{}
-	constexpr Option():internal(nullptr){}
-	
-	template<typename F>
-	constexpr auto map(F &&f);
-	template<typename F>
-	constexpr auto match(F &&f){
-		if (internal.is_left) return (internal.left);
-		else return f(&internal.right);
-	}
-
-	template<typename F>
-	constexpr auto map(F &&f) const ;
-	template<typename F>
-	constexpr auto match(F &&f) const {
-		if (internal.is_left) return f((T*)internal.left);
-		else return f(&internal.right);
-	}
-};
-
-template<std::size_t length>
-struct ctstring{
-	constexpr ctstring():data{{0}}{}
-	char data[length];
-};
-
-using string = ctstring<2048>;
-
-
-struct result {
-	enum class status{
-		ok,error
-			};
-	constexpr result(status s)
-		:status(s){}
-	status status;
-	Option<string> message;
-	
-};
-
-constexpr result ok_result(){
-	return result{result::status::ok};
-}
-
-template<typename T>
-template<typename F>
-constexpr auto Option<T>::map(F &&f){
-	if (!internal.is_left) return f(internal.right);
-	else return ok_result();
-};
-
-template<typename T>
-template<typename F>
-constexpr auto Option<T>::map(F &&f) const {
-	if (!internal.is_left) return f(internal.right);
-	else return ok_result();
-};
+#include "ctutils.hpp"
+#include "ast.hpp"
+#include "test_ast.hpp"
+#include <iostream>
 
 template<typename T, std::size_t max_depth>
 struct FakeTree;
@@ -167,12 +83,20 @@ constexpr pair<result, test_tree> phases (test_tree input){
 
 int main(){
 
+	constexpr test_union tu{3.4};
+	std::cout << tu.template get<double>() + tu.template get<2>()<< std::endl;
+
 	constexpr auto res = phases(test_tree{});
 	if constexpr (res.left.status == result::status::error){
 			static_assert(res.left.status == result::status::ok,"An error occurred");
 		}
 	else {
-		return res.right.left().match([](auto *ptr){return ptr->field.field;});
+		std::cout << res.right.left().match([](auto *ptr){return ptr->field.field;})
+							<< std::endl;
 	}
+
+
+	ast::top_ast a{ast::transaction{}};
+	ast::noop_visitor{}.visit(a);
 	
 }
