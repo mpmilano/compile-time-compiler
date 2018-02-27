@@ -31,6 +31,11 @@ namespace ast {
 			arr[0] = &left;
 			arr[1] = &right;
 		}
+
+		template<std::size_t d, std::size_t w, template<typename> class... o>
+		constexpr auto resize(tree<d,w,o...> const * const) const {
+			return _plus<tree<d,w,o...> >{left,right /* need to map resize these*/};
+		}
 	};
 	
 	template<typename Subtree>
@@ -40,7 +45,9 @@ namespace ast {
 		Subtree body;
 		template<typename Var, typename Collection, typename Body>
 		constexpr _for_each(Var var, Collection collection, Body body)
-			:var(var),collection(collection),body(body){}
+			:var(Subtree::resize(var)),
+			 collection(Subtree::resize(collection)),
+			 body(Subtree::resize(body)){}
 
 			constexpr _for_each(){}
 		template<std::size_t size>
@@ -55,6 +62,11 @@ namespace ast {
 		constexpr _skip(){}
 		template<std::size_t size>
 		constexpr auto provide_children(Subtree*(&)[size]){}
+
+		template<std::size_t d, std::size_t w, template<typename> class... o>
+		constexpr auto resize(tree<d,w,o...> const * const) const {
+			return _skip<tree<d,w,o...> >{};
+		}
 	};
 
 	using maxval = std::integral_constant<std::size_t,3>;

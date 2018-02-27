@@ -7,8 +7,6 @@
 template<typename T> struct Union_elem {
 	T t;
 	bool is_this_elem;
-	template<typename U>
-	constexpr Union_elem(U u):t{},is_this_elem{false}{}
 	constexpr Union_elem(T t):t{t},is_this_elem{true}{}
 	constexpr Union_elem():t{},is_this_elem{false}{}
 
@@ -34,8 +32,6 @@ template<typename T> struct Union_elem {
 template<> struct Union_elem<std::nullptr_t> {
 	std::nullptr_t t;
 	bool is_this_elem;
-	template<typename U>
-	constexpr Union_elem(U):t{nullptr},is_this_elem{false}{}
 	constexpr Union_elem(std::nullptr_t t):t{t},is_this_elem{true}{}
 	constexpr Union_elem():t{nullptr},is_this_elem{false}{}
 
@@ -61,15 +57,20 @@ template<typename T1, typename... T> struct Union :
 	public Union_elem<T1>, public Union_elem<T>...{
 
 	bool is_initialized{false};
+
+	constexpr bool well_formed() const {
+		return (Union_elem<T1>::is_this_elem || ... || Union_elem<T>::is_this_elem);
+	}
 	
 	template<typename U>
 		constexpr Union(U u):
 		is_initialized{true},
-		Union_elem<T1>(u),Union_elem<T>(u)...{}
+		Union_elem<U>(u){
+			assert(well_formed());
+		}
 
 	constexpr Union():
-		is_initialized{false},
-		Union_elem<T1>(),Union_elem<T>()...{}
+		is_initialized{false}{}
 	
 	template<typename F>
 	constexpr auto map(F&& f){

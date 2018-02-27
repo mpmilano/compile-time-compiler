@@ -5,6 +5,7 @@
 
 constexpr auto visit_test(ast::top_ast a){
 	string s[1] = {string{}};
+	assert(a.well_formed());
 	return *ast::noop_visitor{}.visit(a,s);
 }
 
@@ -20,6 +21,6 @@ int main(){
 
 	using namespace ast;
 	auto result{visit_test(
-			top_ast{plus{skip{},skip{}}})};
+			top_ast{plus{_skip<ast<2> >{},_skip<ast<2> >{}}})};
 	std::cout << result.data << std::endl;
 }
