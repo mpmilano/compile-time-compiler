@@ -29,6 +29,21 @@ namespace ast{
 			return r;
 		}
 		
-		IMPLEMENTED_CASES(skip,plus);
+		//IMPLEMENTED_CASES(skip,plus);
+
+		template<template<typename> class T, typename U,
+						 typename Children, std::size_t size,	typename Accum,
+						 typename = std::enable_if_t<!is_in<T<top_ast> , skip,plus>::value>*
+						 >
+		constexpr Accum* visit(T<U>& t, Children (&rest)[size], Accum *accum){
+			return visit_children(*this,rest,accum);
+		}
+		template<std::size_t d, std::size_t w, typename Accum,
+						 template<typename> class... o>
+		constexpr Accum* visit(tree<d,w,o...> &t, Accum *a){
+			return visit(*this, t,a);
+		}
+
+		
 	};
 }
