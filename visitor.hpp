@@ -1,5 +1,6 @@
 #pragma once
 #include "tree.hpp"
+#include "ctutils.hpp"
 
 template<typename Implementor> struct Visitor {
 		
@@ -49,20 +50,7 @@ template<typename Implementor> struct Visitor {
 		return t.fold(vst{i},ac);
 		}
 		
-	};
-
-	
-template<typename target, typename... t> struct is_in;
-
-template<typename target> struct is_in<target> : public std::false_type {};
-
-template<typename target, typename cand, typename... t>
-struct is_in<target,cand,t...> :
-	public std::integral_constant<
-	bool,
-	std::is_same<target,cand>::value ||
-	is_in<target,t...>::value
-	>{};
+	};	
 
 #define IMPLEMENTED_CASES(x...)																					\
 	template<template<typename> class T, typename U,											\

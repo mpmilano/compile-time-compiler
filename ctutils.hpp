@@ -8,6 +8,21 @@
 
 using test_union = Union<int,std::size_t,double>;
 
+template<typename target, typename... t> struct is_in;
+
+template<typename target> struct is_in<target> : public std::false_type {};
+
+template<typename target, typename cand, typename... t>
+struct is_in<target,cand,t...> :
+	public std::integral_constant<
+	bool,
+	std::is_same<target,cand>::value ||
+	is_in<target,t...>::value
+	>{};
+
+template<typename target, typename... t>
+using if_in_t = std::enable_if_t<is_in<target,t...>::value,target>;
+
 template<typename T>
 struct Option{
 	

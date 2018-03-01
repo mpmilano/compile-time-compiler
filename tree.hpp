@@ -36,13 +36,20 @@ struct tree{
 	};
 	
 	template<typename Arg>
-	constexpr tree(Arg a):_this{a.resize((child_tree*)nullptr)}{
+	constexpr tree(Arg a, if_in_t<Arg,options<child_tree>...,options<tree>...> *
+								 = nullptr)
+		:_this{a.resize((child_tree*)nullptr)}{
 		std::cout << "hi" << std::endl;
 		assert(_this.is_initialized);
 		assert(well_formed());
 		_this.fold(provide_children{},this);
 		std::cout << "hi agaiun" << std::endl;
 		assert(well_formed());
+	}
+
+	template<std::size_t other_size>
+	constexpr tree(tree<other_size,child_max, options...>){
+		static_assert(false, "TODO: fix this by resizing parameter correctly.");
 	}
 
 	constexpr tree():
@@ -63,7 +70,7 @@ struct tree{
 	template<std::size_t size>
 	static constexpr tree resize(tree<size,child_max,options...> t,
 															 std::enable_if_t<size != depth_max>* = nullptr){
-		return tree{};
+		return tree{t};
 	}
 
 	static constexpr tree resize(tree t){
