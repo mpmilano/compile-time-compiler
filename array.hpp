@@ -39,10 +39,22 @@ template<typename T> struct array<T,1>{
 		assert(i == 0);
 		return hd[0];
 	}
+
+	constexpr const T& operator[](std::size_t i) const {
+		assert(i == 0);
+		return hd[0];
+	}
+	
 	constexpr T* ptr(std::size_t i){
 		assert(i == 0);
 		return hd;
 	}
+
+	constexpr const T* ptr(std::size_t i) const {
+		assert(i == 0);
+		return hd;
+	}
+	
 	constexpr iterator begin(){
 		return iterator{*this,0};
 	}
@@ -77,7 +89,23 @@ template<typename T, std::size_t _size> struct array {
 		}
 	}
 
+	constexpr const T* ptr(std::size_t i) const {
+		if (i == 0) return hd;
+		else {
+			if (i < _size){
+				return rest.ptr(i-1);
+			}
+			else {
+				assert(false && "error: index out of bounds");
+			}
+		}
+	}
+
 	constexpr T& operator[](std::size_t i){
+		return *ptr(i);
+	}
+
+	constexpr const T& operator[](std::size_t i) const {
 		return *ptr(i);
 	}
 

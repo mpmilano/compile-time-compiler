@@ -1,39 +1,35 @@
 #include "allocator.hpp"
-
+#include <iostream>
 
 
 struct child {
 	allocated_ref<child> c;
+	std::size_t payload;
 
-	constexpr child(){}
-	constexpr child(child&&){}
+	constexpr child():payload{0}{}
+	constexpr child(child&& c)
+		:c{std::move(c.c)},
+		 payload{c.payload}{}
 
 };
+
+std::ostream& operator<<(std::ostream &o, const child& c){
+	return o << "I'm a child! " << c.payload;
+}
 
 struct top{
 	allocated_ref<child> c;
 
 	constexpr top(){}
-	constexpr top(top&&){}	
+	constexpr top(top&& t):c{std::move(t.c)}{}	
 
 };
 
-/*
-constexpr array<child,15> test_allocator
-(array<child,15> alloc = array<child,15>{}){
-	return alloc;
-}
-
-int main() {
-
-	constexpr array<child,15> a{test_allocator()};
-	
-}
-//*/
-
-
 constexpr Allocator<15,top,child> test_allocator
 (Allocator<15,top,child> alloc = Allocator<15,top,child>{}){
+	alloc.top.c = alloc.template allocate<child>();
+	alloc.top.c.get(alloc).c = alloc.template allocate<child>();
+	alloc.top.c.get(alloc).c.get(alloc).payload = 14;
 	return alloc;
 }
 
@@ -52,6 +48,7 @@ constexpr int test_array(array<_int,25> arr = array<_int,25>{}){
 int main() {
 
 	constexpr Allocator<15,top,child> a{test_allocator()};
+	std::cout << a.top.c.get(a).c.get(a) << std::endl;
 	constexpr int arr = test_array();
 	
 	

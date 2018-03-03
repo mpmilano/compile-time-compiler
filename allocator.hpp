@@ -16,7 +16,11 @@ template<std::size_t size, typename T> struct SingleAllocator{
 			open_slots[i] = o.open_slots[i];
 		}
 	}
-	constexpr SingleAllocator():open_slots{true}{}
+	constexpr SingleAllocator():open_slots{true}{
+		for (auto& b : open_slots){
+			b = true;
+		}
+	}
 
 	constexpr std::size_t allocate(){
 		for (auto i = 0u; i < size; ++i){
@@ -47,17 +51,19 @@ struct allocated_ref{
 		return new_parent.template get<T>().data[indx];
 	}
 
-	allocated_ref(const allocated_ref&) = delete;
-	allocated_ref(allocated_ref&& o):indx(o.indx),t(o.t){
-		o.t = nullptr;
+	template<typename Allocator>
+	constexpr const T& get(Allocator& new_parent)const {
+		return new_parent.template get<T>().data[indx];
 	}
 
-	constexpr allocated_ref(T* t = nullptr):indx{0},t{t}{}
+	constexpr allocated_ref(const allocated_ref&) = delete;
+	constexpr allocated_ref(allocated_ref&& o):indx(o.indx){}
+
+	constexpr allocated_ref():indx{0}{}
 	
 	constexpr allocated_ref& operator=(allocated_ref&& o){
 		indx = o.indx;
-		t = o.t;
-		o.t = nullptr;
+		return *this;
 	}
 	
 };
@@ -80,10 +86,14 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 		return *this;
 	}
 
+	template<typename T>
+		constexpr const SingleAllocator<s,T>& get() const {
+		return *this;
+	}
+
 	template<typename T> constexpr allocated_ref<T> allocate(){
 		allocated_ref<T> ret;
-		ret.index = get<T>().allocate();
-		ret.t = get<T>().data.ptr(ret.index);
+		ret.indx = get<T>().allocate();
 		return ret;
 	}
 
