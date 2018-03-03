@@ -10,7 +10,7 @@ template<std::size_t size, typename T> struct SingleAllocator{
 
 	template<typename Allocator>
 	constexpr SingleAllocator(SingleAllocator&& o, Allocator& _new)
-		:data(std::move(o.data)),open_slots{false}{
+		:data(std::move(o.data)),open_slots{false} {
 		//initialize data as copy (if that's a thing)
 		for (auto i = 0u; i < size; ++i){
 			open_slots[i] = o.open_slots[i];
@@ -42,34 +42,32 @@ template<std::size_t size, typename T> struct SingleAllocator{
 template<std::size_t s, typename Top, typename... Subs> struct Allocator;
 
 template<typename T>
-struct allocated_ptr{
+struct allocated_ref{
 	std::size_t indx;
-	T* t;
+	T& t;
 	template<typename Allocator>
 	constexpr void repoint(Allocator& new_parent){
-		t = new_parent.template get<T>().data.ptr(indx);
+		auto* tmp = new_parent.template get<T>().data.ptr(indx);
+		t = *tmp;
 	}
 
-	allocated_ptr(const allocated_ptr&) = delete;
-	allocated_ptr(allocated_ptr&& o):indx(o.indx),t(o.t){
+	allocated_ref(const allocated_ref&) = delete;
+	allocated_ref(allocated_ref&& o):indx(o.indx),t(o.t){
 		o.t = nullptr;
 	}
 
-	constexpr allocated_ptr():indx{0},t{nullptr}{}
+	constexpr allocated_ref(T* t = nullptr):indx{0},t{t}{}
 	
-	constexpr allocated_ptr& operator=(allocated_ptr&& o){
+	constexpr allocated_ref& operator=(allocated_ref&& o){
 		indx = o.indx;
 		t = o.t;
 		o.t = nullptr;
 	}
 
 	constexpr T& operator*() {
-		return *t;
-	}
-
-	constexpr T* operator->() const {
 		return t;
 	}
+	
 };
 
 
@@ -91,8 +89,8 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 		return *this;
 	}
 
-	template<typename T> constexpr allocated_ptr<T> allocate(){
-		allocated_ptr<T> ret;
+	template<typename T> constexpr allocated_ref<T> allocate(){
+		allocated_ref<T> ret;
 		ret.index = get<T>().allocate();
 		ret.t = get<T>().data.ptr(ret.index);
 		return ret;

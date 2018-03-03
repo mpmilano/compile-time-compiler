@@ -3,7 +3,7 @@
 
 
 struct child {
-	allocated_ptr<child> c;
+	allocated_ref<child> c;
 
 	constexpr child(){}
 	constexpr child(child&&){}
@@ -14,7 +14,7 @@ struct child {
 };
 
 struct top{
-	allocated_ptr<child> c;
+	allocated_ref<child> c;
 
 	constexpr top(){}
 	constexpr top(top&&){}
@@ -44,9 +44,24 @@ constexpr Allocator<15,top,child> test_allocator
 	return alloc;
 }
 
+struct _int{
+	int i;
+	constexpr _int():i(0){}
+};
+
+constexpr int test_array(array<_int,25> arr = array<_int,25>{}){
+	_int* temp{nullptr};
+	auto ret = arr[0];
+	temp = arr.ptr(0);
+	return (*temp).i + ret.i;
+}
+
 int main() {
 
 	constexpr Allocator<15,top,child> a{test_allocator()};
+	constexpr int arr = test_array();
+	
+	
 	
 }
 

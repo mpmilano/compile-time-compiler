@@ -29,7 +29,6 @@ template<typename T, typename array> struct iterator{
 		}
 };
 
-
 template<typename T> struct array<T,1>{
 	T hd[1];
 	using iterator = ::iterator<T,array>;
