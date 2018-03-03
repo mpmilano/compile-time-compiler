@@ -16,6 +16,11 @@ namespace ast {
 		constexpr auto provide_children(Subtree*(&arr)[size]){
 			arr[0] = &child;
 		}
+
+		template<std::size_t d, std::size_t w, template<typename> class... o>
+		constexpr auto resize(tree<d,w,o...> const * const) const {
+			return _transaction<tree<d,w,o...> >{child};
+		}
 	};
 
 	template<typename Subtree>
@@ -45,16 +50,19 @@ namespace ast {
 		Subtree body;
 		template<typename Var, typename Collection, typename Body>
 		constexpr _for_each(Var var, Collection collection, Body body)
-			:var(Subtree::resize(var)),
-			 collection(Subtree::resize(collection)),
-			 body(Subtree::resize(body)){}
+			:var(var),collection(collection),body(body){}
 
-			constexpr _for_each(){}
+		constexpr _for_each(){}
 		template<std::size_t size>
 		constexpr auto provide_children(Subtree*(&arr)[size]){
 			arr[0] = &var;
 			arr[1] = &collection;
 			arr[2] = &body;
+		}
+
+		template<std::size_t d, std::size_t w, template<typename> class... o>
+		constexpr auto resize(tree<d,w,o...> const * const) const {
+			return _for_each<tree<d,w,o...> >{var,collection,body};
 		}
 	};
 

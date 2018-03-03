@@ -20,7 +20,7 @@ int main(){
 	//assert(o.internal.which() == 1);
 
 	using namespace ast;
-	auto result{visit_test(
+	constexpr auto result{visit_test(
 			top_ast{plus{_skip<ast<2> >{},_skip<ast<2> >{}}})};
 	std::cout << result.data << std::endl;
 }

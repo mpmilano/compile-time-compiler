@@ -39,17 +39,35 @@ struct tree{
 	constexpr tree(Arg a, if_in_t<Arg,options<child_tree>...,options<tree>...> *
 								 = nullptr)
 		:_this{a.resize((child_tree*)nullptr)}{
-		std::cout << "hi" << std::endl;
 		assert(_this.is_initialized);
 		assert(well_formed());
 		_this.fold(provide_children{},this);
-		std::cout << "hi agaiun" << std::endl;
 		assert(well_formed());
 	}
 
+
+	struct resize_child{
+		constexpr resize_child(){}
+		template<typename T>
+		constexpr tree operator()(T && t){
+			return tree{t};
+		}
+	};
+
+	constexpr tree& operator=(const tree& o){
+		_this = o._this;
+		_this.fold(provide_children{},this);
+		return *this;
+	}
+	
 	template<std::size_t other_size>
-	constexpr tree(tree<other_size,child_max, options...>){
-		static_assert(false, "TODO: fix this by resizing parameter correctly.");
+	constexpr tree(tree<other_size,child_max, options...> o){
+		if constexpr (other_size == depth_max){
+				operator=(o);
+			}
+		else {
+			operator=(_this.map(resize_child{}));
+		}
 	}
 
 	constexpr tree():
@@ -67,15 +85,6 @@ struct tree{
 		return true;
 	}
 
-	template<std::size_t size>
-	static constexpr tree resize(tree<size,child_max,options...> t,
-															 std::enable_if_t<size != depth_max>* = nullptr){
-		return tree{t};
-	}
-
-	static constexpr tree resize(tree t){
-		return t;
-	}	
 
 	template<typename F>
 	struct fold_specialize{
