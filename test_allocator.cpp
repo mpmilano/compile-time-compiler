@@ -7,22 +7,15 @@ struct child {
 
 	constexpr child(){}
 	constexpr child(child&&){}
-	template<typename A>
-	constexpr void repoint(A&& a){
-		c.repoint(a);
-	}
+
 };
 
 struct top{
 	allocated_ref<child> c;
 
 	constexpr top(){}
-	constexpr top(top&&){}
-	
-	template<typename A>
-	constexpr void repoint(A&& a){
-		c.repoint(a);
-	}
+	constexpr top(top&&){}	
+
 };
 
 /*

@@ -15,9 +15,6 @@ template<std::size_t size, typename T> struct SingleAllocator{
 		for (auto i = 0u; i < size; ++i){
 			open_slots[i] = o.open_slots[i];
 		}
-		for (auto& d : data){
-			d.repoint(_new);
-		}
 	}
 	constexpr SingleAllocator():open_slots{true}{}
 
@@ -44,11 +41,10 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator;
 template<typename T>
 struct allocated_ref{
 	std::size_t indx;
-	T& t;
+	
 	template<typename Allocator>
-	constexpr void repoint(Allocator& new_parent){
-		auto* tmp = new_parent.template get<T>().data.ptr(indx);
-		t = *tmp;
+	constexpr T& get(Allocator& new_parent){
+		return new_parent.template get<T>().data[indx];
 	}
 
 	allocated_ref(const allocated_ref&) = delete;
@@ -63,10 +59,6 @@ struct allocated_ref{
 		t = o.t;
 		o.t = nullptr;
 	}
-
-	constexpr T& operator*() {
-		return t;
-	}
 	
 };
 
@@ -80,7 +72,6 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 
 	constexpr Allocator(Allocator&& o)
 		:SingleAllocator<s,Subs>(std::move(o),*this)...{
-		top.repoint(*this);
 	}
 	
 
