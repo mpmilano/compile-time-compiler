@@ -103,3 +103,6 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 	
 };
 
+#define $(a) a.get(allocator)
+
+

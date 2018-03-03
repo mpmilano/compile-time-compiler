@@ -26,11 +26,11 @@ struct top{
 };
 
 constexpr Allocator<15,top,child> test_allocator
-(Allocator<15,top,child> alloc = Allocator<15,top,child>{}){
-	alloc.top.c = alloc.template allocate<child>();
-	alloc.top.c.get(alloc).c = alloc.template allocate<child>();
-	alloc.top.c.get(alloc).c.get(alloc).payload = 14;
-	return alloc;
+(Allocator<15,top,child> allocator = Allocator<15,top,child>{}){
+	allocator.top.c = allocator.template allocate<child>();
+	allocator.top.$(c).c = allocator.template allocate<child>();
+	allocator.top.$(c).$(c).payload = 14;
+	return allocator;
 }
 
 struct _int{
@@ -47,8 +47,9 @@ constexpr int test_array(array<_int,25> arr = array<_int,25>{}){
 
 int main() {
 
-	constexpr Allocator<15,top,child> a{test_allocator()};
-	std::cout << a.top.c.get(a).c.get(a) << std::endl;
+	constexpr Allocator<15,top,child> allocator{test_allocator()};
+	constexpr auto payload = allocator.top.$(c).$(c).payload;
+	std::cout << payload << std::endl;
 	constexpr int arr = test_array();
 	
 	
