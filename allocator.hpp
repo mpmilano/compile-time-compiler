@@ -29,7 +29,11 @@ template<std::size_t size, typename T> struct SingleAllocator{
 				return i;
 			}
 		}
-		assert(false && "out of memory");
+		//this will always assert false;
+		//gcc just gets upset if I do that directly,
+		//and clang gets upset if I don't. 
+		if (!open_slots[3]) assert(false && "out of memory");
+		else return 0;
 	}
 
 

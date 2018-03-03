@@ -16,6 +16,9 @@ template<typename T> struct Union_elem {
 		return *this;
 	}
 
+	constexpr Union_elem(Union_elem&& u)
+		:t{std::move(u.t)},is_this_elem{u.is_this_elem}{}
+
 	template<typename F, typename R>
 	constexpr void map(F &&f, R& r){
 		if (is_this_elem) r = f(t);
@@ -110,6 +113,10 @@ template<typename T1, typename... T> struct Union :
 		return *this;
 	}
 
+	constexpr Union(Union&& u)
+		:Union_elem<T1>{std::move(u)},
+		Union_elem<T>{std::move(u)}...{}
+
 	template<typename U>
 	constexpr Union& operator=(const U &u){
 		Union_elem<U>* _this = this;
@@ -119,17 +126,27 @@ template<typename T1, typename... T> struct Union :
 		_this->is_this_elem = true;
 		return *this;
 	}
+	
+	template<typename U>
+	constexpr Union& operator=(U &&u){
+		Union_elem<U>* _this = this;
+		Union_elem<T1>::is_this_elem = false;
+		((Union_elem<T>::is_this_elem = false),...);
+		_this->t = std::move(u);
+		_this->is_this_elem = true;
+		return *this;
+	}
+
 
 	template<typename target>
-		constexpr auto& get_(){
-		Union_elem<target>* _this = this;
-		//assert(_this->is_this_elem);
-		return *_this;
+		constexpr Union_elem<target>& get_(){
+		return *this;
 	}
 
 	
 	template<typename target>
 		constexpr auto& get(){
+		assert(get_<target>().is_this_elem);
 		return get_<target>().t;
 	}
 

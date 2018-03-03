@@ -1,26 +1,36 @@
-#include "ctutils.hpp"
 #include "ast.hpp"
-#include "test_ast.hpp"
 #include <iostream>
+#include "mutils/CTString.hpp"
 
-constexpr auto visit_test(ast::top_ast a){
-	string s[1] = {string{}};
-	assert(a.well_formed());
-	return *ast::noop_visitor{}.visit(a,s);
-}
+#define $ITEM(trn,e,plus) trn.e = allocator.template allocate<AST_elem>(); (trn.$(e) = plus{}).template get<plus>()
+#define $PLUS(trn,e) $ITEM(trn,e,plus)
+
+
+template<std::size_t size>
+struct stringref{
+	using arr = char[size];
+	arr& str;
+	std::size_t begin_pos{0};
+	std::size_t end_pos{0};
+	constexpr stringref(arr& str):str{str}{}
+};
 
 int main(){
-
-	constexpr test_union tu{3.4};
-	std::cout << tu.template get<double>() + tu.template get<2>()<< std::endl;
-
-	Option<int> o;
-	//assert(o.internal.which() == 0);
-	o = 3;
-	//assert(o.internal.which() == 1);
-
-	using namespace ast;
-	constexpr auto result{visit_test(
-			top_ast{plus{_skip<ast<2> >{},_skip<ast<2> >{}}})};
-	std::cout << result.data << std::endl;
+	struct tc{
+		static constexpr auto test_compile(){
+			Allocator<15,transaction, AST_elem> allocator;
+			auto& trn = allocator.top;
+			$PLUS(trn,e).payload = 14;
+			/*
+				trn.e = allocator.template allocate<AST_elem>();
+				trn.$(e) = plus{};*/
+			return allocator;
+			
+		}
+	};
+	constexpr auto allocator = tc::test_compile();
+	auto fourteen = allocator.top.$(e).template get<plus>().payload;
+	//using str = DECT(MUTILS_STRING("hello")::trim_ends());
+	std:: cout << fourteen << " " /*<< str{} */<< std::endl;
+	return fourteen;
 }
