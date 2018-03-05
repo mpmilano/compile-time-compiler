@@ -29,7 +29,8 @@ int main(){
 		}
 	};
 	constexpr auto allocator = tc::test_compile();
-	auto fourteen = allocator.top.$(e).template get<plus>().payload;
+	constexpr auto fourteen = allocator.top.$(e).template get<plus>().payload;
+	static_assert(fourteen == 14);
 	//using str = DECT(MUTILS_STRING("hello")::trim_ends());
 	std:: cout << fourteen << " " /*<< str{} */<< std::endl;
 	return fourteen;

@@ -10,9 +10,10 @@ struct transaction {
 	std::size_t payload{0};
 	constexpr transaction(){};
 	constexpr transaction(transaction&& p)
-		:e{std::move(p.e)}{}
+		:e{std::move(p.e)},payload(std::move(p.payload)){}
 	constexpr transaction& operator=(transaction&& p){
 		e = std::move(p.e);
+		payload = std::move(payload);
 		return *this;
 	}
 };
@@ -22,9 +23,12 @@ struct plus {
 	std::size_t payload{0};
 	constexpr plus(){}
 	constexpr plus(plus&& p)
-		:e{std::move(p.e)}{}
+		:e{std::move(p.e)},
+		payload(std::move(p.payload))
+		{}
 	constexpr plus& operator=(plus&& p){
 		e = std::move(p.e);
+		payload = std::move(payload);
 		return *this;
 	}
 };
@@ -34,10 +38,11 @@ struct skip {
 	std::size_t payload{0};
 	constexpr skip(){}
 	constexpr skip(skip&& p)
-		:e{std::move(p.e)}{}
+		:e{std::move(p.e)},payload(std::move(p.payload)){}
 
 	constexpr skip& operator=(skip&& p){
 		e = std::move(p.e);
+		payload = std::move(payload);
 		return *this;
 	}
 };
