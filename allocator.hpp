@@ -56,7 +56,7 @@ struct allocated_ref{
 	}
 
 	template<typename Allocator>
-	constexpr const T& get(Allocator& new_parent)const {
+	constexpr const T& get(Allocator& new_parent) const {
 		return new_parent.template get<T>().data[indx];
 	}
 

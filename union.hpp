@@ -62,7 +62,8 @@ template<typename T1, typename... T> struct Union :
 	bool is_initialized{false};
 
 	constexpr bool well_formed() const {
-		return (Union_elem<T1>::is_this_elem || ... || Union_elem<T>::is_this_elem);
+		return ((Union_elem<T1>::is_this_elem + 
+		... + Union_elem<T>::is_this_elem) == 1);
 	}
 	
 	template<typename U>
@@ -143,6 +144,11 @@ template<typename T1, typename... T> struct Union :
 		return *this;
 	}
 
+	template<typename target>
+		constexpr const Union_elem<target>& get_() const {
+		return *this;
+	}
+
 	
 	template<typename target>
 		constexpr auto& get(){
@@ -150,21 +156,11 @@ template<typename T1, typename... T> struct Union :
 		return get_<target>().t;
 	}
 
-
-
-	template<typename target, typename cand1, typename... candn>
-		constexpr const auto& _get(Union_elem<cand1> &c1, Union_elem<candn>&... c2) const {
-		if constexpr (std::is_same<target,cand1>::value){
-				return c1.t;
-			}
-		else return _get<target>(c2...);
+template<typename target>
+		constexpr auto& get() const {
+		assert(get_<target>().is_this_elem);
+		return get_<target>().t;
 	}
-
-	template<typename target>
-		constexpr const auto& get() const {
-		return _get<target>(*(Union_elem<T1>*)this, *(Union_elem<T>*)this... );
-	}
-
 	
 	template<std::size_t target, typename cand1, typename... candn>
 		static constexpr auto& _get(Union_elem<cand1> &c1, Union_elem<candn>&... c2){
