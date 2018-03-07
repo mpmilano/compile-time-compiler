@@ -1,6 +1,7 @@
 #include "ast.hpp"
 #include <iostream>
 #include "mutils/CTString.hpp"
+#include "mutils/cstring.hpp"
 
 #define $ITEM(trn,e,plus) trn.e = allocator.template allocate<AST_elem>(); (trn.$(e) = plus{}).template get<plus>()
 #define $PLUS(trn,e) $ITEM(trn,e,plus)
@@ -13,6 +14,48 @@ struct compiled{
 			$ITEM(trn.$(e).template get<plus>(),e,skip).payload = 13;
 			return allocator;
 		}
+};
+
+using Alloc = Allocator<15,transaction, AST_elem>;
+
+template<typename string>
+struct parse{
+	const string _str;
+	using str_t = char const[string::string_length+1];
+	using str_nc = char[string::string_length+1];
+	Alloc allocator;
+
+	constexpr allocated_ref<AST_elem> parse_expression(const str_t& str){
+		return allocated_ref<AST_elem>{};
+	}
+	
+	constexpr allocated_ref<AST_elem> parse_statement(const str_t& str){
+		return allocated_ref<AST_elem>{};
+	}
+
+	constexpr allocated_ref<AST_elem> parse_sequence(const str_t& str){
+		using namespace mutils;
+		using namespace cstring;
+		str_nc string_bufs[20] = {{0}};
+		split_outside_parens(';',str,string_bufs);
+		return allocated_ref<AST_elem>{};
+	}
+	
+	constexpr parse(){
+		//all parsing implemented in the constructor, so that
+		//future things can just build this and expect it to work
+		allocator.top.e = parse_sequence(_str.string);
+	}
+};
+
+template<typename string>
+struct flatten {
+	//parsing happens during construction
+	parse<string> prev;
+	Alloc allocator;
+	constexpr flatten(){
+		
+	}
 };
 
 template<typename compiled>
@@ -70,7 +113,8 @@ int main(){
 	constexpr auto allocator = compiled::test_compile();
 	constexpr auto fourteen = allocator.top.$(e).template get<plus>().payload;
 	static_assert(fourteen == 14);
-	//using str = DECT(MUTILS_STRING("hello")::trim_ends());
+	using str = DECT(MUTILS_STRING("hello")::trim_ends());
+	constexpr flatten<str> f;
 	std:: cout << fourteen << " " /*<< str{} */<< std::endl;
 	return fourteen;
 }
