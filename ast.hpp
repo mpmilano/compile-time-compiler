@@ -25,7 +25,7 @@ struct plus {
 	constexpr plus(plus&& p)
 		:e{std::move(p.e)},
 		payload(std::move(p.payload))
-		{}
+		{static_assert(false,"remember to use decltype(auto) in truly-polymorphic returns);")}
 	constexpr plus& operator=(plus&& p){
 		e = std::move(p.e);
 		payload = std::move(payload);
