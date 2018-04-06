@@ -25,7 +25,7 @@ struct plus {
 	constexpr plus(plus&& p)
 		:e{std::move(p.e)},
 		payload(std::move(p.payload))
-		{static_assert(false,"remember to use decltype(auto) in truly-polymorphic returns);")}
+		{static_assert(true,"remember to use decltype(auto) in truly-polymorphic returns);");}
 	constexpr plus& operator=(plus&& p){
 		e = std::move(p.e);
 		payload = std::move(payload);
@@ -46,4 +46,10 @@ struct skip {
 		return *this;
 	}
 };
+
+namespace as_types{
+	struct skip{};
+	template<typename L, typename R> struct plus{};
+	template<typename body> struct transaction{};
+}
 

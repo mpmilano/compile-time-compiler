@@ -46,12 +46,60 @@ struct parse{
 		//future things can just build this and expect it to work
 		allocator.top.e = parse_sequence(_str.string);
 	}
+
 };
 
 template<typename string>
 struct flatten {
 	//parsing happens during construction
-	parse<string> prev;
+	static const constexpr parse<string> prev{};
+	template<std::size_t budget, typename F>
+	static constexpr auto parse_as_type(){
+		static_assert(budget > 0);
+		constexpr const AST_elem& e = F{}();
+		if constexpr (e.template get_<skip>().is_this_elem){
+			return as_types::skip{};
+		}
+		if constexpr (e.template get_<transaction>().is_this_elem){
+			struct arg{
+				constexpr arg(){}
+				constexpr const AST_elem& operator()() const {
+					return e.template get_<transaction>().t.e.get(prev.allocator);
+				}
+			};
+			using body = DECT(parse_as_type<budget-1,arg>());
+			return as_types::transaction<body>{};
+		}
+		if constexpr (e.template get_<plus>().is_this_elem){
+			struct arg1{
+				constexpr arg1(){}
+				constexpr const AST_elem& operator()() const {
+					return e.template get_<plus>().t.e.get(prev.allocator);
+				}
+			};
+			struct arg2{
+				constexpr arg2(){}
+				constexpr const AST_elem& operator()() const {
+					return e.template get_<plus>().t.e.get(prev.allocator);
+				}
+			};
+			using left = DECT(parse_as_type<budget-1,arg1>());
+			using right = DECT(parse_as_type<budget-1,arg2>());
+			return as_types::plus<left,right>{};
+		}
+		struct error{};
+		return error{};
+	}
+	static constexpr auto parse_as_type(){
+		struct arg{
+			constexpr arg(){}
+			constexpr const AST_elem& operator()() const{
+				return prev.allocator.top.e.get(prev.allocator);
+			}
+		};
+		return parse_as_type<15,arg>();
+	}
+	using parse_t = DECT(parse_as_type());
 	Alloc allocator;
 	constexpr flatten(){
 		
@@ -115,6 +163,7 @@ int main(){
 	static_assert(fourteen == 14);
 	using str = DECT(MUTILS_STRING("hello")::trim_ends());
 	constexpr flatten<str> f;
+	flatten<str>::parse_t::print();
 	std:: cout << fourteen << " " /*<< str{} */<< std::endl;
 	return fourteen;
 }

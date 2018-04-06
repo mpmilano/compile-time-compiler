@@ -14,6 +14,11 @@ struct allocated_ref{
 		return new_parent.template get<T>().data[indx];
 	}
 
+	template<typename Allocator>
+	constexpr const T& get(const Allocator& new_parent) const {
+		return new_parent.template get<T>().data[indx];
+	}
+
 	constexpr allocated_ref(const allocated_ref&) = delete;
 	constexpr allocated_ref(allocated_ref&& o):indx(o.indx){}
 
