@@ -1,25 +1,24 @@
 #include "ast.hpp"
 #include "mutils/CTString.hpp"
-#include "string3.hpp"
 #include "mutils/cstring.hpp"
 #include <iostream>
 
 #define $ITEM(trn, e, plus)                                                    \
-  trn.e = allocator.template allocate<AST_elem>();                             \
-  (trn.$(e) = plus{}).template get<plus>()
+  trn.e = allocator.template allocate<as_values::AST_elem>();                             \
+  (trn.$(e) = as_values::plus{}).template get<as_values::plus>()
 #define $PLUS(trn, e) $ITEM(trn, e, plus)
 
 struct compiled {
-  static constexpr Allocator<15, transaction, AST_elem> test_compile() {
-    Allocator<15, transaction, AST_elem> allocator;
+  static constexpr as_values::AST_Allocator<15> test_compile() {
+    as_values::AST_Allocator<15> allocator;
     auto &trn = allocator.top;
     $PLUS(trn, e).payload = 14;
-    $ITEM(trn.$(e).template get<plus>(), e, skip).payload = 13;
+    $ITEM(trn.$(e).template get<as_values::plus>(), e, skip).payload = 13;
     return allocator;
   }
 };
 
-using Alloc = Allocator<15, transaction, AST_elem>;
+using Alloc = as_values::AST_Allocator<15>;
 
 template <typename string> struct parse {
   const string _str;
@@ -28,20 +27,20 @@ template <typename string> struct parse {
   using str_nc = char[string_length::value + 1];
   Alloc allocator;
 
-  constexpr allocated_ref<AST_elem> parse_expression(const str_t &str) {
-    return allocated_ref<AST_elem>{};
+  constexpr allocated_ref<as_values::AST_elem> parse_expression(const str_t &str) {
+    return allocated_ref<as_values::AST_elem>{};
   }
 
-  constexpr allocated_ref<AST_elem> parse_statement(const str_t &str) {
-    return allocated_ref<AST_elem>{};
+  constexpr allocated_ref<as_values::AST_elem> parse_statement(const str_t &str) {
+    return allocated_ref<as_values::AST_elem>{};
   }
 
-  constexpr allocated_ref<AST_elem> parse_sequence(const str_t &str) {
+  constexpr allocated_ref<as_values::AST_elem> parse_sequence(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
     str_nc string_bufs[20] = {{0}};
     split_outside_parens(';', str, string_bufs);
-    return allocated_ref<AST_elem>{};
+    return allocated_ref<as_values::AST_elem>{};
   }
 
   constexpr parse() {
@@ -59,54 +58,8 @@ template <typename string> struct parse {
 template <typename string> struct flatten {
   // parsing happens during construction
   static const constexpr parse<string> prev{};
-  template <std::size_t budget, typename F>
   static constexpr auto parse_as_type() {
-    static_assert(budget > 0);
-    if (budget > 0) {
-      constexpr const AST_elem &e = F{}();
-      if constexpr (e.template get_<skip>().is_this_elem) {
-        return as_types::skip{};
-      }
-      if constexpr (e.template get_<transaction>().is_this_elem) {
-        struct arg {
-          constexpr arg() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<transaction>().t.e.get(prev.allocator);
-          }
-        };
-        using body = DECT(parse_as_type<budget - 1, arg>());
-        return as_types::transaction<body>{};
-      }
-      if constexpr (e.template get_<plus>().is_this_elem) {
-        struct arg1 {
-          constexpr arg1() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<plus>().t.e.get(prev.allocator);
-          }
-        };
-        struct arg2 {
-          constexpr arg2() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<plus>().t.e.get(prev.allocator);
-          }
-        };
-        using left = DECT(parse_as_type<budget - 1, arg1>());
-        using right = DECT(parse_as_type<budget - 1, arg2>());
-        return as_types::plus<left, right>{};
-      }
-    }
-	static_assert(budget > 0);
-    struct error {};
-    return error{};
-  }
-  static constexpr auto parse_as_type() {
-    struct arg {
-      constexpr arg() {}
-      constexpr const AST_elem &operator()() const {
-        return prev.allocator.top.e.get(prev.allocator);
-      }
-    };
-    return parse_as_type<15, arg>();
+    return as_values::as_type<flatten>();
   }
   using parse_t = DECT(parse_as_type());
   Alloc allocator;
@@ -115,24 +68,24 @@ template <typename string> struct flatten {
 
 template <typename compiled> struct tc {
 
-  static constexpr const Allocator<15, transaction, AST_elem> allocator =
+  static constexpr const as_values::AST_Allocator<15> allocator =
       compiled::test_compile();
 
   template <std::size_t budget, typename F> auto evaluate() const {
     if constexpr (budget > 0) {
-      constexpr const AST_elem &this_node = F{}();
+      constexpr const as_values::AST_elem &this_node = F{}();
       static_assert(this_node.well_formed());
-      static_assert(!this_node.template get_<transaction>().is_this_elem);
-      if constexpr (this_node.template get_<skip>().is_this_elem) {
+      static_assert(!this_node.template get_<as_values::transaction>().is_this_elem);
+      if constexpr (this_node.template get_<as_values::skip>().is_this_elem) {
         std::cout << "encountered skip with payload: "
-                  << this_node.template get<skip>().payload << std::endl;
-        return this_node.template get<skip>().payload;
-      } else if constexpr (this_node.template get_<plus>().is_this_elem) {
-        constexpr auto &plusv = this_node.template get_<plus>();
+                  << this_node.template get<as_values::skip>().payload << std::endl;
+        return this_node.template get<as_values::skip>().payload;
+      } else if constexpr (this_node.template get_<as_values::plus>().is_this_elem) {
+        constexpr auto &plusv = this_node.template get_<as_values::plus>();
         struct left {
-          constexpr const AST_elem &operator()() const {
+          constexpr const as_values::AST_elem &operator()() const {
             // constexpr auto& this_node = F{}();
-            return /*plusv.*/ F{}().template get<plus>().$(e);
+            return /*plusv.*/ F{}().template get<as_values::plus>().$(e);
           }
         };
 
@@ -147,7 +100,7 @@ template <typename compiled> struct tc {
 
   auto evaluate() const {
     struct start {
-      constexpr const AST_elem &operator()() const {
+      constexpr const as_values::AST_elem &operator()() const {
         return allocator.top.$(e);
       }
     };
@@ -160,7 +113,7 @@ int main() {
   constexpr tc<compiled> testing;
   std::cout << testing.evaluate() << std::endl;
   constexpr auto allocator = compiled::test_compile();
-  constexpr auto fourteen = allocator.top.$(e).template get<plus>().payload;
+  constexpr auto fourteen = allocator.top.$(e).template get<as_values::plus>().payload;
   static_assert(fourteen == 14);
   constexpr auto length = ::mutils::cstring::str_len("this is a string!")+1;
   struct wrapper {constexpr wrapper(){} const char str[length]{"this is a string!"};};

@@ -29,6 +29,7 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
+                "/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7",
                 "${workspaceRoot}"
             ],
             "defines": [],
