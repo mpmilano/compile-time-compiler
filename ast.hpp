@@ -7,7 +7,9 @@ namespace as_values {
 struct transaction;
 struct plus;
 struct skip;
-using AST_elem = Union<transaction, plus, skip>;
+struct number;
+struct return_val;
+using AST_elem = Union<transaction, plus, skip, number,return_val>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
@@ -25,29 +27,51 @@ struct transaction {
 };
 
 struct plus {
-  allocated_ref<AST_elem> e;
-  std::size_t payload{0};
+  allocated_ref<AST_elem> l;
+  allocated_ref<AST_elem> r;
   constexpr plus() {}
-  constexpr plus(plus &&p) : e{std::move(p.e)}, payload(std::move(p.payload)) {
+  constexpr plus(plus &&p) : l{std::move(p.l)}, r(std::move(p.r)) {
     static_assert(
         true, "remember to use decltype(auto) in truly-polymorphic returns);");
   }
   constexpr plus &operator=(plus &&p) {
-    e = std::move(p.e);
-    payload = std::move(payload);
+    l = std::move(p.l);
+    r = std::move(p.r);
+    return *this;
+  }
+};
+
+struct number {
+  std::size_t num{0};
+  constexpr number() {}
+  constexpr number(number &&p) : num{std::move(p.num)}{
+    static_assert(
+        true, "remember to use decltype(auto) in truly-polymorphic returns);");
+  }
+  constexpr number &operator=(number &&p) {
+    num = std::move(p.num);
+    return *this;
+  }
+};
+
+struct return_val {
+  allocated_ref<AST_elem> v;
+  constexpr return_val() {}
+  constexpr return_val(return_val &&p) : v{std::move(p.v)} {
+    static_assert(
+        true, "remember to use decltype(auto) in truly-polymorphic returns);");
+  }
+  constexpr return_val &operator=(return_val &&p) {
+    v = std::move(p.v);
     return *this;
   }
 };
 
 struct skip {
-  allocated_ref<AST_elem> e;
-  std::size_t payload{0};
   constexpr skip() {}
-  constexpr skip(skip &&p) : e{std::move(p.e)}, payload(std::move(p.payload)) {}
+  constexpr skip(skip &&p) {}
 
-  constexpr skip &operator=(skip &&p) {
-    e = std::move(p.e);
-    payload = std::move(payload);
+  constexpr skip &operator=(skip &&) {
     return *this;
   }
 };
@@ -57,6 +81,8 @@ namespace as_types {
 struct skip {};
 template <typename L, typename R> struct plus {};
 template <typename body> struct transaction {};
+template<std::size_t> struct number {};
+template<typename val> struct return_val{};
 
 } // namespace as_types
 
@@ -84,18 +110,31 @@ constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
       struct arg1 {
         constexpr arg1() {}
         constexpr const AST_elem &operator()() const {
-          return e.template get_<plus>().t.e.get(allocator);
+          return e.template get_<plus>().t.l.get(allocator);
         }
       };
       struct arg2 {
         constexpr arg2() {}
         constexpr const AST_elem &operator()() const {
-          return e.template get_<plus>().t.e.get(allocator);
+          return e.template get_<plus>().t.r.get(allocator);
         }
       };
       using left = DECT(as_type<budget - 1, arg1>(allocator));
       using right = DECT(as_type<budget - 1, arg2>(allocator));
       return as_types::plus<left, right>{};
+    }
+    if constexpr (e.template get_<number>().is_this_elem){
+      return as_types::number<e.template get_<number>().t.num>{};
+    }
+    if constexpr (e.template get_<return_val>().is_this_elem){
+      struct arg {
+        constexpr arg() {}
+        constexpr const AST_elem &operator()() const {
+          return e.template get_<return_val>().t.v.get(allocator);
+        }
+      };
+      using body = DECT(as_type<budget - 1, arg>(allocator));
+      return as_types::return_val<body>{};
     }
   }
   static_assert(budget > 0);
