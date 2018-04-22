@@ -26,7 +26,10 @@ template <typename string> struct parse {
     using namespace mutils;
     using namespace cstring;
     str_nc string_bufs[20] = {{0}};
-    split_outside_parens(';', str, string_bufs);
+    auto groups = split_outside_parens(';', str, string_bufs);
+    for (auto i = 0u; i < groups; ++i){
+      
+    }
     return allocated_ref<as_values::AST_elem>{};
   }
 

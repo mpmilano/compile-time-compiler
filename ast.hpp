@@ -3,25 +3,44 @@
 #include "mutils/type_utils.hpp"
 #include "union.hpp"
 
+#define generate_value7(name,ftype1,f1,f1init,ftype2,f2,f2init) \
+    struct $name { \
+  ftype1 f1 f1init; \
+  ftype2 f2 f2init; \
+  constexpr $name(){}; \
+  constexpr $name($name &&p) \
+      : f1{std::move(p.f1)}, f2(std::move(p.f2)) {} \
+  constexpr $name &operator=($name &&p) { \
+    f1 = std::move(p.f1); \
+    f2 = std::move(f2); \
+    return *this; \
+  } \
+};
+  
+
 namespace as_values {
 struct transaction;
 struct plus;
 struct skip;
 struct number;
 struct return_val;
-using AST_elem = Union<transaction, plus, skip, number,return_val>;
+using AST_elem = Union<transaction, plus, skip, number, return_val>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
-struct transaction {
+generate_value7(transaction,allocated_ref<AST_elem>, e, {},std::size_t, payload,{0});
+
+
+struct sequence {
+  allocated_ref<AST_elem> next;
   allocated_ref<AST_elem> e;
   std::size_t payload{0};
-  constexpr transaction(){};
-  constexpr transaction(transaction &&p)
-      : e{std::move(p.e)}, payload(std::move(p.payload)) {}
-  constexpr transaction &operator=(transaction &&p) {
+  constexpr sequence(){};
+  constexpr sequence(sequence &&p)
+      : e{std::move(p.e)}, next(std::move(p.next)) {}
+  constexpr sequence &operator=(sequence &&p) {
     e = std::move(p.e);
-    payload = std::move(payload);
+    next = std::move(next);
     return *this;
   }
 };
@@ -44,7 +63,7 @@ struct plus {
 struct number {
   std::size_t num{0};
   constexpr number() {}
-  constexpr number(number &&p) : num{std::move(p.num)}{
+  constexpr number(number &&p) : num{std::move(p.num)} {
     static_assert(
         true, "remember to use decltype(auto) in truly-polymorphic returns);");
   }
@@ -71,9 +90,7 @@ struct skip {
   constexpr skip() {}
   constexpr skip(skip &&p) {}
 
-  constexpr skip &operator=(skip &&) {
-    return *this;
-  }
+  constexpr skip &operator=(skip &&) { return *this; }
 };
 } // namespace as_values
 
@@ -81,8 +98,19 @@ namespace as_types {
 struct skip {};
 template <typename L, typename R> struct plus {};
 template <typename body> struct transaction {};
-template<std::size_t> struct number {};
-template<typename val> struct return_val{};
+template <std::size_t> struct number {};
+template <typename val> struct return_val {};
+template <typename... seqs> struct sequence {
+  template <typename... more>
+  static constexpr sequence<seqs..., more...>
+  append(const sequence<more...> &) {
+    return sequence<seqs..., more...>{};
+  }
+
+  template<typename T> static constexpr auto append(const T&){
+    return sequence<seqs...,T>{};
+  }
+};
 
 } // namespace as_types
 
@@ -123,10 +151,10 @@ constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
       using right = DECT(as_type<budget - 1, arg2>(allocator));
       return as_types::plus<left, right>{};
     }
-    if constexpr (e.template get_<number>().is_this_elem){
+    if constexpr (e.template get_<number>().is_this_elem) {
       return as_types::number<e.template get_<number>().t.num>{};
     }
-    if constexpr (e.template get_<return_val>().is_this_elem){
+    if constexpr (e.template get_<return_val>().is_this_elem) {
       struct arg {
         constexpr arg() {}
         constexpr const AST_elem &operator()() const {
@@ -135,6 +163,23 @@ constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
       };
       using body = DECT(as_type<budget - 1, arg>(allocator));
       return as_types::return_val<body>{};
+    }
+    if constexpr (e.template get_<sequence>().is_this_elem) {
+      struct fst {
+        constexpr fst() {}
+        constexpr const AST_elem &operator()() const {
+          return e.template get_<sequence>().t.e.get(allocator);
+        }
+      };
+      struct rst {
+        constexpr rst() {}
+        constexpr const AST_elem &operator()() const {
+          return e.template get_<sequence>().t.next.get(allocator);
+        }
+      };
+      using _fst = DECT(as_type<budget - 1, fst>(allocator));
+      return as_types::sequence<_fst>::append(
+          as_type<budget - 1, rst>(allocator));
     }
   }
   static_assert(budget > 0);
