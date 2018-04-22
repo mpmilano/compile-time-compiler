@@ -33,64 +33,10 @@
     constexpr name() {}                                                        \
   }
 
-#define generate_internal_value3(name, f1, f2)                                 \
-  generate_value7(name, allocated_ref<AST_elem>, f1, {},                       \
-                  allocated_ref<AST_elem>, f2, {})
-
-#define generate_internal_value2(name, f1)                                     \
-  generate_value4(name, allocated_ref<AST_elem>, f1, {})
-
 #define generate_value_IMPL2(count, ...) generate_value##count(__VA_ARGS__)
 #define generate_value_IMPL(count, ...) generate_value_IMPL2(count, __VA_ARGS__)
 #define generate_value(...)                                                    \
   generate_value_IMPL(VA_NARGS(__VA_ARGS__), __VA_ARGS__)
-
-#define generate_internal_value_IMPL2(count, ...)                              \
-  generate_internal_value##count(__VA_ARGS__)
-#define generate_internal_value_IMPL(count, ...)                               \
-  generate_internal_value_IMPL2(count, __VA_ARGS__)
-#define generate_internal_value(...)                                           \
-  generate_internal_value_IMPL(VA_NARGS(__VA_ARGS__), __VA_ARGS__)
-
-#define convert3(name, l, r)                                                   \
-  if constexpr (e.template get_<name>().is_this_elem) {                        \
-    struct arg1 {                                                              \
-      constexpr arg1() {}                                                      \
-      constexpr const AST_elem &operator()() const {                           \
-        return e.template get_<name>().t.l.get(allocator);                     \
-      }                                                                        \
-    };                                                                         \
-    struct arg2 {                                                              \
-      constexpr arg2() {}                                                      \
-      constexpr const AST_elem &operator()() const {                           \
-        return e.template get_<name>().t.r.get(allocator);                     \
-      }                                                                        \
-    };                                                                         \
-    using left = DECT(as_type<budget - 1, arg1>(allocator));                   \
-    using right = DECT(as_type<budget - 1, arg2>(allocator));                  \
-    return as_types::name<left, right>{};                                      \
-  }
-
-#define convert2(name, l)                                                      \
-  if constexpr (e.template get_<name>().is_this_elem) {                        \
-    struct arg1 {                                                              \
-      constexpr arg1() {}                                                      \
-      constexpr const AST_elem &operator()() const {                           \
-        return e.template get_<name>().t.l.get(allocator);                     \
-      }                                                                        \
-    };                                                                         \
-    using left = DECT(as_type<budget - 1, arg1>(allocator));                   \
-    return as_types::name<left>{};                                             \
-  }
-
-#define convert1(name)                                                         \
-  if constexpr (e.template get_<name>().is_this_elem) {                        \
-    return as_types::name{};                                                   \
-  }
-
-#define convert_IMPL2(count, ...) convert##count(__VA_ARGS__)
-#define convert_IMPL(count, ...) convert_IMPL2(count, __VA_ARGS__)
-#define convert(...) convert_IMPL(VA_NARGS(__VA_ARGS__), __VA_ARGS__)
 
 namespace as_values {
 struct transaction;
@@ -215,3 +161,33 @@ template <typename prev_holder> constexpr auto as_type() {
   return as_type<15, arg>(prev_holder::prev.allocator);
 }
 } // namespace as_values
+
+namespace as_types {
+
+template <typename AST_Allocator> struct as_values_ns_fns {
+  template <typename e, std::size_t payload>
+  constexpr static void as_value(AST_Allocator &allocator,
+                                 const transaction<e, payload> &) {}
+  template <typename e, typename next>
+  constexpr static void as_value(AST_Allocator &allocator,
+                                 const sequence<e, next> &) {}
+  template <typename l, typename r>
+  constexpr static void as_value(AST_Allocator &allocator, const plus<l, r> &) {
+
+  }
+  template <std::size_t num>
+  constexpr static void as_value(AST_Allocator &allocator,
+                                 const number<num> &) {}
+  template <typename v>
+  constexpr static void as_value(AST_Allocator &allocator,
+                                 const return_val<v> &) {}
+  constexpr static void as_value(AST_Allocator &allocator, const skip &) {}
+};
+
+template <std::size_t budget, typename hd>
+constexpr as_values::AST_Allocator<budget> as_value() {
+  as_values::AST_Allocator<budget> head;
+  return as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head,
+                                                                      hd{});
+}
+} // namespace as_types
