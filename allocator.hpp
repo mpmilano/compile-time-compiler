@@ -78,6 +78,10 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 	template<typename T> constexpr void free(std::size_t index){
 		get<T>().free(index);
 	}
+
+	template<typename T> constexpr void free(allocated_ref<T> ptr){
+		get<T>().free(ptr.indx);
+	}
 	
 };
 

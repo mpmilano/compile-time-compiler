@@ -16,12 +16,24 @@ template <typename string> struct parse {
 
   constexpr allocated_ref<as_values::AST_elem>
   parse_expression(const str_t &str) {
-    return allocated_ref<as_values::AST_elem>{};
+
+    allocated_ref<as_values::AST_elem> ret =
+        allocator.template allocate<as_values::AST_elem>();
+    ret.get(allocator).template get_<as_values::number>().is_this_elem = true;
+    auto &voidref = ret.get(allocator).template get_<as_values::number>().t;
+    (void)voidref;
+    return ret;
   }
 
   constexpr allocated_ref<as_values::AST_elem>
   parse_statement(const str_t &str) {
-    return allocated_ref<as_values::AST_elem>{};
+
+    allocated_ref<as_values::AST_elem> ret =
+        allocator.template allocate<as_values::AST_elem>();
+    ret.get(allocator).template get_<as_values::skip>().is_this_elem = true;
+    auto &skipref = ret.get(allocator).template get_<as_values::skip>().t;
+    (void)skipref;
+    return ret;
   }
 
   constexpr allocated_ref<as_values::AST_elem>
@@ -32,10 +44,34 @@ template <typename string> struct parse {
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
     ret.get(allocator).template get_<as_values::sequence>().is_this_elem = true;
-    auto &objname = ret.get(allocator).template get_<as_values::sequence>().t;
+    auto &seqref = ret.get(allocator).template get_<as_values::sequence>().t;
+    auto *seq = &seqref;
     str_nc string_bufs[20] = {{0}};
     auto groups = split_outside_parens(';', str, string_bufs);
+    bool sequence_empty = true;
+    assert(groups < 20);
     for (auto i = 0u; i < groups; ++i) {
+      seq->e = parse_statement(string_bufs[i]);
+
+      allocated_ref<as_values::AST_elem> newret =
+          allocator.template allocate<as_values::AST_elem>();
+      newret.get(allocator).template get_<as_values::sequence>().is_this_elem =
+          true;
+      auto &seqref =
+          newret.get(allocator).template get_<as_values::sequence>().t;
+      seq->next = std::move(newret);
+      seq = &seqref;
+    }
+    {
+
+      allocated_ref<as_values::AST_elem> skipref =
+          allocator.template allocate<as_values::AST_elem>();
+      skipref.get(allocator).template get_<as_values::skip>().is_this_elem =
+          true;
+      auto &voidref = skipref.get(allocator).template get_<as_values::skip>().t;
+      (void)voidref;
+      allocator.free(std::move(seq->next));
+      seq->next = std::move(skipref);
     }
     return ret;
   }

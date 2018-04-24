@@ -56,6 +56,11 @@
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt",
+                "R:/usr/lib64/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7",
+                "R:/usr/lib64/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7/x86_64-pc-linux-gnu",
+                "R:/usr/lib64/gcc/x86_64-pc-linux-gnu/7.2.0/include",
+                "R:/usr/include",
+                "R:/usr/local/include",
                 "${workspaceRoot}"
             ],
             "defines": [
