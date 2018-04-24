@@ -95,38 +95,6 @@
 #include "mutils/type_utils.hpp"
 #include "union.hpp"
 
-#define generate_value7(name,ftype1,f1,f1init,ftype2,f2,f2init) \
-    struct name { \
-  ftype1 f1 f1init; \
-  ftype2 f2 f2init; \
-  constexpr name(){}; \
-  constexpr name(name &&p) \
-      : f1{std::move(p.f1)}, f2(std::move(p.f2)) {} \
-  constexpr name &operator=(name &&p) { \
-    f1 = std::move(p.f1); \
-    f2 = std::move(f2); \
-    return *this; \
-  } \
-};
-
-#define generate_value4(name,ftype1,f1,f1init) \
-    struct name { \
-  ftype1 f1 f1init; \
-  constexpr name(){}; \
-  constexpr name(name &&p) \
-      : f1{std::move(p.f1)}{} \
-  constexpr name &operator=(name &&p) { \
-    f1 = std::move(p.f1); \
-    return *this; \
-  } \
-};
-
-#define generate_value1(name) struct name {constexpr name(){}}
-
-#define generate_value_IMPL2(count, ...) generate_value ## count (__VA_ARGS__)
-#define generate_value_IMPL(count, ...) generate_value_IMPL2(count, __VA_ARGS__)
-#define generate_value(...) generate_value_IMPL(VA_NARGS(__VA_ARGS__), __VA_ARGS__)
-
 <?php function comma_separated($arr){
   $target = count($arr) - 1;
   foreach ($arr as $i => $e){
@@ -154,12 +122,27 @@ using AST_Allocator = Allocator<budget, <?php echo $types[0]->name;?>, AST_elem>
 
 <?php
 foreach ($types as $type){
-  echo "generate_value($type->name";
-  foreach ($type->fields as $field){
-    $fieldtype = value_type_name($field->type);
-    echo ", $fieldtype, $field->name, $field->initializer";
-  }
-  echo ");\n";
+  echo "struct $type->name { ";
+    foreach ($type->fields as $field){
+      $fieldtype = value_type_name($field->type);
+      echo "$fieldtype $field->name $field->initializer;";
+    }
+    echo "
+    constexpr $type->name(){}; 
+    constexpr $type->name($type->name &&p) ";
+    foreach ($type->fields as $i => $field){
+      if ($i === 0) echo ':';
+      echo "$field->name{std::move(p.$field->name)}";
+      if ($i +1 < count($type->fields)) echo ",";
+    }
+    echo '{}';
+    echo "constexpr $type->name &operator=($type->name &&p) {"; 
+      foreach ($type->fields as $field){
+        echo "$field->name = std::move(p.$field->name);"; 
+      }
+      echo "return *this; 
+    } 
+  };";
 }
 ?>
 } // namespace as_values
@@ -210,16 +193,20 @@ namespace as_values {
 template <typename prev_holder>
           struct as_type_f{
 static constexpr const DECT(prev_holder::prev.allocator) &allocator{prev_holder::prev.allocator};
-template<std::size_t budget, typename F>
-constexpr static auto as_type() {
+template<long budget, typename F>
+constexpr static auto as_type(std::enable_if_t<(budget > 0) && (budget < 50)>* = nullptr) {
   static_assert(budget > 0);
-  if (budget > 0) {
+  if constexpr (budget > 0) {
     constexpr const AST_elem &e = F{}();
-    <?php foreach ($types as $type){
+    <?php foreach ($types as $i => $type){
+      if ($i > 0) echo 'else ';
       echo "if constexpr (e.template get_<$type->name>().is_this_elem) {\n";
       foreach ($type->fields as $i => $field){
         if (is_ast_node($field->type)) {
         echo "struct arg$i {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
           constexpr arg$i() {}
           constexpr const AST_elem &operator()() const {
             return e.template get_<$type->name>().t.$field->name.get(allocator);
@@ -244,10 +231,13 @@ constexpr static auto as_type() {
     echo '>';
     echo "{};}\n";
   }?>
+  else {struct error {};
+    return error{};}
+  } else {
+    static_assert(budget > 0);
+    struct error {};
+    return error{};
   }
-  static_assert(budget > 0);
-  struct error {};
-  return error{};
 }
 };
 
@@ -266,17 +256,21 @@ namespace as_types{
 
 template<typename AST_Allocator>
 struct as_values_ns_fns{
+  using AST_elem = as_values::AST_elem;
   <?php 
   foreach ($types as $type){
     echo full_template_defn($type);
     $decl = type_type_name($type);
-  echo "constexpr static void as_value(AST_Allocator& allocator, const $decl &){
+  echo "constexpr static allocated_ref<AST_elem> as_value(AST_Allocator& allocator, const $decl &){
     auto elem = allocator.template allocate<AST_elem>();
-    auto &this_node = elem.template get_<as_values::$type->name>();";
+    auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
+    this_node.is_this_elem = true;";
     foreach ($type->fields as $field){
-      this_node.
-      echo "$field->name";
+      if (is_ast_node($field->type))
+        echo "this_node.t.$field->name = as_value(allocator, $field->name{});";
+      else echo "this_node.t.$field->name = $field->name;";
     }
+    echo 'return std::move(elem);';
   echo "}\n";
   }
   ?>
@@ -285,6 +279,7 @@ struct as_values_ns_fns{
   template<std::size_t budget, typename hd>
   constexpr as_values::AST_Allocator<budget> as_value(){
     as_values::AST_Allocator<budget> head;
-    return as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head,hd{});
+    as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head,hd{});
+    return head;
   }
 }

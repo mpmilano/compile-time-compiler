@@ -56,10 +56,28 @@ template <typename string> struct flatten {
   constexpr flatten() {}
 };
 
+auto test_input(){
+    using namespace as_types;
+    return Statement<sequence<Statement<skip>,Statement<return_val<Expression<number<5>>>>>>{};
+  }
+using round_trip_send = DECT(test_input());
+struct prev_t{
+    as_values::AST_Allocator<10> allocator = as_types::as_value<10,round_trip_send>();
+    constexpr prev_t() {}
+  };
+struct round_trip_test{
+  static constexpr prev_t prev{};
+  constexpr round_trip_test(){}
+};
+
+using round_trip_return = DECT(as_values::as_type<round_trip_test>());
+
 int main() {
   constexpr auto length = ::mutils::cstring::str_len("this is a string!")+1;
   struct wrapper {constexpr wrapper(){} const char str[length]{"this is a string!"};};
   constexpr flatten<wrapper> f;
   // flatten<str>::parse_t::print();
+  //round_trip_return::print();
+  static_assert(std::is_same<round_trip_return, round_trip_send>::value);
   return 0;
 }
