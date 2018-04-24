@@ -198,8 +198,9 @@ namespace as_types {
 <?php foreach ($types as $type){
      echo template_defn($type);
      echo "struct $type->name{};\n";
-    echo full_template_defn($type);
-    echo "struct ".type_type_name($type)."{};\n";
+    $tmp = full_template_defn($type);
+    if ($tmp === '') $tmp = 'template<>';
+    echo "$tmp struct ".type_type_name($type)."{};\n";
   }
 ?>
 
@@ -267,11 +268,16 @@ template<typename AST_Allocator>
 struct as_values_ns_fns{
   <?php 
   foreach ($types as $type){
-    template_defn($type);
+    echo full_template_defn($type);
     $decl = type_type_name($type);
   echo "constexpr static void as_value(AST_Allocator& allocator, const $decl &){
-
-  }\n";
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.template get_<as_values::$type->name>();";
+    foreach ($type->fields as $field){
+      this_node.
+      echo "$field->name";
+    }
+  echo "}\n";
   }
   ?>
 };

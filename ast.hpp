@@ -76,7 +76,7 @@ template <std::size_t num> struct Expression<number<num>> {};
 template <typename v> struct return_val {};
 template <typename v> struct Statement<return_val<v>> {};
 struct skip {};
-struct Statement<skip> {};
+template <> struct Statement<skip> {};
 
 } // namespace as_types
 
@@ -177,18 +177,46 @@ template <typename prev_holder> constexpr auto as_type() {
 namespace as_types {
 
 template <typename AST_Allocator> struct as_values_ns_fns {
+  template <typename e, std::size_t payload>
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const Statement<transaction<e, payload>> &) {}
+                                 const Statement<transaction<e, payload>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.template get_<as_values::transaction>();
+    epayload
+  }
+  template <typename e, typename next>
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const Statement<sequence<e, next>> &) {}
+                                 const Statement<sequence<e, next>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.template get_<as_values::sequence>();
+    enext
+  }
+  template <typename l, typename r>
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const Expression<plus<l, r>> &) {}
+                                 const Expression<plus<l, r>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.template get_<as_values::plus>();
+    lr
+  }
+  template <std::size_t num>
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const Expression<number<num>> &) {}
+                                 const Expression<number<num>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.template get_<as_values::number>();
+    num
+  }
+  template <typename v>
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const Statement<return_val<v>> &) {}
+                                 const Statement<return_val<v>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.template get_<as_values::return_val>();
+    v
+  }
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const Statement<skip> &) {}
+                                 const Statement<skip> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.template get_<as_values::skip>();
+  }
 };
 
 template <std::size_t budget, typename hd>
