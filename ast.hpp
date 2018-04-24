@@ -101,7 +101,7 @@ template <typename prev_holder> struct as_type_f {
       allocator{prev_holder::prev.allocator};
   template <long budget, typename F>
   constexpr static auto
-  as_type(std::enable_if_t<(budget > 0) && (budget < 50)> * = nullptr) {
+  as_type(std::enable_if_t<(budget >= 0) && (budget < 50)> * = nullptr) {
     static_assert(budget > 0);
     if constexpr (budget > 0) {
       constexpr const AST_elem &e = F{}();
