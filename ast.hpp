@@ -61,95 +61,107 @@ generate_value(skip);
 } // namespace as_values
 
 namespace as_types {
+template <typename> struct Expression;
+template <typename> struct Statement;
+template <typename, typename> struct Binding;
 template <typename e, std::size_t payload> struct transaction {};
+template <typename e, std::size_t payload>
+struct Statement<transaction<e, payload>> {};
 template <typename e, typename next> struct sequence {};
+template <typename e, typename next> struct Statement<sequence<e, next>> {};
 template <typename l, typename r> struct plus {};
+template <typename l, typename r> struct Expression<plus<l, r>> {};
 template <std::size_t num> struct number {};
+template <std::size_t num> struct Expression<number<num>> {};
 template <typename v> struct return_val {};
+template <typename v> struct Statement<return_val<v>> {};
 struct skip {};
+struct Statement<skip> {};
 
 } // namespace as_types
 
 namespace as_values {
-template <std::size_t budget, typename F, std::size_t alloc_budget,
-          typename... allocates>
-constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
-  static_assert(budget > 0);
-  if (budget > 0) {
-    constexpr const AST_elem &e = F{}();
-    if constexpr (e.template get_<transaction>().is_this_elem) {
-      struct arg0 {
-        constexpr arg0() {}
-        constexpr const AST_elem &operator()() const {
-          return e.template get_<transaction>().t.e.get(allocator);
-        }
-      };
+template <typename prev_holder> struct as_type_f {
+  static constexpr const DECT(prev_holder::prev.allocator) &
+      allocator{prev_holder::prev.allocator};
+  template <std::size_t budget, typename F> constexpr static auto as_type() {
+    static_assert(budget > 0);
+    if (budget > 0) {
+      constexpr const AST_elem &e = F{}();
+      if constexpr (e.template get_<transaction>().is_this_elem) {
+        struct arg0 {
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<transaction>().t.e.get(allocator);
+          }
+        };
 
-      using _arg0 = DECT(as_type<budget - 1, arg0>(allocator));
-      constexpr auto _arg1 = e.template get_<transaction>().t.payload;
-      return as_types::transaction<_arg0, _arg1>{};
-    }
-    if constexpr (e.template get_<sequence>().is_this_elem) {
-      struct arg0 {
-        constexpr arg0() {}
-        constexpr const AST_elem &operator()() const {
-          return e.template get_<sequence>().t.e.get(allocator);
-        }
-      };
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        constexpr auto _arg1 = e.template get_<transaction>().t.payload;
+        return as_types::Statement<as_types::transaction<_arg0, _arg1>>{};
+      }
+      if constexpr (e.template get_<sequence>().is_this_elem) {
+        struct arg0 {
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<sequence>().t.e.get(allocator);
+          }
+        };
 
-      using _arg0 = DECT(as_type<budget - 1, arg0>(allocator));
-      struct arg1 {
-        constexpr arg1() {}
-        constexpr const AST_elem &operator()() const {
-          return e.template get_<sequence>().t.next.get(allocator);
-        }
-      };
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        struct arg1 {
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<sequence>().t.next.get(allocator);
+          }
+        };
 
-      using _arg1 = DECT(as_type<budget - 1, arg1>(allocator));
-      return as_types::sequence<_arg0, _arg1>{};
-    }
-    if constexpr (e.template get_<plus>().is_this_elem) {
-      struct arg0 {
-        constexpr arg0() {}
-        constexpr const AST_elem &operator()() const {
-          return e.template get_<plus>().t.l.get(allocator);
-        }
-      };
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        return as_types::Statement<as_types::sequence<_arg0, _arg1>>{};
+      }
+      if constexpr (e.template get_<plus>().is_this_elem) {
+        struct arg0 {
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<plus>().t.l.get(allocator);
+          }
+        };
 
-      using _arg0 = DECT(as_type<budget - 1, arg0>(allocator));
-      struct arg1 {
-        constexpr arg1() {}
-        constexpr const AST_elem &operator()() const {
-          return e.template get_<plus>().t.r.get(allocator);
-        }
-      };
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        struct arg1 {
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<plus>().t.r.get(allocator);
+          }
+        };
 
-      using _arg1 = DECT(as_type<budget - 1, arg1>(allocator));
-      return as_types::plus<_arg0, _arg1>{};
-    }
-    if constexpr (e.template get_<number>().is_this_elem) {
-      constexpr auto _arg0 = e.template get_<number>().t.num;
-      return as_types::number<_arg0>{};
-    }
-    if constexpr (e.template get_<return_val>().is_this_elem) {
-      struct arg0 {
-        constexpr arg0() {}
-        constexpr const AST_elem &operator()() const {
-          return e.template get_<return_val>().t.v.get(allocator);
-        }
-      };
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        return as_types::Expression<as_types::plus<_arg0, _arg1>>{};
+      }
+      if constexpr (e.template get_<number>().is_this_elem) {
+        constexpr auto _arg0 = e.template get_<number>().t.num;
+        return as_types::Expression<as_types::number<_arg0>>{};
+      }
+      if constexpr (e.template get_<return_val>().is_this_elem) {
+        struct arg0 {
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<return_val>().t.v.get(allocator);
+          }
+        };
 
-      using _arg0 = DECT(as_type<budget - 1, arg0>(allocator));
-      return as_types::return_val<_arg0>{};
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        return as_types::Statement<as_types::return_val<_arg0>>{};
+      }
+      if constexpr (e.template get_<skip>().is_this_elem) {
+        return as_types::Statement<as_types::skip>{};
+      }
     }
-    if constexpr (e.template get_<skip>().is_this_elem) {
-      return as_types::skip{};
-    }
+    static_assert(budget > 0);
+    struct error {};
+    return error{};
   }
-  static_assert(budget > 0);
-  struct error {};
-  return error{};
-}
+};
 
 template <typename prev_holder> constexpr auto as_type() {
   struct arg {
@@ -158,30 +170,25 @@ template <typename prev_holder> constexpr auto as_type() {
       return prev_holder::prev.allocator.top.e.get(prev_holder::prev.allocator);
     }
   };
-  return as_type<15, arg>(prev_holder::prev.allocator);
+  return as_type_f<prev_holder>::template as_type<15, arg>();
 }
 } // namespace as_values
 
 namespace as_types {
 
 template <typename AST_Allocator> struct as_values_ns_fns {
-  template <typename e, std::size_t payload>
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const transaction<e, payload> &) {}
-  template <typename e, typename next>
+                                 const Statement<transaction<e, payload>> &) {}
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const sequence<e, next> &) {}
-  template <typename l, typename r>
-  constexpr static void as_value(AST_Allocator &allocator, const plus<l, r> &) {
-
-  }
-  template <std::size_t num>
+                                 const Statement<sequence<e, next>> &) {}
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const number<num> &) {}
-  template <typename v>
+                                 const Expression<plus<l, r>> &) {}
   constexpr static void as_value(AST_Allocator &allocator,
-                                 const return_val<v> &) {}
-  constexpr static void as_value(AST_Allocator &allocator, const skip &) {}
+                                 const Expression<number<num>> &) {}
+  constexpr static void as_value(AST_Allocator &allocator,
+                                 const Statement<return_val<v>> &) {}
+  constexpr static void as_value(AST_Allocator &allocator,
+                                 const Statement<skip> &) {}
 };
 
 template <std::size_t budget, typename hd>

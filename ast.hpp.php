@@ -1,9 +1,14 @@
 <?php
+
+    $Expression_t = 0;
+    $Statement_t = 1;
+    $Binding_t = 2;
+
     class Field{
-        public $type = "allocated_ref<AST_elem>";
+        public $type;
         public $name;
         public $initializer = "{}";
-          public function __construct($name,$type = "allocated_ref<AST_elem>",$initializer = "{}") {
+          public function __construct($name,$type,$initializer = "{}") {
             $this->name = $name;
             $this->type = $type;
             $this->initializer = $initializer;
@@ -11,18 +16,77 @@
     }
     class AST_node{
         public $name;
+        public $type;
         public $fields;
-        public function __construct($type_name, ...$fields) {
+        public function __construct($type_name, $type, $fields) {
           $this->name = $type_name;
+          $this->type = $type;
           $this->fields = $fields;
         }
     }
-    $types = array(new AST_node('transaction',new Field('e'),new Field('payload','std::size_t','{0}')),
-    new AST_node('sequence',new Field('e'),new Field('next')),
-    new AST_node('plus', new Field('l'),new Field('r')),
-    new AST_node('number',new Field('num','std::size_t','{0}')),
-    new AST_node('return_val', new Field('v')),
-    new AST_node('skip')
+    class Statement extends AST_node {
+      public function __construct($type_name, ...$fields) {
+        global $Statement_t;
+        parent::__construct($type_name, $Statement_t, $fields);
+      }
+    }
+    class Binding extends AST_node {
+      public function __construct($type_name, ...$fields) {
+        global $Binding_t;
+        parent::__construct($type_name, $Binding_t, $fields);
+      }
+    }
+    class Expression extends AST_node {
+      public function __construct($type_name, ...$fields) {
+        global $Expression_t;
+        parent::__construct($type_name, $Expression_t, $fields);
+      }
+    }
+
+    function is_ast_node($node_t){
+      global $Statement_t; global $Expression_t; global $Binding_t;
+      return $node_t === $Statement_t || $node_t === $Expression_t || $node_t === $Binding_t;
+    }
+
+    function value_type_name($node_t){
+      if (is_ast_node($node_t)) return "allocated_ref<AST_elem>";
+      else return $node_t;
+    }
+
+    function type_name_helper(int $node_t) : string{
+      global $Statement_t; global $Expression_t; global $Binding_t;
+      switch($node_t) {
+        case $Statement_t: return "Statement";
+        case $Expression_t: return "Expression";
+        case $Binding_t: return "Binding";
+        default: return "error";
+      }
+    }
+
+
+    function type_type_name($type) : string{
+      $out = type_name_helper($type->type);
+      $out = $out.'<'.($type->name);
+      $field_num = count($type->fields);
+      if ($field_num > 0) {
+        $out = $out."<";
+        foreach ($type->fields as $i => $field){
+         $out = $out."$field->name";
+         if ($i+1 != $field_num){
+           $out = $out.",";
+         }
+        }
+        $out = $out.">";
+     }
+     return $out.">";
+    }
+
+    $types = array(new Statement('transaction',new Field('e',$Statement_t),new Field('payload','std::size_t','{0}')),
+    new Statement('sequence',new Field('e',$Statement_t),new Field('next',$Statement_t)),
+    new Expression('plus', new Field('l',$Expression_t),new Field('r',$Expression_t)),
+    new Expression('number',new Field('num','std::size_t','{0}')),
+    new Statement('return_val', new Field('v',$Expression_t)),
+    new Statement('skip')
    );
 ?>
 
@@ -92,7 +156,8 @@ using AST_Allocator = Allocator<budget, <?php echo $types[0]->name;?>, AST_elem>
 foreach ($types as $type){
   echo "generate_value($type->name";
   foreach ($type->fields as $field){
-    echo ", $field->type, $field->name, $field->initializer";
+    $fieldtype = value_type_name($field->type);
+    echo ", $fieldtype, $field->name, $field->initializer";
   }
   echo ");\n";
 }
@@ -101,58 +166,58 @@ foreach ($types as $type){
 
 <?php
  function template_defn($type){
+   $out = '';
   $field_num = count($type->fields);
   if ($field_num > 0) {
-    echo "template <";
+    $out = $out."template <";
     foreach ($type->fields as $i => $field){
-     if ($field->type == "allocated_ref<AST_elem>"){
-       echo "typename ";
+     if (is_ast_node($field->type)){
+       $out = $out."typename ";
      }
-     else {echo "$field->type ";}
-     echo "$field->name";
+     else {$out = $out. "$field->type ";}
+     $out = $out. "$field->name";
      if ($i+1 != $field_num){
-       echo ",";
+       $out = $out. ",";
      }
     }
-    echo "> ";
+    $out = $out. "> ";
  }
+ return $out;
 }
 
- function template_use($type){
-  $field_num = count($type->fields);
-  if ($field_num > 0) {
-    echo "<";
-    foreach ($type->fields as $i => $field){
-     echo "$field->name";
-     if ($i+1 != $field_num){
-       echo ",";
-     }
-    }
-    echo "> ";
- }
+function full_template_defn($type){
+  return template_defn($type);
 }
+
 ?>
 
 namespace as_types {
+  template<typename> struct Expression;
+  template<typename> struct Statement;
+  template<typename,typename> struct Binding;
 <?php foreach ($types as $type){
-     template_defn($type);
+     echo template_defn($type);
      echo "struct $type->name{};\n";
+    echo full_template_defn($type);
+    echo "struct ".type_type_name($type)."{};\n";
   }
 ?>
 
 } // namespace as_types
 
 namespace as_values {
-template <std::size_t budget, typename F, std::size_t alloc_budget,
-          typename... allocates>
-constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
+template <typename prev_holder>
+          struct as_type_f{
+static constexpr const DECT(prev_holder::prev.allocator) &allocator{prev_holder::prev.allocator};
+template<std::size_t budget, typename F>
+constexpr static auto as_type() {
   static_assert(budget > 0);
   if (budget > 0) {
     constexpr const AST_elem &e = F{}();
     <?php foreach ($types as $type){
       echo "if constexpr (e.template get_<$type->name>().is_this_elem) {\n";
       foreach ($type->fields as $i => $field){
-        if ($field->type === "allocated_ref<AST_elem>") {
+        if (is_ast_node($field->type)) {
         echo "struct arg$i {
           constexpr arg$i() {}
           constexpr const AST_elem &operator()() const {
@@ -161,11 +226,11 @@ constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
         };
         
         ";
-          echo "using _arg$i = DECT(as_type<budget - 1, arg$i>(allocator));\n";
+          echo "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n";
         }
         else echo "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
       }
-    echo "return as_types::$type->name";
+    echo "return as_types::".type_name_helper($type->type)."<as_types::$type->name";
     $field_count = count($type->fields);
     if ($field_count > 0) echo "<";
     foreach ($type->fields as $i => $field){
@@ -175,6 +240,7 @@ constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
       }
     }
     if ($field_count > 0) echo ">";
+    echo '>';
     echo "{};}\n";
   }?>
   }
@@ -182,6 +248,7 @@ constexpr auto as_type(const Allocator<alloc_budget, allocates...> &allocator) {
   struct error {};
   return error{};
 }
+};
 
 template <typename prev_holder> constexpr auto as_type() {
   struct arg {
@@ -190,7 +257,7 @@ template <typename prev_holder> constexpr auto as_type() {
       return prev_holder::prev.allocator.top.e.get(prev_holder::prev.allocator);
     }
   };
-  return as_type<15, arg>(prev_holder::prev.allocator);
+  return as_type_f<prev_holder>::template as_type<15,arg>();
 }
 } // namespace as_values
 
@@ -201,8 +268,8 @@ struct as_values_ns_fns{
   <?php 
   foreach ($types as $type){
     template_defn($type);
-  echo "constexpr static void as_value(AST_Allocator& allocator, const $type->name";
-  template_use($type); echo " &){
+    $decl = type_type_name($type);
+  echo "constexpr static void as_value(AST_Allocator& allocator, const $decl &){
 
   }\n";
   }
