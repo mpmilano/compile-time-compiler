@@ -22,8 +22,8 @@ template<std::size_t size, typename T> struct SingleAllocator{
 			b = true;
 		}
 	}
-
-	constexpr std::size_t allocate(){
+private:
+	constexpr std::size_t _allocate(){
 		for (auto i = 0u; i < size; ++i){
 			if (open_slots[i]){
 				open_slots[i] = false;
@@ -36,16 +36,22 @@ template<std::size_t size, typename T> struct SingleAllocator{
 		if (!open_slots[3]) assert(false && "out of memory");
 		else return 0;
 	}
-
+public:
+	constexpr auto allocate(){
+		return allocated_ref<T> {*this};
+	}
 
 	constexpr void free (std::size_t i){
 		open_slots[i] = true;
 	}
 
-	
+	friend class allocated_ref<T>;
 };
 
-
+template<typename T> template<std::size_t s>
+constexpr allocated_ref<T>::allocated_ref(SingleAllocator<s,T>& sa)
+:indx(sa._allocate() + 1)
+{}
 
 template<std::size_t s, typename Top, typename... Subs> struct Allocator
 	: public SingleAllocator<s,Subs>...{
@@ -55,8 +61,8 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 	constexpr Allocator(){}
 
 	constexpr Allocator(Allocator&& o)
-		:SingleAllocator<s,Subs>(std::move(o),*this)...{
-	}
+		:SingleAllocator<s,Subs>(std::move(o),*this)...,
+		top(std::move(o.top)){}
 	
 
 	template<typename T>
@@ -70,9 +76,7 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 	}
 
 	template<typename T> constexpr allocated_ref<T> allocate(){
-		allocated_ref<T> ret;
-		ret.indx = get<T>().allocate();
-		return ret;
+		return get<T>().allocate();
 	}
 
 	template<typename T> constexpr void free(std::size_t index){
