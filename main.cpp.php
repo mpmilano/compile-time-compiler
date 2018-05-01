@@ -100,7 +100,8 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
 int main() {
   constexpr auto length = ::mutils::cstring::str_len("this is a string!")+1;
   struct wrapper {constexpr wrapper(){} const char str[length]{"this is a string!"};};
-  parse<wrapper> p;
+  constexpr parse<wrapper> p;
+  print(std::cout,p.allocator.top,p.allocator);
   //constexpr flatten<wrapper> f;
   // flatten<str>::parse_t::print();
   //round_trip_return::print();

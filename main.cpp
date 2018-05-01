@@ -127,7 +127,8 @@ int main() {
     constexpr wrapper() {}
     const char str[length]{"this is a string!"};
   };
-  parse<wrapper> p;
+  constexpr parse<wrapper> p;
+  print(std::cout, p.allocator.top, p.allocator);
   // constexpr flatten<wrapper> f;
   // flatten<str>::parse_t::print();
   // round_trip_return::print();

@@ -300,11 +300,36 @@ struct as_values_ns_fns{
 }
 
 namespace as_values {
-  std::ostream& print(const AST_elem& e){
+  template<typename Allocator>
+  std::ostream& print(std::ostream& o, const std::size_t& st, const Allocator &){
+    return o << st;
+  }
+  template<typename Allocator>
+  std::ostream& print(std::ostream& o, const AST_elem& e, const Allocator &allocator);
+  <?php 
+  foreach ($types as $type){
+  echo "
+  template<typename Allocator>
+  std::ostream& print(std::ostream& o, const $type->name& e, const Allocator& allocator){
+    o << \"$type->name{\";";
+    foreach ($type->fields as $field){
+      echo "print(o,e.$field->name,allocator);
+      o << \",\";";
+    }
+  echo "
+    return o;
+    }";
+  }
+  ?>
+  template<typename Allocator>
+  std::ostream& print(std::ostream& o, const AST_elem& e, const Allocator &allocator){
     <?php 
     foreach ($types as $type){
-      echo "if constexpr (e.template get_<$type->name>().is_this_elem)";
+      echo "if (e.template get_<$type->name>().is_this_elem) {
+          return print(o,e.template get<$type->name>(),allocator);
+      }";
     }
     ?>
+    return o;
   }
 }

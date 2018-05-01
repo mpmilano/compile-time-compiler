@@ -3,6 +3,7 @@
 #include "allocator.hpp"
 #include "mutils/type_utils.hpp"
 #include "union.hpp"
+#include <ostream>
 
 namespace as_values {
 struct transaction;
@@ -322,3 +323,83 @@ constexpr as_values::AST_Allocator<budget> as_value() {
   return head;
 }
 } // namespace as_types
+
+namespace as_values {
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const std::size_t &st, Allocator &) {
+  return o << st;
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const AST_elem &e, Allocator &allocator);
+
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const transaction &e,
+                    Allocator &allocator) {
+  o << "transaction{";
+  print(o, e.e, allocator);
+  o << ",";
+  print(o, e.payload, allocator);
+  o << ",";
+  return o;
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const sequence &e, Allocator &allocator) {
+  o << "sequence{";
+  print(o, e.e, allocator);
+  o << ",";
+  print(o, e.next, allocator);
+  o << ",";
+  return o;
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const plus &e, Allocator &allocator) {
+  o << "plus{";
+  print(o, e.l, allocator);
+  o << ",";
+  print(o, e.r, allocator);
+  o << ",";
+  return o;
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const number &e, Allocator &allocator) {
+  o << "number{";
+  print(o, e.num, allocator);
+  o << ",";
+  return o;
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const return_val &e,
+                    Allocator &allocator) {
+  o << "return_val{";
+  print(o, e.v, allocator);
+  o << ",";
+  return o;
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const skip &e, Allocator &allocator) {
+  o << "skip{";
+  return o;
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const AST_elem &e, Allocator &allocator) {
+  if (e.template get_<transaction>().is_this_elem) {
+    return print(o, e.template get<transaction>(), allocator);
+  }
+  if (e.template get_<sequence>().is_this_elem) {
+    return print(o, e.template get<sequence>(), allocator);
+  }
+  if (e.template get_<plus>().is_this_elem) {
+    return print(o, e.template get<plus>(), allocator);
+  }
+  if (e.template get_<number>().is_this_elem) {
+    return print(o, e.template get<number>(), allocator);
+  }
+  if (e.template get_<return_val>().is_this_elem) {
+    return print(o, e.template get<return_val>(), allocator);
+  }
+  if (e.template get_<skip>().is_this_elem) {
+    return print(o, e.template get<skip>(), allocator);
+  }
+  return o;
+}
+} // namespace as_values

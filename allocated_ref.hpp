@@ -8,19 +8,19 @@ private:
 	std::size_t indx;
 public:
 	
-	template<typename Allocator>
-	constexpr T& get(Allocator& new_parent){
-		return new_parent.template get<T>().data[indx-1];
+	template<std::size_t size>
+	constexpr T& get(SingleAllocator<size,T>& new_parent){
+		return new_parent.data[indx-1];
 	}
 
-	template<typename Allocator>
-	constexpr const T& get(Allocator& new_parent) const {
-		return new_parent.template get<T>().data[indx-1];
+	template<std::size_t size>
+	constexpr const T& get(SingleAllocator<size,T>& new_parent) const {
+		return new_parent.data[indx-1];
 	}
 
-	template<typename Allocator>
-	constexpr const T& get(const Allocator& new_parent) const {
-		return new_parent.template get<T>().data[indx-1];
+	template<std::size_t size>
+	constexpr const T& get(const SingleAllocator<size,T>& new_parent) const {
+		return new_parent.data[indx-1];
 	}
 
 	constexpr allocated_ref(const allocated_ref&) = delete;

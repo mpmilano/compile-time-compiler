@@ -67,9 +67,15 @@ template<typename T1, typename... T> struct Union :
 	}
 	
 	template<typename U>
-		constexpr Union(U u):
+		constexpr Union(U u, std::enable_if_t<((std::is_same<U,T>::value + ... + 0) > 0)>* = nullptr):
 		is_initialized{true},
 		Union_elem<U>(u){
+			assert(well_formed());
+		}
+
+		constexpr Union(T1 u):
+		is_initialized{true},
+		Union_elem<T1>(u){
 			assert(well_formed());
 		}
 

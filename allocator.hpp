@@ -1,6 +1,7 @@
 #pragma once
 #include <cassert>
 #include <utility>
+#include <ostream>
 #include "array.hpp"
 #include "allocated_ref.hpp"
 
@@ -101,4 +102,17 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 
 #define $(a) a.get(allocator)
 
+template<typename T, std::size_t s, typename Top, typename... Subs>
+std::ostream& print(std::ostream& o, const allocated_ref<T>& ptr, const Allocator<s,Top,Subs...> &_allocator){
+	const SingleAllocator<s,T> &allocator = _allocator;
+	o << "&(";
+	print(o,ptr.get(allocator),allocator);
+	return o << ")";
+}
 
+template<typename T, std::size_t s>
+std::ostream& print(std::ostream& o, const allocated_ref<T>& ptr, const SingleAllocator<s,T> &allocator){
+	o << "&(";
+	print(o,ptr.get(allocator),allocator);
+	return o << ")";
+}
