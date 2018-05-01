@@ -89,7 +89,7 @@ template <typename string> struct parse {
     allocator.top.e = parse_sequence(local_copy);
   }
 };
-
+/*
 template <typename string> struct flatten {
   // parsing happens during construction
   static const constexpr parse<string> prev{};
@@ -100,7 +100,7 @@ template <typename string> struct flatten {
   Alloc allocator;
   constexpr flatten() {}
 };
-
+*/
 auto test_input() {
   using namespace as_types;
   return Statement<transaction<
@@ -127,7 +127,8 @@ int main() {
     constexpr wrapper() {}
     const char str[length]{"this is a string!"};
   };
-  constexpr flatten<wrapper> f;
+  parse<wrapper> p;
+  // constexpr flatten<wrapper> f;
   // flatten<str>::parse_t::print();
   // round_trip_return::print();
   static_assert(std::is_same<round_trip_return, round_trip_send>::value);

@@ -63,7 +63,7 @@ template<typename T1, typename... T> struct Union :
 
 	constexpr bool well_formed() const {
 		return ((Union_elem<T1>::is_this_elem + 
-		... + Union_elem<T>::is_this_elem) == 1);
+		... + Union_elem<T>::is_this_elem) == 1) && is_initialized;
 	}
 	
 	template<typename U>
@@ -125,6 +125,7 @@ template<typename T1, typename... T> struct Union :
 		((Union_elem<T>::is_this_elem = false),...);
 		_this->t = u;
 		_this->is_this_elem = true;
+		is_initialized = true;
 		return *this;
 	}
 	
@@ -135,6 +136,7 @@ template<typename T1, typename... T> struct Union :
 		((Union_elem<T>::is_this_elem = false),...);
 		_this->t = std::move(u);
 		_this->is_this_elem = true;
+		is_initialized = true;
 		return *this;
 	}
 

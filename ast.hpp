@@ -235,7 +235,9 @@ template <typename prev_holder> constexpr auto as_type() {
       return prev_holder::prev.allocator.top.e.get(prev_holder::prev.allocator);
     }
   };
-  return as_type_f<prev_holder>::template as_type<15, arg>();
+  return as_types::Statement<as_types::transaction<
+      DECT(as_type_f<prev_holder>::template as_type<15, arg>()),
+      prev_holder::prev.allocator.top.payload>>{};
 }
 } // namespace as_values
 
@@ -251,6 +253,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto &this_node =
         elem.get(allocator).template get_<as_values::transaction>();
     this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
     this_node.t.e = as_value(allocator, e{});
     this_node.t.payload = payload;
     return std::move(elem);
@@ -261,6 +264,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::sequence>();
     this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
     this_node.t.e = as_value(allocator, e{});
     this_node.t.next = as_value(allocator, next{});
     return std::move(elem);
@@ -271,6 +275,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::plus>();
     this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
     this_node.t.l = as_value(allocator, l{});
     this_node.t.r = as_value(allocator, r{});
     return std::move(elem);
@@ -281,6 +286,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::number>();
     this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
     this_node.t.num = num;
     return std::move(elem);
   }
@@ -291,6 +297,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto &this_node =
         elem.get(allocator).template get_<as_values::return_val>();
     this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
     this_node.t.v = as_value(allocator, v{});
     return std::move(elem);
   }
@@ -299,6 +306,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::skip>();
     this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
     return std::move(elem);
   }
 };

@@ -94,6 +94,7 @@
 #include "allocator.hpp"
 #include "mutils/type_utils.hpp"
 #include "union.hpp"
+#include <ostream>
 
 <?php function comma_separated($arr){
   $target = count($arr) - 1;
@@ -260,7 +261,7 @@ template <typename prev_holder> constexpr auto as_type() {
       return prev_holder::prev.allocator.top.e.get(prev_holder::prev.allocator);
     }
   };
-  return as_type_f<prev_holder>::template as_type<15,arg>();
+  return as_types::Statement<as_types::transaction<DECT(as_type_f<prev_holder>::template as_type<15,arg>()),prev_holder::prev.allocator.top.payload>>{};
 }
 } // namespace as_values
 
@@ -276,7 +277,8 @@ struct as_values_ns_fns{
   echo "constexpr static allocated_ref<AST_elem> as_value(AST_Allocator& allocator, const $decl &){
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
-    this_node.is_this_elem = true;";
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;";
     foreach ($type->fields as $field){
       if (is_ast_node($field->type))
         echo "this_node.t.$field->name = as_value(allocator, $field->name{});";
@@ -294,5 +296,15 @@ struct as_values_ns_fns{
     as_values::AST_Allocator<budget> head;
     head.top = std::move(as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head,hd{}).get(head).template get<as_values::transaction>());
     return head;
+  }
+}
+
+namespace as_values {
+  std::ostream& print(const AST_elem& e){
+    <?php 
+    foreach ($types as $type){
+      echo "if constexpr (e.template get_<$type->name>().is_this_elem)";
+    }
+    ?>
   }
 }

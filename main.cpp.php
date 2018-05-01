@@ -69,7 +69,7 @@ template <typename string> struct parse {
     allocator.top.e = parse_sequence(local_copy);
   }
 };
-
+/*
 template <typename string> struct flatten {
   // parsing happens during construction
   static const constexpr parse<string> prev{};
@@ -80,7 +80,7 @@ template <typename string> struct flatten {
   Alloc allocator;
   constexpr flatten() {}
 };
-
+*/
 auto test_input(){
     using namespace as_types;
     return Statement<transaction<Statement<sequence<Statement<skip>,Statement<return_val<Expression<number<5>>>>>>,0>>{};
@@ -100,7 +100,8 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
 int main() {
   constexpr auto length = ::mutils::cstring::str_len("this is a string!")+1;
   struct wrapper {constexpr wrapper(){} const char str[length]{"this is a string!"};};
-  constexpr flatten<wrapper> f;
+  parse<wrapper> p;
+  //constexpr flatten<wrapper> f;
   // flatten<str>::parse_t::print();
   //round_trip_return::print();
   static_assert(std::is_same<round_trip_return, round_trip_send>::value);
