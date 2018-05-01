@@ -45,6 +45,10 @@ public:
 		open_slots[i] = true;
 	}
 
+	constexpr void free (allocated_ref<T>& o){
+		return o.free(*this);
+	}
+
 	friend class allocated_ref<T>;
 };
 
@@ -52,6 +56,12 @@ template<typename T> template<std::size_t s>
 constexpr allocated_ref<T>::allocated_ref(SingleAllocator<s,T>& sa)
 :indx(sa._allocate() + 1)
 {}
+
+template<typename T> template<std::size_t s>
+constexpr void allocated_ref<T>::free(SingleAllocator<s,T>& sa)
+{
+	sa.free(indx);
+}
 
 template<std::size_t s, typename Top, typename... Subs> struct Allocator
 	: public SingleAllocator<s,Subs>...{
@@ -84,7 +94,7 @@ template<std::size_t s, typename Top, typename... Subs> struct Allocator
 	}
 
 	template<typename T> constexpr void free(allocated_ref<T> ptr){
-		get<T>().free(ptr.indx);
+		get<T>().free(ptr);
 	}
 	
 };

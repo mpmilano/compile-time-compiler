@@ -3,6 +3,8 @@
 #include "mutils/cstring.hpp"
 #include <iostream>
 
+/*
+ */
 using Alloc = as_values::AST_Allocator<15>;
 
 template <typename string> struct parse {
@@ -101,8 +103,10 @@ template <typename string> struct flatten {
 
 auto test_input() {
   using namespace as_types;
-  return Statement<sequence<Statement<skip>,
-                            Statement<return_val<Expression<number<5>>>>>>{};
+  return Statement<transaction<
+      Statement<sequence<Statement<skip>,
+                         Statement<return_val<Expression<number<5>>>>>>,
+      0>>{};
 }
 using round_trip_send = DECT(test_input());
 struct prev_t {

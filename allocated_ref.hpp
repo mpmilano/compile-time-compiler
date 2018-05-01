@@ -30,6 +30,9 @@ public:
 
 	template<std::size_t s>
 	constexpr allocated_ref(SingleAllocator<s,T>&);
+
+	template<std::size_t s>
+	constexpr void free(SingleAllocator<s,T>&);
 	
 	constexpr allocated_ref& operator=(allocated_ref&& o){
 		indx = o.indx;

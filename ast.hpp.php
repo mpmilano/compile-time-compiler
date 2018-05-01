@@ -64,14 +64,14 @@
     }
 
 
-    function type_type_name($type) : string{
+    function type_type_name($type, $prefix = '') : string{
       $out = type_name_helper($type->type);
       $out = $out.'<'.($type->name);
       $field_num = count($type->fields);
       if ($field_num > 0) {
         $out = $out."<";
         foreach ($type->fields as $i => $field){
-         $out = $out."$field->name";
+         $out = $out.$prefix."$field->name";
          if ($i+1 != $field_num){
            $out = $out.",";
          }
@@ -148,7 +148,7 @@ foreach ($types as $type){
 } // namespace as_values
 
 <?php
- function template_defn($type){
+ function template_defn($type,$prefix = ''){
    $out = '';
   $field_num = count($type->fields);
   if ($field_num > 0) {
@@ -158,7 +158,7 @@ foreach ($types as $type){
        $out = $out."typename ";
      }
      else {$out = $out. "$field->type ";}
-     $out = $out. "$field->name";
+     $out = $out. $prefix."$field->name";
      if ($i+1 != $field_num){
        $out = $out. ",";
      }
@@ -168,8 +168,8 @@ foreach ($types as $type){
  return $out;
 }
 
-function full_template_defn($type){
-  return template_defn($type);
+function full_template_defn($type, $prefix = ''){
+  return template_defn($type,$prefix);
 }
 
 ?>
@@ -178,12 +178,24 @@ namespace as_types {
   template<typename> struct Expression;
   template<typename> struct Statement;
   template<typename,typename> struct Binding;
+  
 <?php foreach ($types as $type){
      echo template_defn($type);
      echo "struct $type->name{};\n";
-    $tmp = full_template_defn($type);
+    $tmp = full_template_defn($type, '_');
     if ($tmp === '') $tmp = 'template<>';
-    echo "$tmp struct ".type_type_name($type)."{};\n";
+    echo "$tmp struct ".type_type_name($type,'_')."{";
+    foreach ($type->fields as $field){
+      if (is_ast_node($field->type)){
+        echo "using $field->name = _$field->name;";
+      }
+      else {
+        echo "$field->type $field->name{_$field->name};";
+      }
+    }
+    echo "};\n";
+    echo "template<typename> struct is_astnode_$type->name : public std::false_type{};";
+    echo "$tmp struct is_astnode_$type->name<".type_type_name($type,"_")."> : public std::true_type{};";
   }
 ?>
 
@@ -278,8 +290,9 @@ struct as_values_ns_fns{
 
   template<std::size_t budget, typename hd>
   constexpr as_values::AST_Allocator<budget> as_value(){
+    static_assert(is_astnode_transaction<hd>::value);
     as_values::AST_Allocator<budget> head;
-    as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head,hd{});
+    head.top = std::move(as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head,hd{}).get(head).template get<as_values::transaction>());
     return head;
   }
 }

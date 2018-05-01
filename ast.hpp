@@ -79,20 +79,51 @@ namespace as_types {
 template <typename> struct Expression;
 template <typename> struct Statement;
 template <typename, typename> struct Binding;
+
 template <typename e, std::size_t payload> struct transaction {};
-template <typename e, std::size_t payload>
-struct Statement<transaction<e, payload>> {};
+template <typename _e, std::size_t _payload>
+struct Statement<transaction<_e, _payload>> {
+  using e = _e;
+  std::size_t payload{_payload};
+};
+template <typename> struct is_astnode_transaction : public std::false_type {};
+template <typename _e, std::size_t _payload>
+struct is_astnode_transaction<Statement<transaction<_e, _payload>>>
+    : public std::true_type {};
 template <typename e, typename next> struct sequence {};
-template <typename e, typename next> struct Statement<sequence<e, next>> {};
+template <typename _e, typename _next> struct Statement<sequence<_e, _next>> {
+  using e = _e;
+  using next = _next;
+};
+template <typename> struct is_astnode_sequence : public std::false_type {};
+template <typename _e, typename _next>
+struct is_astnode_sequence<Statement<sequence<_e, _next>>>
+    : public std::true_type {};
 template <typename l, typename r> struct plus {};
-template <typename l, typename r> struct Expression<plus<l, r>> {};
+template <typename _l, typename _r> struct Expression<plus<_l, _r>> {
+  using l = _l;
+  using r = _r;
+};
+template <typename> struct is_astnode_plus : public std::false_type {};
+template <typename _l, typename _r>
+struct is_astnode_plus<Expression<plus<_l, _r>>> : public std::true_type {};
 template <std::size_t num> struct number {};
-template <std::size_t num> struct Expression<number<num>> {};
+template <std::size_t _num> struct Expression<number<_num>> {
+  std::size_t num{_num};
+};
+template <typename> struct is_astnode_number : public std::false_type {};
+template <std::size_t _num>
+struct is_astnode_number<Expression<number<_num>>> : public std::true_type {};
 template <typename v> struct return_val {};
-template <typename v> struct Statement<return_val<v>> {};
+template <typename _v> struct Statement<return_val<_v>> { using v = _v; };
+template <typename> struct is_astnode_return_val : public std::false_type {};
+template <typename _v>
+struct is_astnode_return_val<Statement<return_val<_v>>>
+    : public std::true_type {};
 struct skip {};
 template <> struct Statement<skip> {};
-
+template <typename> struct is_astnode_skip : public std::false_type {};
+template <> struct is_astnode_skip<Statement<skip>> : public std::true_type {};
 } // namespace as_types
 
 namespace as_values {
@@ -101,7 +132,7 @@ template <typename prev_holder> struct as_type_f {
       allocator{prev_holder::prev.allocator};
   template <long budget, typename F>
   constexpr static auto
-  as_type(std::enable_if_t<(budget >= 0) && (budget < 50)> * = nullptr) {
+  as_type(std::enable_if_t<(budget > 0) && (budget < 50)> * = nullptr) {
     static_assert(budget > 0);
     if constexpr (budget > 0) {
       constexpr const AST_elem &e = F{}();
@@ -274,8 +305,12 @@ template <typename AST_Allocator> struct as_values_ns_fns {
 
 template <std::size_t budget, typename hd>
 constexpr as_values::AST_Allocator<budget> as_value() {
+  static_assert(is_astnode_transaction<hd>::value);
   as_values::AST_Allocator<budget> head;
-  as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head, hd{});
+  head.top = std::move(
+      as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head, hd{})
+          .get(head)
+          .template get<as_values::transaction>());
   return head;
 }
 } // namespace as_types
