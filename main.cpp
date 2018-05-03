@@ -52,28 +52,31 @@ template <typename string> struct parse {
     auto groups = split_outside_parens(';', str, string_bufs);
     bool sequence_empty = true;
     assert(groups < 20);
+    assert(groups > 0);
     for (auto i = 0u; i < groups; ++i) {
       seq->e = parse_statement(string_bufs[i]);
+      if ((i + 1) < groups) {
 
-      allocated_ref<as_values::AST_elem> newret =
-          allocator.template allocate<as_values::AST_elem>();
-      newret.get(allocator).template get_<as_values::sequence>().is_this_elem =
-          true;
-      auto &seqref =
-          newret.get(allocator).template get_<as_values::sequence>().t;
-      seq->next = std::move(newret);
-      seq = &seqref;
-    }
-    {
+        allocated_ref<as_values::AST_elem> newret =
+            allocator.template allocate<as_values::AST_elem>();
+        newret.get(allocator)
+            .template get_<as_values::sequence>()
+            .is_this_elem = true;
+        auto &seqref =
+            newret.get(allocator).template get_<as_values::sequence>().t;
+        seq->next = std::move(newret);
+        seq = &seqref;
+      } else {
 
-      allocated_ref<as_values::AST_elem> skipref =
-          allocator.template allocate<as_values::AST_elem>();
-      skipref.get(allocator).template get_<as_values::skip>().is_this_elem =
-          true;
-      auto &voidref = skipref.get(allocator).template get_<as_values::skip>().t;
-      (void)voidref;
-      allocator.free(std::move(seq->next));
-      seq->next = std::move(skipref);
+        allocated_ref<as_values::AST_elem> skipref =
+            allocator.template allocate<as_values::AST_elem>();
+        skipref.get(allocator).template get_<as_values::skip>().is_this_elem =
+            true;
+        auto &voidref =
+            skipref.get(allocator).template get_<as_values::skip>().t;
+        (void)voidref;
+        seq->next = std::move(skipref);
+      }
     }
     return ret;
   }

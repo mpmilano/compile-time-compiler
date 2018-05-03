@@ -326,62 +326,68 @@ constexpr as_values::AST_Allocator<budget> as_value() {
 
 namespace as_values {
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const std::size_t &st, Allocator &) {
+std::ostream &print(std::ostream &o, const std::size_t &st, const Allocator &) {
   return o << st;
 }
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const AST_elem &e, Allocator &allocator);
+std::ostream &print(std::ostream &o, const AST_elem &e,
+                    const Allocator &allocator);
 
 template <typename Allocator>
 std::ostream &print(std::ostream &o, const transaction &e,
-                    Allocator &allocator) {
+                    const Allocator &allocator) {
   o << "transaction{";
   print(o, e.e, allocator);
   o << ",";
   print(o, e.payload, allocator);
   o << ",";
-  return o;
+  return o << "}";
 }
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const sequence &e, Allocator &allocator) {
+std::ostream &print(std::ostream &o, const sequence &e,
+                    const Allocator &allocator) {
   o << "sequence{";
   print(o, e.e, allocator);
   o << ",";
   print(o, e.next, allocator);
   o << ",";
-  return o;
+  return o << "}";
 }
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const plus &e, Allocator &allocator) {
+std::ostream &print(std::ostream &o, const plus &e,
+                    const Allocator &allocator) {
   o << "plus{";
   print(o, e.l, allocator);
   o << ",";
   print(o, e.r, allocator);
   o << ",";
-  return o;
+  return o << "}";
 }
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const number &e, Allocator &allocator) {
+std::ostream &print(std::ostream &o, const number &e,
+                    const Allocator &allocator) {
   o << "number{";
   print(o, e.num, allocator);
   o << ",";
-  return o;
+  return o << "}";
 }
 template <typename Allocator>
 std::ostream &print(std::ostream &o, const return_val &e,
-                    Allocator &allocator) {
+                    const Allocator &allocator) {
   o << "return_val{";
   print(o, e.v, allocator);
   o << ",";
-  return o;
+  return o << "}";
 }
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const skip &e, Allocator &allocator) {
+std::ostream &print(std::ostream &o, const skip &e,
+                    const Allocator &allocator) {
   o << "skip{";
-  return o;
+  return o << "}";
 }
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const AST_elem &e, Allocator &allocator) {
+std::ostream &print(std::ostream &o, const AST_elem &e,
+                    const Allocator &allocator) {
   if (e.template get_<transaction>().is_this_elem) {
     return print(o, e.template get<transaction>(), allocator);
   }

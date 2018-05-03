@@ -43,17 +43,19 @@ template <typename string> struct parse {
     auto groups = split_outside_parens(';', str, string_bufs);
     bool sequence_empty = true;
     assert(groups < 20);
+    assert(groups > 0);
     for (auto i = 0u; i < groups; ++i){
       seq->e = parse_statement(string_bufs[i]);
-      <?php alloc("newret","seqref","sequence")?>
-      seq->next = std::move(newret);
-      seq = &seqref;
-    }
-    {
-    <?php alloc("skipref","voidref","skip")?>
-    (void)voidref;
-    allocator.free(std::move(seq->next));
-    seq->next = std::move(skipref);
+      if ((i + 1) < groups){
+        <?php alloc("newret","seqref","sequence")?>
+        seq->next = std::move(newret);
+        seq = &seqref;
+      }
+      else {
+        <?php alloc("skipref","voidref","skip")?>
+        (void)voidref;
+        seq->next = std::move(skipref);
+      }
     }
     return ret;
   }

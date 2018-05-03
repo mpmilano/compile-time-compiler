@@ -317,7 +317,7 @@ namespace as_values {
       o << \",\";";
     }
   echo "
-    return o;
+    return o << \"}\";
     }";
   }
   ?>
