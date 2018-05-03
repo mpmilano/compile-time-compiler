@@ -99,9 +99,11 @@ struct round_trip_test{
 
 using round_trip_return = DECT(as_values::as_type<round_trip_test>());
 
+#define CSTR(wrapper, x...) \
+  struct wrapper {constexpr wrapper(){} const char str[::mutils::cstring::str_len(#x)+1]{#x};};
+
 int main() {
-  constexpr auto length = ::mutils::cstring::str_len("this is a string!")+1;
-  struct wrapper {constexpr wrapper(){} const char str[length]{"this is a string!"};};
+  CSTR(wrapper,this is a string!);
   constexpr parse<wrapper> p;
   print(std::cout,p.allocator.top,p.allocator);
   //constexpr flatten<wrapper> f;
