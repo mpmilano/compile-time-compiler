@@ -36,12 +36,16 @@ using AST_elem =
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
+// Define structs.
 struct transaction {
   allocated_ref<AST_elem> e{};
   std::size_t payload{0};
+  // default constructor
   constexpr transaction(){};
+  // move constructor
   constexpr transaction(transaction &&p)
       : e{std::move(p.e)}, payload{std::move(p.payload)} {}
+  // move-assignment
   constexpr transaction &operator=(transaction &&p) {
     e = std::move(p.e);
     payload = std::move(p.payload);
@@ -51,9 +55,12 @@ struct transaction {
 struct FieldReference {
   allocated_ref<AST_elem> Struct{};
   allocated_ref<AST_elem> Field{};
+  // default constructor
   constexpr FieldReference(){};
+  // move constructor
   constexpr FieldReference(FieldReference &&p)
       : Struct{std::move(p.Struct)}, Field{std::move(p.Field)} {}
+  // move-assignment
   constexpr FieldReference &operator=(FieldReference &&p) {
     Struct = std::move(p.Struct);
     Field = std::move(p.Field);
@@ -63,9 +70,12 @@ struct FieldReference {
 struct FieldPointerReference {
   allocated_ref<AST_elem> Struct{};
   allocated_ref<AST_elem> Field{};
+  // default constructor
   constexpr FieldPointerReference(){};
+  // move constructor
   constexpr FieldPointerReference(FieldPointerReference &&p)
       : Struct{std::move(p.Struct)}, Field{std::move(p.Field)} {}
+  // move-assignment
   constexpr FieldPointerReference &operator=(FieldPointerReference &&p) {
     Struct = std::move(p.Struct);
     Field = std::move(p.Field);
@@ -74,8 +84,11 @@ struct FieldPointerReference {
 };
 struct Dereference {
   allocated_ref<AST_elem> Struct{};
+  // default constructor
   constexpr Dereference(){};
+  // move constructor
   constexpr Dereference(Dereference &&p) : Struct{std::move(p.Struct)} {}
+  // move-assignment
   constexpr Dereference &operator=(Dereference &&p) {
     Struct = std::move(p.Struct);
     return *this;
@@ -84,9 +97,12 @@ struct Dereference {
 struct Endorse {
   allocated_ref<AST_elem> label{};
   allocated_ref<AST_elem> Hndl{};
+  // default constructor
   constexpr Endorse(){};
+  // move constructor
   constexpr Endorse(Endorse &&p)
       : label{std::move(p.label)}, Hndl{std::move(p.Hndl)} {}
+  // move-assignment
   constexpr Endorse &operator=(Endorse &&p) {
     label = std::move(p.label);
     Hndl = std::move(p.Hndl);
@@ -96,9 +112,12 @@ struct Endorse {
 struct Ensure {
   allocated_ref<AST_elem> label{};
   allocated_ref<AST_elem> Hndl{};
+  // default constructor
   constexpr Ensure(){};
+  // move constructor
   constexpr Ensure(Ensure &&p)
       : label{std::move(p.label)}, Hndl{std::move(p.Hndl)} {}
+  // move-assignment
   constexpr Ensure &operator=(Ensure &&p) {
     label = std::move(p.label);
     Hndl = std::move(p.Hndl);
@@ -107,8 +126,11 @@ struct Ensure {
 };
 struct IsValid {
   allocated_ref<AST_elem> Hndl{};
+  // default constructor
   constexpr IsValid(){};
+  // move constructor
   constexpr IsValid(IsValid &&p) : Hndl{std::move(p.Hndl)} {}
+  // move-assignment
   constexpr IsValid &operator=(IsValid &&p) {
     Hndl = std::move(p.Hndl);
     return *this;
@@ -116,8 +138,11 @@ struct IsValid {
 };
 struct VarReference {
   allocated_ref<AST_elem> Var{};
+  // default constructor
   constexpr VarReference(){};
+  // move constructor
   constexpr VarReference(VarReference &&p) : Var{std::move(p.Var)} {}
+  // move-assignment
   constexpr VarReference &operator=(VarReference &&p) {
     Var = std::move(p.Var);
     return *this;
@@ -125,8 +150,11 @@ struct VarReference {
 };
 struct Constant {
   std::size_t i{0};
+  // default constructor
   constexpr Constant(){};
+  // move constructor
   constexpr Constant(Constant &&p) : i{std::move(p.i)} {}
+  // move-assignment
   constexpr Constant &operator=(Constant &&p) {
     i = std::move(p.i);
     return *this;
@@ -136,9 +164,12 @@ struct BinOp {
   char op{};
   allocated_ref<AST_elem> L{};
   allocated_ref<AST_elem> R{};
+  // default constructor
   constexpr BinOp(){};
+  // move constructor
   constexpr BinOp(BinOp &&p)
       : op{std::move(p.op)}, L{std::move(p.L)}, R{std::move(p.R)} {}
+  // move-assignment
   constexpr BinOp &operator=(BinOp &&p) {
     op = std::move(p.op);
     L = std::move(p.L);
@@ -149,9 +180,12 @@ struct BinOp {
 struct Let {
   allocated_ref<AST_elem> Binding{};
   allocated_ref<AST_elem> Body{};
+  // default constructor
   constexpr Let(){};
+  // move constructor
   constexpr Let(Let &&p)
       : Binding{std::move(p.Binding)}, Body{std::move(p.Body)} {}
+  // move-assignment
   constexpr Let &operator=(Let &&p) {
     Binding = std::move(p.Binding);
     Body = std::move(p.Body);
@@ -161,9 +195,12 @@ struct Let {
 struct LetRemote {
   allocated_ref<AST_elem> Binding{};
   allocated_ref<AST_elem> Body{};
+  // default constructor
   constexpr LetRemote(){};
+  // move constructor
   constexpr LetRemote(LetRemote &&p)
       : Binding{std::move(p.Binding)}, Body{std::move(p.Body)} {}
+  // move-assignment
   constexpr LetRemote &operator=(LetRemote &&p) {
     Binding = std::move(p.Binding);
     Body = std::move(p.Body);
@@ -172,9 +209,12 @@ struct LetRemote {
 };
 struct operation_args_exprs {
   allocated_ref<AST_elem> exprs{};
+  // default constructor
   constexpr operation_args_exprs(){};
+  // move constructor
   constexpr operation_args_exprs(operation_args_exprs &&p)
       : exprs{std::move(p.exprs)} {}
+  // move-assignment
   constexpr operation_args_exprs &operator=(operation_args_exprs &&p) {
     exprs = std::move(p.exprs);
     return *this;
@@ -182,9 +222,12 @@ struct operation_args_exprs {
 };
 struct operation_args_varrefs {
   allocated_ref<AST_elem> vars{};
+  // default constructor
   constexpr operation_args_varrefs(){};
+  // move constructor
   constexpr operation_args_varrefs(operation_args_varrefs &&p)
       : vars{std::move(p.vars)} {}
+  // move-assignment
   constexpr operation_args_varrefs &operator=(operation_args_varrefs &&p) {
     vars = std::move(p.vars);
     return *this;
@@ -195,10 +238,13 @@ struct Operation {
   allocated_ref<AST_elem> Hndl{};
   allocated_ref<AST_elem> expr_args{};
   allocated_ref<AST_elem> var_args{};
+  // default constructor
   constexpr Operation(){};
+  // move constructor
   constexpr Operation(Operation &&p)
       : name{std::move(p.name)}, Hndl{std::move(p.Hndl)},
         expr_args{std::move(p.expr_args)}, var_args{std::move(p.var_args)} {}
+  // move-assignment
   constexpr Operation &operator=(Operation &&p) {
     name = std::move(p.name);
     Hndl = std::move(p.Hndl);
@@ -212,10 +258,13 @@ struct Operation {
   allocated_ref<AST_elem> Hndl{};
   allocated_ref<AST_elem> expr_args{};
   allocated_ref<AST_elem> var_args{};
+  // default constructor
   constexpr Operation(){};
+  // move constructor
   constexpr Operation(Operation &&p)
       : name{std::move(p.name)}, Hndl{std::move(p.Hndl)},
         expr_args{std::move(p.expr_args)}, var_args{std::move(p.var_args)} {}
+  // move-assignment
   constexpr Operation &operator=(Operation &&p) {
     name = std::move(p.name);
     Hndl = std::move(p.Hndl);
@@ -227,9 +276,12 @@ struct Operation {
 struct Assignment {
   allocated_ref<AST_elem> Var{};
   allocated_ref<AST_elem> Expr{};
+  // default constructor
   constexpr Assignment(){};
+  // move constructor
   constexpr Assignment(Assignment &&p)
       : Var{std::move(p.Var)}, Expr{std::move(p.Expr)} {}
+  // move-assignment
   constexpr Assignment &operator=(Assignment &&p) {
     Var = std::move(p.Var);
     Expr = std::move(p.Expr);
@@ -238,8 +290,11 @@ struct Assignment {
 };
 struct Return {
   allocated_ref<AST_elem> Expr{};
+  // default constructor
   constexpr Return(){};
+  // move constructor
   constexpr Return(Return &&p) : Expr{std::move(p.Expr)} {}
+  // move-assignment
   constexpr Return &operator=(Return &&p) {
     Expr = std::move(p.Expr);
     return *this;
@@ -249,10 +304,13 @@ struct If {
   allocated_ref<AST_elem> condition{};
   allocated_ref<AST_elem> then{};
   allocated_ref<AST_elem> els{};
+  // default constructor
   constexpr If(){};
+  // move constructor
   constexpr If(If &&p)
       : condition{std::move(p.condition)}, then{std::move(p.then)},
         els{std::move(p.els)} {}
+  // move-assignment
   constexpr If &operator=(If &&p) {
     condition = std::move(p.condition);
     then = std::move(p.then);
@@ -263,9 +321,12 @@ struct If {
 struct While {
   allocated_ref<AST_elem> condition{};
   allocated_ref<AST_elem> body{};
+  // default constructor
   constexpr While(){};
+  // move constructor
   constexpr While(While &&p)
       : condition{std::move(p.condition)}, body{std::move(p.body)} {}
+  // move-assignment
   constexpr While &operator=(While &&p) {
     condition = std::move(p.condition);
     body = std::move(p.body);
@@ -275,9 +336,12 @@ struct While {
 struct Sequence {
   allocated_ref<AST_elem> e{};
   allocated_ref<AST_elem> next{};
+  // default constructor
   constexpr Sequence(){};
+  // move constructor
   constexpr Sequence(Sequence &&p)
       : e{std::move(p.e)}, next{std::move(p.next)} {}
+  // move-assignment
   constexpr Sequence &operator=(Sequence &&p) {
     e = std::move(p.e);
     next = std::move(p.next);
@@ -285,8 +349,11 @@ struct Sequence {
   }
 };
 struct Skip {
+  // default constructor
   constexpr Skip(){};
+  // move constructor
   constexpr Skip(Skip &&p) {}
+  // move-assignment
   constexpr Skip &operator=(Skip &&p) { return *this; }
 };
 } // namespace as_values
@@ -303,8 +370,8 @@ struct Statement<transaction<_e, _payload>> {
   std::size_t payload{_payload};
 };
 template <typename> struct is_astnode_transaction : public std::false_type {};
-template <typename _e, std::size_t _payload>
-struct is_astnode_transaction<Statement<transaction<_e, _payload>>>
+template <typename e, std::size_t payload>
+struct is_astnode_transaction<Statement<transaction<e, payload>>>
     : public std::true_type {};
 template <typename Struct, typename Field> struct FieldReference {};
 template <typename _Struct, typename _Field>
@@ -314,8 +381,8 @@ struct Expression<FieldReference<_Struct, _Field>> {
 };
 template <typename>
 struct is_astnode_FieldReference : public std::false_type {};
-template <typename _Struct, typename _Field>
-struct is_astnode_FieldReference<Expression<FieldReference<_Struct, _Field>>>
+template <typename Struct, typename Field>
+struct is_astnode_FieldReference<Expression<FieldReference<Struct, Field>>>
     : public std::true_type {};
 template <typename Struct, typename Field> struct FieldPointerReference {};
 template <typename _Struct, typename _Field>
@@ -325,17 +392,17 @@ struct Expression<FieldPointerReference<_Struct, _Field>> {
 };
 template <typename>
 struct is_astnode_FieldPointerReference : public std::false_type {};
-template <typename _Struct, typename _Field>
+template <typename Struct, typename Field>
 struct is_astnode_FieldPointerReference<
-    Expression<FieldPointerReference<_Struct, _Field>>>
-    : public std::true_type {};
+    Expression<FieldPointerReference<Struct, Field>>> : public std::true_type {
+};
 template <typename Struct> struct Dereference {};
 template <typename _Struct> struct Expression<Dereference<_Struct>> {
   using Struct = _Struct;
 };
 template <typename> struct is_astnode_Dereference : public std::false_type {};
-template <typename _Struct>
-struct is_astnode_Dereference<Expression<Dereference<_Struct>>>
+template <typename Struct>
+struct is_astnode_Dereference<Expression<Dereference<Struct>>>
     : public std::true_type {};
 template <typename label, typename Hndl> struct Endorse {};
 template <typename _label, typename _Hndl>
@@ -344,8 +411,8 @@ struct Expression<Endorse<_label, _Hndl>> {
   using Hndl = _Hndl;
 };
 template <typename> struct is_astnode_Endorse : public std::false_type {};
-template <typename _label, typename _Hndl>
-struct is_astnode_Endorse<Expression<Endorse<_label, _Hndl>>>
+template <typename label, typename Hndl>
+struct is_astnode_Endorse<Expression<Endorse<label, Hndl>>>
     : public std::true_type {};
 template <typename label, typename Hndl> struct Ensure {};
 template <typename _label, typename _Hndl>
@@ -354,32 +421,31 @@ struct Expression<Ensure<_label, _Hndl>> {
   using Hndl = _Hndl;
 };
 template <typename> struct is_astnode_Ensure : public std::false_type {};
-template <typename _label, typename _Hndl>
-struct is_astnode_Ensure<Expression<Ensure<_label, _Hndl>>>
+template <typename label, typename Hndl>
+struct is_astnode_Ensure<Expression<Ensure<label, Hndl>>>
     : public std::true_type {};
 template <typename Hndl> struct IsValid {};
 template <typename _Hndl> struct Expression<IsValid<_Hndl>> {
   using Hndl = _Hndl;
 };
 template <typename> struct is_astnode_IsValid : public std::false_type {};
-template <typename _Hndl>
-struct is_astnode_IsValid<Expression<IsValid<_Hndl>>> : public std::true_type {
-};
+template <typename Hndl>
+struct is_astnode_IsValid<Expression<IsValid<Hndl>>> : public std::true_type {};
 template <typename Var> struct VarReference {};
 template <typename _Var> struct Expression<VarReference<_Var>> {
   using Var = _Var;
 };
 template <typename> struct is_astnode_VarReference : public std::false_type {};
-template <typename _Var>
-struct is_astnode_VarReference<Expression<VarReference<_Var>>>
+template <typename Var>
+struct is_astnode_VarReference<Expression<VarReference<Var>>>
     : public std::true_type {};
 template <std::size_t i> struct Constant {};
 template <std::size_t _i> struct Expression<Constant<_i>> {
   std::size_t i{_i};
 };
 template <typename> struct is_astnode_Constant : public std::false_type {};
-template <std::size_t _i>
-struct is_astnode_Constant<Expression<Constant<_i>>> : public std::true_type {};
+template <std::size_t i>
+struct is_astnode_Constant<Expression<Constant<i>>> : public std::true_type {};
 template <char op, typename L, typename R> struct BinOp {};
 template <char _op, typename _L, typename _R>
 struct Expression<BinOp<_op, _L, _R>> {
@@ -388,9 +454,8 @@ struct Expression<BinOp<_op, _L, _R>> {
   using R = _R;
 };
 template <typename> struct is_astnode_BinOp : public std::false_type {};
-template <char _op, typename _L, typename _R>
-struct is_astnode_BinOp<Expression<BinOp<_op, _L, _R>>>
-    : public std::true_type {};
+template <char op, typename L, typename R>
+struct is_astnode_BinOp<Expression<BinOp<op, L, R>>> : public std::true_type {};
 template <typename Binding, typename Body> struct Let {};
 template <typename _Binding, typename _Body>
 struct Statement<Let<_Binding, _Body>> {
@@ -398,9 +463,8 @@ struct Statement<Let<_Binding, _Body>> {
   using Body = _Body;
 };
 template <typename> struct is_astnode_Let : public std::false_type {};
-template <typename _Binding, typename _Body>
-struct is_astnode_Let<Statement<Let<_Binding, _Body>>> : public std::true_type {
-};
+template <typename Binding, typename Body>
+struct is_astnode_Let<Statement<Let<Binding, Body>>> : public std::true_type {};
 template <typename Binding, typename Body> struct LetRemote {};
 template <typename _Binding, typename _Body>
 struct Statement<LetRemote<_Binding, _Body>> {
@@ -408,8 +472,8 @@ struct Statement<LetRemote<_Binding, _Body>> {
   using Body = _Body;
 };
 template <typename> struct is_astnode_LetRemote : public std::false_type {};
-template <typename _Binding, typename _Body>
-struct is_astnode_LetRemote<Statement<LetRemote<_Binding, _Body>>>
+template <typename Binding, typename Body>
+struct is_astnode_LetRemote<Statement<LetRemote<Binding, Body>>>
     : public std::true_type {};
 template <typename exprs> struct operation_args_exprs {};
 template <typename _exprs> struct operation_args_exprs {
@@ -417,14 +481,14 @@ template <typename _exprs> struct operation_args_exprs {
 };
 template <typename>
 struct is_astnode_operation_args_exprs : public std::false_type {};
-template <typename _exprs>
+template <typename exprs>
 struct is_astnode_operation_args_exprs<operation_args_exprs>
     : public std::true_type {};
 template <typename vars> struct operation_args_varrefs {};
 template <typename _vars> struct operation_args_varrefs { using vars = _vars; };
 template <typename>
 struct is_astnode_operation_args_varrefs : public std::false_type {};
-template <typename _vars>
+template <typename vars>
 struct is_astnode_operation_args_varrefs<operation_args_varrefs>
     : public std::true_type {};
 template <typename name, typename Hndl, typename expr_args, typename var_args>
@@ -438,10 +502,9 @@ struct Expression<Operation<_name, _Hndl, _expr_args, _var_args>> {
   using var_args = _var_args;
 };
 template <typename> struct is_astnode_Operation : public std::false_type {};
-template <typename _name, typename _Hndl, typename _expr_args,
-          typename _var_args>
+template <typename name, typename Hndl, typename expr_args, typename var_args>
 struct is_astnode_Operation<
-    Expression<Operation<_name, _Hndl, _expr_args, _var_args>>>
+    Expression<Operation<name, Hndl, expr_args, var_args>>>
     : public std::true_type {};
 template <typename name, typename Hndl, typename expr_args, typename var_args>
 struct Operation {};
@@ -454,10 +517,9 @@ struct Statement<Operation<_name, _Hndl, _expr_args, _var_args>> {
   using var_args = _var_args;
 };
 template <typename> struct is_astnode_Operation : public std::false_type {};
-template <typename _name, typename _Hndl, typename _expr_args,
-          typename _var_args>
+template <typename name, typename Hndl, typename expr_args, typename var_args>
 struct is_astnode_Operation<
-    Statement<Operation<_name, _Hndl, _expr_args, _var_args>>>
+    Statement<Operation<name, Hndl, expr_args, var_args>>>
     : public std::true_type {};
 template <typename Var, typename Expr> struct Assignment {};
 template <typename _Var, typename _Expr>
@@ -466,16 +528,16 @@ struct Statement<Assignment<_Var, _Expr>> {
   using Expr = _Expr;
 };
 template <typename> struct is_astnode_Assignment : public std::false_type {};
-template <typename _Var, typename _Expr>
-struct is_astnode_Assignment<Statement<Assignment<_Var, _Expr>>>
+template <typename Var, typename Expr>
+struct is_astnode_Assignment<Statement<Assignment<Var, Expr>>>
     : public std::true_type {};
 template <typename Expr> struct Return {};
 template <typename _Expr> struct Statement<Return<_Expr>> {
   using Expr = _Expr;
 };
 template <typename> struct is_astnode_Return : public std::false_type {};
-template <typename _Expr>
-struct is_astnode_Return<Statement<Return<_Expr>>> : public std::true_type {};
+template <typename Expr>
+struct is_astnode_Return<Statement<Return<Expr>>> : public std::true_type {};
 template <typename condition, typename then, typename els> struct If {};
 template <typename _condition, typename _then, typename _els>
 struct Statement<If<_condition, _then, _els>> {
@@ -484,8 +546,8 @@ struct Statement<If<_condition, _then, _els>> {
   using els = _els;
 };
 template <typename> struct is_astnode_If : public std::false_type {};
-template <typename _condition, typename _then, typename _els>
-struct is_astnode_If<Statement<If<_condition, _then, _els>>>
+template <typename condition, typename then, typename els>
+struct is_astnode_If<Statement<If<condition, then, els>>>
     : public std::true_type {};
 template <typename condition, typename body> struct While {};
 template <typename _condition, typename _body>
@@ -494,8 +556,8 @@ struct Statement<While<_condition, _body>> {
   using body = _body;
 };
 template <typename> struct is_astnode_While : public std::false_type {};
-template <typename _condition, typename _body>
-struct is_astnode_While<Statement<While<_condition, _body>>>
+template <typename condition, typename body>
+struct is_astnode_While<Statement<While<condition, body>>>
     : public std::true_type {};
 template <typename e, typename next> struct Sequence {};
 template <typename _e, typename _next> struct Statement<Sequence<_e, _next>> {
@@ -503,8 +565,8 @@ template <typename _e, typename _next> struct Statement<Sequence<_e, _next>> {
   using next = _next;
 };
 template <typename> struct is_astnode_Sequence : public std::false_type {};
-template <typename _e, typename _next>
-struct is_astnode_Sequence<Statement<Sequence<_e, _next>>>
+template <typename e, typename next>
+struct is_astnode_Sequence<Statement<Sequence<e, next>>>
     : public std::true_type {};
 struct Skip {};
 template <> struct Statement<Skip> {};
@@ -1274,6 +1336,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.next = as_value(allocator, next{});
     return std::move(elem);
   }
+  template <>
   constexpr static allocated_ref<AST_elem> as_value(AST_Allocator &allocator,
                                                     const Statement<Skip> &) {
     auto elem = allocator.template allocate<AST_elem>();

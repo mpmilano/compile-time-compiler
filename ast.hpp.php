@@ -1,14 +1,6 @@
 <?php
 
     require_once 'ast.php';
-    $Expression_t = 0;
-    $Statement_t = 1;
-    $Binding_t = 2;
-    $String_t = 3;
-    $Label_t = 4;
-    $Argument_pack_t = 5;
-    $List_t = 6;
-    $NODEMAX = 7;
 
     $types = array(new Statement('transaction',new Field('e',$Statement_t),new Field('payload','std::size_t','{0}')),
     new Expression('FieldReference', new Field('Struct',$Expression_t),new Field('Field',$String_t)),
@@ -33,7 +25,7 @@
     new Statement('If', new Field('condition',$Expression_t), new Field('then',$Statement_t), new Field('els',$Statement_t)),
     new Statement('While', new Field('condition',$Expression_t), new Field('body',$Statement_t)),
     new Statement('Sequence',new Field('e',$Statement_t),new Field('next',$Statement_t)),
-    new Statement('Skip')
+    new Skip('Skip')
    );
 
    require "ast_skeleton.php";

@@ -8,21 +8,23 @@
 namespace as_values {
   <?php 
   foreach ($types as $type){
-    echo "struct $type->name;\n";
+    echo $type->value_declaration();
   } ?>
 using AST_elem = Union<<?php comma_separated(names($types))?>>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, <?php echo $types[0]->name;?>, AST_elem>;
 
+// Define structs. 
 <?php
 foreach ($types as $type){
   echo "struct $type->name { ";
     foreach ($type->fields as $field){
-      $fieldtype = value_type_name($field->type);
-      echo "$fieldtype $field->name $field->initializer;";
+      echo $field->declare_struct_member();
     }
     echo "
+    //default constructor
     constexpr $type->name(){}; 
+    //move constructor
     constexpr $type->name($type->name &&p) ";
     foreach ($type->fields as $i => $field){
       if ($i === 0) echo ':';
@@ -30,7 +32,9 @@ foreach ($types as $type){
       if ($i +1 < count($type->fields)) echo ",";
     }
     echo '{}';
-    echo "constexpr $type->name &operator=($type->name &&p) {"; 
+    echo "
+    //move-assignment 
+    constexpr $type->name &operator=($type->name &&p) {"; 
       foreach ($type->fields as $field){
         echo "$field->name = std::move(p.$field->name);"; 
       }
@@ -47,22 +51,9 @@ namespace as_types {
   template<typename,typename> struct Binding;
   
 <?php foreach ($types as $type){
-     echo $type->template_defn();
-     echo "struct $type->name{};\n";
-    $tmp = $type->full_template_defn('_');
-    if ($tmp === '') $tmp = 'template<>';
-    echo "$tmp struct ".$type->type_type_name('_')."{";
-    foreach ($type->fields as $field){
-      if (is_ast_node($field->type)){
-        echo "using $field->name = _$field->name;";
-      }
-      else {
-        echo "$field->type $field->name{_$field->name};";
-      }
-    }
-    echo "};\n";
-    echo "template<typename> struct is_astnode_$type->name : public std::false_type{};";
-    echo "$tmp struct is_astnode_$type->name<".$type->type_type_name("_")."> : public std::true_type{};";
+     echo $type->define_type();
+    echo $type->encapsulate_type();
+    echo $type->is_astnode_defn();
   }
 ?>
 
@@ -139,7 +130,7 @@ struct as_values_ns_fns{
   <?php 
   foreach ($types as $type){
     echo $type->full_template_defn();
-    $decl = $type->type_type_name();
+    $decl = $type->encapsulated_type_name();
   echo "constexpr static allocated_ref<AST_elem> as_value(AST_Allocator& allocator, const $decl &){
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
