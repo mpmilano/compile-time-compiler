@@ -50,7 +50,7 @@ struct transaction {
 };
 struct FieldReference {
   allocated_ref<AST_elem> Struct{};
-  3 Field{};
+  allocated_ref<AST_elem> Field{};
   constexpr FieldReference(){};
   constexpr FieldReference(FieldReference &&p)
       : Struct{std::move(p.Struct)}, Field{std::move(p.Field)} {}
@@ -62,7 +62,7 @@ struct FieldReference {
 };
 struct FieldPointerReference {
   allocated_ref<AST_elem> Struct{};
-  3 Field{};
+  allocated_ref<AST_elem> Field{};
   constexpr FieldPointerReference(){};
   constexpr FieldPointerReference(FieldPointerReference &&p)
       : Struct{std::move(p.Struct)}, Field{std::move(p.Field)} {}
@@ -82,7 +82,7 @@ struct Dereference {
   }
 };
 struct Endorse {
-  4 label{};
+  allocated_ref<AST_elem> label{};
   allocated_ref<AST_elem> Hndl{};
   constexpr Endorse(){};
   constexpr Endorse(Endorse &&p)
@@ -94,7 +94,7 @@ struct Endorse {
   }
 };
 struct Ensure {
-  4 label{};
+  allocated_ref<AST_elem> label{};
   allocated_ref<AST_elem> Hndl{};
   constexpr Ensure(){};
   constexpr Ensure(Ensure &&p)
@@ -115,7 +115,7 @@ struct IsValid {
   }
 };
 struct VarReference {
-  3 Var{};
+  allocated_ref<AST_elem> Var{};
   constexpr VarReference(){};
   constexpr VarReference(VarReference &&p) : Var{std::move(p.Var)} {}
   constexpr VarReference &operator=(VarReference &&p) {
@@ -171,7 +171,7 @@ struct LetRemote {
   }
 };
 struct operation_args_exprs {
-  6 exprs{};
+  allocated_ref<AST_elem> exprs{};
   constexpr operation_args_exprs(){};
   constexpr operation_args_exprs(operation_args_exprs &&p)
       : exprs{std::move(p.exprs)} {}
@@ -181,7 +181,7 @@ struct operation_args_exprs {
   }
 };
 struct operation_args_varrefs {
-  6 vars{};
+  allocated_ref<AST_elem> vars{};
   constexpr operation_args_varrefs(){};
   constexpr operation_args_varrefs(operation_args_varrefs &&p)
       : vars{std::move(p.vars)} {}
@@ -191,10 +191,10 @@ struct operation_args_varrefs {
   }
 };
 struct Operation {
-  3 name{};
+  allocated_ref<AST_elem> name{};
   allocated_ref<AST_elem> Hndl{};
-  5 expr_args{};
-  5 var_args{};
+  allocated_ref<AST_elem> expr_args{};
+  allocated_ref<AST_elem> var_args{};
   constexpr Operation(){};
   constexpr Operation(Operation &&p)
       : name{std::move(p.name)}, Hndl{std::move(p.Hndl)},
@@ -208,10 +208,10 @@ struct Operation {
   }
 };
 struct Operation {
-  3 name{};
+  allocated_ref<AST_elem> name{};
   allocated_ref<AST_elem> Hndl{};
-  5 expr_args{};
-  5 var_args{};
+  allocated_ref<AST_elem> expr_args{};
+  allocated_ref<AST_elem> var_args{};
   constexpr Operation(){};
   constexpr Operation(Operation &&p)
       : name{std::move(p.name)}, Hndl{std::move(p.Hndl)},
@@ -306,26 +306,26 @@ template <typename> struct is_astnode_transaction : public std::false_type {};
 template <typename _e, std::size_t _payload>
 struct is_astnode_transaction<Statement<transaction<_e, _payload>>>
     : public std::true_type {};
-template <typename Struct, 3 Field> struct FieldReference {};
-template <typename _Struct, 3 _Field>
+template <typename Struct, typename Field> struct FieldReference {};
+template <typename _Struct, typename _Field>
 struct Expression<FieldReference<_Struct, _Field>> {
   using Struct = _Struct;
-  3 Field{_Field};
+  using Field = _Field;
 };
 template <typename>
 struct is_astnode_FieldReference : public std::false_type {};
-template <typename _Struct, 3 _Field>
+template <typename _Struct, typename _Field>
 struct is_astnode_FieldReference<Expression<FieldReference<_Struct, _Field>>>
     : public std::true_type {};
-template <typename Struct, 3 Field> struct FieldPointerReference {};
-template <typename _Struct, 3 _Field>
+template <typename Struct, typename Field> struct FieldPointerReference {};
+template <typename _Struct, typename _Field>
 struct Expression<FieldPointerReference<_Struct, _Field>> {
   using Struct = _Struct;
-  3 Field{_Field};
+  using Field = _Field;
 };
 template <typename>
 struct is_astnode_FieldPointerReference : public std::false_type {};
-template <typename _Struct, 3 _Field>
+template <typename _Struct, typename _Field>
 struct is_astnode_FieldPointerReference<
     Expression<FieldPointerReference<_Struct, _Field>>>
     : public std::true_type {};
@@ -337,22 +337,24 @@ template <typename> struct is_astnode_Dereference : public std::false_type {};
 template <typename _Struct>
 struct is_astnode_Dereference<Expression<Dereference<_Struct>>>
     : public std::true_type {};
-template <4 label, typename Hndl> struct Endorse {};
-template <4 _label, typename _Hndl> struct Expression<Endorse<_label, _Hndl>> {
-  4 label{_label};
+template <typename label, typename Hndl> struct Endorse {};
+template <typename _label, typename _Hndl>
+struct Expression<Endorse<_label, _Hndl>> {
+  using label = _label;
   using Hndl = _Hndl;
 };
 template <typename> struct is_astnode_Endorse : public std::false_type {};
-template <4 _label, typename _Hndl>
+template <typename _label, typename _Hndl>
 struct is_astnode_Endorse<Expression<Endorse<_label, _Hndl>>>
     : public std::true_type {};
-template <4 label, typename Hndl> struct Ensure {};
-template <4 _label, typename _Hndl> struct Expression<Ensure<_label, _Hndl>> {
-  4 label{_label};
+template <typename label, typename Hndl> struct Ensure {};
+template <typename _label, typename _Hndl>
+struct Expression<Ensure<_label, _Hndl>> {
+  using label = _label;
   using Hndl = _Hndl;
 };
 template <typename> struct is_astnode_Ensure : public std::false_type {};
-template <4 _label, typename _Hndl>
+template <typename _label, typename _Hndl>
 struct is_astnode_Ensure<Expression<Ensure<_label, _Hndl>>>
     : public std::true_type {};
 template <typename Hndl> struct IsValid {};
@@ -363,10 +365,12 @@ template <typename> struct is_astnode_IsValid : public std::false_type {};
 template <typename _Hndl>
 struct is_astnode_IsValid<Expression<IsValid<_Hndl>>> : public std::true_type {
 };
-template <3 Var> struct VarReference {};
-template <3 _Var> struct Expression<VarReference<_Var>> { 3 Var{_Var}; };
+template <typename Var> struct VarReference {};
+template <typename _Var> struct Expression<VarReference<_Var>> {
+  using Var = _Var;
+};
 template <typename> struct is_astnode_VarReference : public std::false_type {};
-template <3 _Var>
+template <typename _Var>
 struct is_astnode_VarReference<Expression<VarReference<_Var>>>
     : public std::true_type {};
 template <std::size_t i> struct Constant {};
@@ -407,47 +411,51 @@ template <typename> struct is_astnode_LetRemote : public std::false_type {};
 template <typename _Binding, typename _Body>
 struct is_astnode_LetRemote<Statement<LetRemote<_Binding, _Body>>>
     : public std::true_type {};
-template <6 exprs> struct operation_args_exprs {};
-template <6 _exprs> struct error<operation_args_exprs<_exprs>> {
-  6 exprs{_exprs};
+template <typename exprs> struct operation_args_exprs {};
+template <typename _exprs> struct operation_args_exprs {
+  using exprs = _exprs;
 };
 template <typename>
 struct is_astnode_operation_args_exprs : public std::false_type {};
-template <6 _exprs>
-struct is_astnode_operation_args_exprs<error<operation_args_exprs<_exprs>>>
+template <typename _exprs>
+struct is_astnode_operation_args_exprs<operation_args_exprs>
     : public std::true_type {};
-template <6 vars> struct operation_args_varrefs {};
-template <6 _vars> struct error<operation_args_varrefs<_vars>> {
-  6 vars{_vars};
-};
+template <typename vars> struct operation_args_varrefs {};
+template <typename _vars> struct operation_args_varrefs { using vars = _vars; };
 template <typename>
 struct is_astnode_operation_args_varrefs : public std::false_type {};
-template <6 _vars>
-struct is_astnode_operation_args_varrefs<error<operation_args_varrefs<_vars>>>
+template <typename _vars>
+struct is_astnode_operation_args_varrefs<operation_args_varrefs>
     : public std::true_type {};
-template <3 name, typename Hndl, 5 expr_args, 5 var_args> struct Operation {};
-template <3 _name, typename _Hndl, 5 _expr_args, 5 _var_args>
+template <typename name, typename Hndl, typename expr_args, typename var_args>
+struct Operation {};
+template <typename _name, typename _Hndl, typename _expr_args,
+          typename _var_args>
 struct Expression<Operation<_name, _Hndl, _expr_args, _var_args>> {
-  3 name{_name};
+  using name = _name;
   using Hndl = _Hndl;
-  5 expr_args{_expr_args};
-  5 var_args{_var_args};
+  using expr_args = _expr_args;
+  using var_args = _var_args;
 };
 template <typename> struct is_astnode_Operation : public std::false_type {};
-template <3 _name, typename _Hndl, 5 _expr_args, 5 _var_args>
+template <typename _name, typename _Hndl, typename _expr_args,
+          typename _var_args>
 struct is_astnode_Operation<
     Expression<Operation<_name, _Hndl, _expr_args, _var_args>>>
     : public std::true_type {};
-template <3 name, typename Hndl, 5 expr_args, 5 var_args> struct Operation {};
-template <3 _name, typename _Hndl, 5 _expr_args, 5 _var_args>
+template <typename name, typename Hndl, typename expr_args, typename var_args>
+struct Operation {};
+template <typename _name, typename _Hndl, typename _expr_args,
+          typename _var_args>
 struct Statement<Operation<_name, _Hndl, _expr_args, _var_args>> {
-  3 name{_name};
+  using name = _name;
   using Hndl = _Hndl;
-  5 expr_args{_expr_args};
-  5 var_args{_var_args};
+  using expr_args = _expr_args;
+  using var_args = _var_args;
 };
 template <typename> struct is_astnode_Operation : public std::false_type {};
-template <3 _name, typename _Hndl, 5 _expr_args, 5 _var_args>
+template <typename _name, typename _Hndl, typename _expr_args,
+          typename _var_args>
 struct is_astnode_Operation<
     Statement<Operation<_name, _Hndl, _expr_args, _var_args>>>
     : public std::true_type {};
@@ -540,7 +548,17 @@ template <typename prev_holder> struct as_type_f {
         };
 
         using _arg0 = DECT(as_type<budget - 1, arg0>());
-        constexpr auto _arg1 = e.template get_<FieldReference>().t.Field;
+        struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<FieldReference>().t.Field.get(allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Expression<as_types::FieldReference<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<FieldPointerReference>()
                                .is_this_elem) {
@@ -556,7 +574,18 @@ template <typename prev_holder> struct as_type_f {
         };
 
         using _arg0 = DECT(as_type<budget - 1, arg0>());
-        constexpr auto _arg1 = e.template get_<FieldPointerReference>().t.Field;
+        struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<FieldPointerReference>().t.Field.get(
+                allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Expression<
             as_types::FieldPointerReference<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Dereference>().is_this_elem) {
@@ -573,7 +602,17 @@ template <typename prev_holder> struct as_type_f {
         using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::Dereference<_arg0>>{};
       } else if constexpr (e.template get_<Endorse>().is_this_elem) {
-        constexpr auto _arg0 = e.template get_<Endorse>().t.label;
+        struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Endorse>().t.label.get(allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
@@ -587,7 +626,17 @@ template <typename prev_holder> struct as_type_f {
         using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Expression<as_types::Endorse<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Ensure>().is_this_elem) {
-        constexpr auto _arg0 = e.template get_<Ensure>().t.label;
+        struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Ensure>().t.label.get(allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
@@ -614,7 +663,17 @@ template <typename prev_holder> struct as_type_f {
         using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::IsValid<_arg0>>{};
       } else if constexpr (e.template get_<VarReference>().is_this_elem) {
-        constexpr auto _arg0 = e.template get_<VarReference>().t.Var;
+        struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<VarReference>().t.Var.get(allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::VarReference<_arg0>>{};
       } else if constexpr (e.template get_<Constant>().is_this_elem) {
         constexpr auto _arg0 = e.template get_<Constant>().t.i;
@@ -694,14 +753,48 @@ template <typename prev_holder> struct as_type_f {
         return as_types::Statement<as_types::LetRemote<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<operation_args_exprs>()
                                .is_this_elem) {
-        constexpr auto _arg0 = e.template get_<operation_args_exprs>().t.exprs;
-        return as_types::error<as_types::operation_args_exprs<_arg0>>{};
+        struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs.get(
+                allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        return as_types::$Argument_pack_t_tnh<
+            as_types::operation_args_exprs<_arg0>>{};
       } else if constexpr (e.template get_<operation_args_varrefs>()
                                .is_this_elem) {
-        constexpr auto _arg0 = e.template get_<operation_args_varrefs>().t.vars;
-        return as_types::error<as_types::operation_args_varrefs<_arg0>>{};
+        struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars.get(
+                allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        return as_types::$Argument_pack_t_tnh<
+            as_types::operation_args_varrefs<_arg0>>{};
       } else if constexpr (e.template get_<Operation>().is_this_elem) {
-        constexpr auto _arg0 = e.template get_<Operation>().t.name;
+        struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Operation>().t.name.get(allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
@@ -713,12 +806,42 @@ template <typename prev_holder> struct as_type_f {
         };
 
         using _arg1 = DECT(as_type<budget - 1, arg1>());
-        constexpr auto _arg2 = e.template get_<Operation>().t.expr_args;
-        constexpr auto _arg3 = e.template get_<Operation>().t.var_args;
+        struct arg2 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg2() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Operation>().t.expr_args.get(allocator);
+          }
+        };
+
+        using _arg2 = DECT(as_type<budget - 1, arg2>());
+        struct arg3 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg3() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Operation>().t.var_args.get(allocator);
+          }
+        };
+
+        using _arg3 = DECT(as_type<budget - 1, arg3>());
         return as_types::Expression<
             as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
       } else if constexpr (e.template get_<Operation>().is_this_elem) {
-        constexpr auto _arg0 = e.template get_<Operation>().t.name;
+        struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Operation>().t.name.get(allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
@@ -730,8 +853,28 @@ template <typename prev_holder> struct as_type_f {
         };
 
         using _arg1 = DECT(as_type<budget - 1, arg1>());
-        constexpr auto _arg2 = e.template get_<Operation>().t.expr_args;
-        constexpr auto _arg3 = e.template get_<Operation>().t.var_args;
+        struct arg2 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg2() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Operation>().t.expr_args.get(allocator);
+          }
+        };
+
+        using _arg2 = DECT(as_type<budget - 1, arg2>());
+        struct arg3 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg3() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Operation>().t.var_args.get(allocator);
+          }
+        };
+
+        using _arg3 = DECT(as_type<budget - 1, arg3>());
         return as_types::Statement<
             as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
       } else if constexpr (e.template get_<Assignment>().is_this_elem) {
@@ -898,7 +1041,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.payload = payload;
     return std::move(elem);
   }
-  template <typename Struct, 3 Field>
+  template <typename Struct, typename Field>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator,
            const Expression<FieldReference<Struct, Field>> &) {
@@ -908,10 +1051,10 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
     this_node.t.Struct = as_value(allocator, Struct{});
-    this_node.t.Field = Field;
+    this_node.t.Field = as_value(allocator, Field{});
     return std::move(elem);
   }
-  template <typename Struct, 3 Field>
+  template <typename Struct, typename Field>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator,
            const Expression<FieldPointerReference<Struct, Field>> &) {
@@ -921,7 +1064,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
     this_node.t.Struct = as_value(allocator, Struct{});
-    this_node.t.Field = Field;
+    this_node.t.Field = as_value(allocator, Field{});
     return std::move(elem);
   }
   template <typename Struct>
@@ -935,25 +1078,25 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.Struct = as_value(allocator, Struct{});
     return std::move(elem);
   }
-  template <4 label, typename Hndl>
+  template <typename label, typename Hndl>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator, const Expression<Endorse<label, Hndl>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Endorse>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.label = label;
+    this_node.t.label = as_value(allocator, label{});
     this_node.t.Hndl = as_value(allocator, Hndl{});
     return std::move(elem);
   }
-  template <4 label, typename Hndl>
+  template <typename label, typename Hndl>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator, const Expression<Ensure<label, Hndl>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Ensure>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.label = label;
+    this_node.t.label = as_value(allocator, label{});
     this_node.t.Hndl = as_value(allocator, Hndl{});
     return std::move(elem);
   }
@@ -967,7 +1110,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.Hndl = as_value(allocator, Hndl{});
     return std::move(elem);
   }
-  template <3 Var>
+  template <typename Var>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator, const Expression<VarReference<Var>> &) {
     auto elem = allocator.template allocate<AST_elem>();
@@ -975,7 +1118,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
         elem.get(allocator).template get_<as_values::VarReference>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Var = Var;
+    this_node.t.Var = as_value(allocator, Var{});
     return std::move(elem);
   }
   template <std::size_t i>
@@ -1023,31 +1166,29 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.Body = as_value(allocator, Body{});
     return std::move(elem);
   }
-  template <6 exprs>
+  template <typename exprs>
   constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const error<operation_args_exprs<exprs>> &) {
+  as_value(AST_Allocator &allocator, const operation_args_exprs &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::operation_args_exprs>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.exprs = exprs;
+    this_node.t.exprs = as_value(allocator, exprs{});
     return std::move(elem);
   }
-  template <6 vars>
+  template <typename vars>
   constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const error<operation_args_varrefs<vars>> &) {
+  as_value(AST_Allocator &allocator, const operation_args_varrefs &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::operation_args_varrefs>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.vars = vars;
+    this_node.t.vars = as_value(allocator, vars{});
     return std::move(elem);
   }
-  template <3 name, typename Hndl, 5 expr_args, 5 var_args>
+  template <typename name, typename Hndl, typename expr_args, typename var_args>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator,
            const Expression<Operation<name, Hndl, expr_args, var_args>> &) {
@@ -1055,13 +1196,13 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.name = name;
+    this_node.t.name = as_value(allocator, name{});
     this_node.t.Hndl = as_value(allocator, Hndl{});
-    this_node.t.expr_args = expr_args;
-    this_node.t.var_args = var_args;
+    this_node.t.expr_args = as_value(allocator, expr_args{});
+    this_node.t.var_args = as_value(allocator, var_args{});
     return std::move(elem);
   }
-  template <3 name, typename Hndl, 5 expr_args, 5 var_args>
+  template <typename name, typename Hndl, typename expr_args, typename var_args>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator,
            const Statement<Operation<name, Hndl, expr_args, var_args>> &) {
@@ -1069,10 +1210,10 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.name = name;
+    this_node.t.name = as_value(allocator, name{});
     this_node.t.Hndl = as_value(allocator, Hndl{});
-    this_node.t.expr_args = expr_args;
-    this_node.t.var_args = var_args;
+    this_node.t.expr_args = as_value(allocator, expr_args{});
+    this_node.t.var_args = as_value(allocator, var_args{});
     return std::move(elem);
   }
   template <typename Var, typename Expr>
