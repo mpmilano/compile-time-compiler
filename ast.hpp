@@ -21,7 +21,6 @@ struct LetRemote;
 struct operation_args_exprs;
 struct operation_args_varrefs;
 struct Operation;
-struct Operation;
 struct Assignment;
 struct Return;
 struct If;
@@ -32,7 +31,7 @@ using AST_elem =
     Union<transaction, FieldReference, FieldPointerReference, Dereference,
           Endorse, Ensure, IsValid, VarReference, Constant, BinOp, Let,
           LetRemote, operation_args_exprs, operation_args_varrefs, Operation,
-          Operation, Assignment, Return, If, While, Sequence, Skip>;
+          Assignment, Return, If, While, Sequence, Skip>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
@@ -253,26 +252,6 @@ struct Operation {
     return *this;
   }
 };
-struct Operation {
-  allocated_ref<AST_elem> name{};
-  allocated_ref<AST_elem> Hndl{};
-  allocated_ref<AST_elem> expr_args{};
-  allocated_ref<AST_elem> var_args{};
-  // default constructor
-  constexpr Operation(){};
-  // move constructor
-  constexpr Operation(Operation &&p)
-      : name{std::move(p.name)}, Hndl{std::move(p.Hndl)},
-        expr_args{std::move(p.expr_args)}, var_args{std::move(p.var_args)} {}
-  // move-assignment
-  constexpr Operation &operator=(Operation &&p) {
-    name = std::move(p.name);
-    Hndl = std::move(p.Hndl);
-    expr_args = std::move(p.expr_args);
-    var_args = std::move(p.var_args);
-    return *this;
-  }
-};
 struct Assignment {
   allocated_ref<AST_elem> Var{};
   allocated_ref<AST_elem> Expr{};
@@ -369,83 +348,46 @@ struct Statement<transaction<_e, _payload>> {
   using e = _e;
   std::size_t payload{_payload};
 };
-template <typename> struct is_astnode_transaction : public std::false_type {};
-template <typename e, std::size_t payload>
-struct is_astnode_transaction<Statement<transaction<e, payload>>>
-    : public std::true_type {};
 template <typename Struct, typename Field> struct FieldReference {};
 template <typename _Struct, typename _Field>
 struct Expression<FieldReference<_Struct, _Field>> {
   using Struct = _Struct;
   using Field = _Field;
 };
-template <typename>
-struct is_astnode_FieldReference : public std::false_type {};
-template <typename Struct, typename Field>
-struct is_astnode_FieldReference<Expression<FieldReference<Struct, Field>>>
-    : public std::true_type {};
 template <typename Struct, typename Field> struct FieldPointerReference {};
 template <typename _Struct, typename _Field>
 struct Expression<FieldPointerReference<_Struct, _Field>> {
   using Struct = _Struct;
   using Field = _Field;
 };
-template <typename>
-struct is_astnode_FieldPointerReference : public std::false_type {};
-template <typename Struct, typename Field>
-struct is_astnode_FieldPointerReference<
-    Expression<FieldPointerReference<Struct, Field>>> : public std::true_type {
-};
 template <typename Struct> struct Dereference {};
 template <typename _Struct> struct Expression<Dereference<_Struct>> {
   using Struct = _Struct;
 };
-template <typename> struct is_astnode_Dereference : public std::false_type {};
-template <typename Struct>
-struct is_astnode_Dereference<Expression<Dereference<Struct>>>
-    : public std::true_type {};
 template <typename label, typename Hndl> struct Endorse {};
 template <typename _label, typename _Hndl>
 struct Expression<Endorse<_label, _Hndl>> {
   using label = _label;
   using Hndl = _Hndl;
 };
-template <typename> struct is_astnode_Endorse : public std::false_type {};
-template <typename label, typename Hndl>
-struct is_astnode_Endorse<Expression<Endorse<label, Hndl>>>
-    : public std::true_type {};
 template <typename label, typename Hndl> struct Ensure {};
 template <typename _label, typename _Hndl>
 struct Expression<Ensure<_label, _Hndl>> {
   using label = _label;
   using Hndl = _Hndl;
 };
-template <typename> struct is_astnode_Ensure : public std::false_type {};
-template <typename label, typename Hndl>
-struct is_astnode_Ensure<Expression<Ensure<label, Hndl>>>
-    : public std::true_type {};
 template <typename Hndl> struct IsValid {};
 template <typename _Hndl> struct Expression<IsValid<_Hndl>> {
   using Hndl = _Hndl;
 };
-template <typename> struct is_astnode_IsValid : public std::false_type {};
-template <typename Hndl>
-struct is_astnode_IsValid<Expression<IsValid<Hndl>>> : public std::true_type {};
 template <typename Var> struct VarReference {};
 template <typename _Var> struct Expression<VarReference<_Var>> {
   using Var = _Var;
 };
-template <typename> struct is_astnode_VarReference : public std::false_type {};
-template <typename Var>
-struct is_astnode_VarReference<Expression<VarReference<Var>>>
-    : public std::true_type {};
 template <std::size_t i> struct Constant {};
 template <std::size_t _i> struct Expression<Constant<_i>> {
   std::size_t i{_i};
 };
-template <typename> struct is_astnode_Constant : public std::false_type {};
-template <std::size_t i>
-struct is_astnode_Constant<Expression<Constant<i>>> : public std::true_type {};
 template <char op, typename L, typename R> struct BinOp {};
 template <char _op, typename _L, typename _R>
 struct Expression<BinOp<_op, _L, _R>> {
@@ -453,91 +395,40 @@ struct Expression<BinOp<_op, _L, _R>> {
   using L = _L;
   using R = _R;
 };
-template <typename> struct is_astnode_BinOp : public std::false_type {};
-template <char op, typename L, typename R>
-struct is_astnode_BinOp<Expression<BinOp<op, L, R>>> : public std::true_type {};
 template <typename Binding, typename Body> struct Let {};
 template <typename _Binding, typename _Body>
 struct Statement<Let<_Binding, _Body>> {
   using Binding = _Binding;
   using Body = _Body;
 };
-template <typename> struct is_astnode_Let : public std::false_type {};
-template <typename Binding, typename Body>
-struct is_astnode_Let<Statement<Let<Binding, Body>>> : public std::true_type {};
 template <typename Binding, typename Body> struct LetRemote {};
 template <typename _Binding, typename _Body>
 struct Statement<LetRemote<_Binding, _Body>> {
   using Binding = _Binding;
   using Body = _Body;
 };
-template <typename> struct is_astnode_LetRemote : public std::false_type {};
-template <typename Binding, typename Body>
-struct is_astnode_LetRemote<Statement<LetRemote<Binding, Body>>>
-    : public std::true_type {};
-template <typename exprs> struct operation_args_exprs {};
-template <typename _exprs> struct operation_args_exprs {
-  using exprs = _exprs;
-};
-template <typename>
-struct is_astnode_operation_args_exprs : public std::false_type {};
-template <typename exprs>
-struct is_astnode_operation_args_exprs<operation_args_exprs>
-    : public std::true_type {};
-template <typename vars> struct operation_args_varrefs {};
-template <typename _vars> struct operation_args_varrefs { using vars = _vars; };
-template <typename>
-struct is_astnode_operation_args_varrefs : public std::false_type {};
-template <typename vars>
-struct is_astnode_operation_args_varrefs<operation_args_varrefs>
-    : public std::true_type {};
+template <typename...> struct operation_args_exprs;
+template <typename...> struct operation_args_varrefs;
 template <typename name, typename Hndl, typename expr_args, typename var_args>
 struct Operation {};
 template <typename _name, typename _Hndl, typename _expr_args,
           typename _var_args>
-struct Expression<Operation<_name, _Hndl, _expr_args, _var_args>> {
+struct<Operation<_name, _Hndl, _expr_args, _var_args>> {
   using name = _name;
   using Hndl = _Hndl;
   using expr_args = _expr_args;
   using var_args = _var_args;
 };
-template <typename> struct is_astnode_Operation : public std::false_type {};
-template <typename name, typename Hndl, typename expr_args, typename var_args>
-struct is_astnode_Operation<
-    Expression<Operation<name, Hndl, expr_args, var_args>>>
-    : public std::true_type {};
-template <typename name, typename Hndl, typename expr_args, typename var_args>
-struct Operation {};
-template <typename _name, typename _Hndl, typename _expr_args,
-          typename _var_args>
-struct Statement<Operation<_name, _Hndl, _expr_args, _var_args>> {
-  using name = _name;
-  using Hndl = _Hndl;
-  using expr_args = _expr_args;
-  using var_args = _var_args;
-};
-template <typename> struct is_astnode_Operation : public std::false_type {};
-template <typename name, typename Hndl, typename expr_args, typename var_args>
-struct is_astnode_Operation<
-    Statement<Operation<name, Hndl, expr_args, var_args>>>
-    : public std::true_type {};
 template <typename Var, typename Expr> struct Assignment {};
 template <typename _Var, typename _Expr>
 struct Statement<Assignment<_Var, _Expr>> {
   using Var = _Var;
   using Expr = _Expr;
 };
-template <typename> struct is_astnode_Assignment : public std::false_type {};
-template <typename Var, typename Expr>
-struct is_astnode_Assignment<Statement<Assignment<Var, Expr>>>
-    : public std::true_type {};
 template <typename Expr> struct Return {};
 template <typename _Expr> struct Statement<Return<_Expr>> {
   using Expr = _Expr;
 };
-template <typename> struct is_astnode_Return : public std::false_type {};
-template <typename Expr>
-struct is_astnode_Return<Statement<Return<Expr>>> : public std::true_type {};
 template <typename condition, typename then, typename els> struct If {};
 template <typename _condition, typename _then, typename _els>
 struct Statement<If<_condition, _then, _els>> {
@@ -545,33 +436,20 @@ struct Statement<If<_condition, _then, _els>> {
   using then = _then;
   using els = _els;
 };
-template <typename> struct is_astnode_If : public std::false_type {};
-template <typename condition, typename then, typename els>
-struct is_astnode_If<Statement<If<condition, then, els>>>
-    : public std::true_type {};
 template <typename condition, typename body> struct While {};
 template <typename _condition, typename _body>
 struct Statement<While<_condition, _body>> {
   using condition = _condition;
   using body = _body;
 };
-template <typename> struct is_astnode_While : public std::false_type {};
-template <typename condition, typename body>
-struct is_astnode_While<Statement<While<condition, body>>>
-    : public std::true_type {};
 template <typename e, typename next> struct Sequence {};
 template <typename _e, typename _next> struct Statement<Sequence<_e, _next>> {
   using e = _e;
   using next = _next;
 };
-template <typename> struct is_astnode_Sequence : public std::false_type {};
-template <typename e, typename next>
-struct is_astnode_Sequence<Statement<Sequence<e, next>>>
-    : public std::true_type {};
 struct Skip {};
 template <> struct Statement<Skip> {};
-template <typename> struct is_astnode_Skip : public std::false_type {};
-template <> struct is_astnode_Skip<Statement<Skip>> : public std::true_type {};
+
 } // namespace as_types
 
 namespace as_values {
@@ -827,8 +705,7 @@ template <typename prev_holder> struct as_type_f {
         };
 
         using _arg0 = DECT(as_type<budget - 1, arg0>());
-        return as_types::$Argument_pack_t_tnh<
-            as_types::operation_args_exprs<_arg0>>{};
+        return as_types::<as_types::operation_args_exprs<_arg0>>{};
       } else if constexpr (e.template get_<operation_args_varrefs>()
                                .is_this_elem) {
         struct arg0 {
@@ -843,8 +720,7 @@ template <typename prev_holder> struct as_type_f {
         };
 
         using _arg0 = DECT(as_type<budget - 1, arg0>());
-        return as_types::$Argument_pack_t_tnh<
-            as_types::operation_args_varrefs<_arg0>>{};
+        return as_types::<as_types::operation_args_varrefs<_arg0>>{};
       } else if constexpr (e.template get_<Operation>().is_this_elem) {
         struct arg0 {
 #ifndef __clang__
@@ -890,55 +766,7 @@ template <typename prev_holder> struct as_type_f {
         };
 
         using _arg3 = DECT(as_type<budget - 1, arg3>());
-        return as_types::Expression<
-            as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
-      } else if constexpr (e.template get_<Operation>().is_this_elem) {
-        struct arg0 {
-#ifndef __clang__
-          const AST_elem &e{F{}()};
-#endif
-          constexpr arg0() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.name.get(allocator);
-          }
-        };
-
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg1 {
-#ifndef __clang__
-          const AST_elem &e{F{}()};
-#endif
-          constexpr arg1() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.Hndl.get(allocator);
-          }
-        };
-
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg2 {
-#ifndef __clang__
-          const AST_elem &e{F{}()};
-#endif
-          constexpr arg2() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.expr_args.get(allocator);
-          }
-        };
-
-        using _arg2 = DECT(as_type<budget - 1, arg2>());
-        struct arg3 {
-#ifndef __clang__
-          const AST_elem &e{F{}()};
-#endif
-          constexpr arg3() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.var_args.get(allocator);
-          }
-        };
-
-        using _arg3 = DECT(as_type<budget - 1, arg3>());
-        return as_types::Statement<
-            as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
+        return as_types::<as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
       } else if constexpr (e.template get_<Assignment>().is_this_elem) {
         struct arg0 {
 #ifndef __clang__
@@ -1253,21 +1081,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
   template <typename name, typename Hndl, typename expr_args, typename var_args>
   constexpr static allocated_ref<AST_elem>
   as_value(AST_Allocator &allocator,
-           const Expression<Operation<name, Hndl, expr_args, var_args>> &) {
-    auto elem = allocator.template allocate<AST_elem>();
-    auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
-    this_node.is_this_elem = true;
-    elem.get(allocator).is_initialized = true;
-    this_node.t.name = as_value(allocator, name{});
-    this_node.t.Hndl = as_value(allocator, Hndl{});
-    this_node.t.expr_args = as_value(allocator, expr_args{});
-    this_node.t.var_args = as_value(allocator, var_args{});
-    return std::move(elem);
-  }
-  template <typename name, typename Hndl, typename expr_args, typename var_args>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const Statement<Operation<name, Hndl, expr_args, var_args>> &) {
+           const<Operation<name, Hndl, expr_args, var_args>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
     this_node.is_this_elem = true;
@@ -1512,20 +1326,6 @@ std::ostream &print(std::ostream &o, const Operation &e,
   return o << "}";
 }
 template <typename Allocator>
-std::ostream &print(std::ostream &o, const Operation &e,
-                    const Allocator &allocator) {
-  o << "Operation{";
-  print(o, e.name, allocator);
-  o << ",";
-  print(o, e.Hndl, allocator);
-  o << ",";
-  print(o, e.expr_args, allocator);
-  o << ",";
-  print(o, e.var_args, allocator);
-  o << ",";
-  return o << "}";
-}
-template <typename Allocator>
 std::ostream &print(std::ostream &o, const Assignment &e,
                     const Allocator &allocator) {
   o << "Assignment{";
@@ -1628,9 +1428,6 @@ std::ostream &print(std::ostream &o, const AST_elem &e,
   if (e.template get_<Operation>().is_this_elem) {
     return print(o, e.template get<Operation>(), allocator);
   }
-  if (e.template get_<Operation>().is_this_elem) {
-    return print(o, e.template get<Operation>(), allocator);
-  }
   if (e.template get_<Assignment>().is_this_elem) {
     return print(o, e.template get<Assignment>(), allocator);
   }
@@ -1652,3 +1449,89 @@ std::ostream &print(std::ostream &o, const AST_elem &e,
   return o;
 }
 } // namespace as_values
+
+namespace as_types {
+template <typename> struct is_astnode_transaction : public std::false_type {};
+template <typename e, std::size_t payload>
+struct is_astnode_transaction<Statement<transaction<e, payload>>>
+    : public std::true_type {};
+template <typename>
+struct is_astnode_FieldReference : public std::false_type {};
+template <typename Struct, typename Field>
+struct is_astnode_FieldReference<Expression<FieldReference<Struct, Field>>>
+    : public std::true_type {};
+template <typename>
+struct is_astnode_FieldPointerReference : public std::false_type {};
+template <typename Struct, typename Field>
+struct is_astnode_FieldPointerReference<
+    Expression<FieldPointerReference<Struct, Field>>> : public std::true_type {
+};
+template <typename> struct is_astnode_Dereference : public std::false_type {};
+template <typename Struct>
+struct is_astnode_Dereference<Expression<Dereference<Struct>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Endorse : public std::false_type {};
+template <typename label, typename Hndl>
+struct is_astnode_Endorse<Expression<Endorse<label, Hndl>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Ensure : public std::false_type {};
+template <typename label, typename Hndl>
+struct is_astnode_Ensure<Expression<Ensure<label, Hndl>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_IsValid : public std::false_type {};
+template <typename Hndl>
+struct is_astnode_IsValid<Expression<IsValid<Hndl>>> : public std::true_type {};
+template <typename> struct is_astnode_VarReference : public std::false_type {};
+template <typename Var>
+struct is_astnode_VarReference<Expression<VarReference<Var>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Constant : public std::false_type {};
+template <std::size_t i>
+struct is_astnode_Constant<Expression<Constant<i>>> : public std::true_type {};
+template <typename> struct is_astnode_BinOp : public std::false_type {};
+template <char op, typename L, typename R>
+struct is_astnode_BinOp<Expression<BinOp<op, L, R>>> : public std::true_type {};
+template <typename> struct is_astnode_Let : public std::false_type {};
+template <typename Binding, typename Body>
+struct is_astnode_Let<Statement<Let<Binding, Body>>> : public std::true_type {};
+template <typename> struct is_astnode_LetRemote : public std::false_type {};
+template <typename Binding, typename Body>
+struct is_astnode_LetRemote<Statement<LetRemote<Binding, Body>>>
+    : public std::true_type {};
+template <typename>
+struct is_astnode_operation_args_exprs : public std::false_type {};
+template <typename exprs>
+struct is_astnode_operation_args_exprs<operation_args_exprs>
+    : public std::true_type {};
+template <typename>
+struct is_astnode_operation_args_varrefs : public std::false_type {};
+template <typename vars>
+struct is_astnode_operation_args_varrefs<operation_args_varrefs>
+    : public std::true_type {};
+template <typename> struct is_astnode_Operation : public std::false_type {};
+template <typename name, typename Hndl, typename expr_args, typename var_args>
+        struct is_astnode_Operation
+        << Operation<name, Hndl, expr_args, var_args>>>
+    : public std::true_type{};
+template <typename> struct is_astnode_Assignment : public std::false_type {};
+template <typename Var, typename Expr>
+struct is_astnode_Assignment<Statement<Assignment<Var, Expr>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Return : public std::false_type {};
+template <typename Expr>
+struct is_astnode_Return<Statement<Return<Expr>>> : public std::true_type {};
+template <typename> struct is_astnode_If : public std::false_type {};
+template <typename condition, typename then, typename els>
+struct is_astnode_If<Statement<If<condition, then, els>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_While : public std::false_type {};
+template <typename condition, typename body>
+struct is_astnode_While<Statement<While<condition, body>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Sequence : public std::false_type {};
+template <typename e, typename next>
+struct is_astnode_Sequence<Statement<Sequence<e, next>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Skip : public std::false_type {};
+template <> struct is_astnode_Skip<Statement<Skip>> : public std::true_type {};
+} // namespace as_types

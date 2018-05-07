@@ -53,7 +53,6 @@ namespace as_types {
 <?php foreach ($types as $type){
      echo $type->define_type();
     echo $type->encapsulate_type();
-    echo $type->is_astnode_defn();
   }
 ?>
 
@@ -88,7 +87,7 @@ constexpr static auto as_type(std::enable_if_t<(budget > 0) && (budget < 50)>* =
         }
         else echo "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
       }
-    echo "return as_types::".type_name_helper($type->type)."<as_types::$type->name";
+    echo "return as_types::".$type->encapsulator_name()."<as_types::$type->name";
     $field_count = count($type->fields);
     if ($field_count > 0) echo "<";
     foreach ($type->fields as $i => $field){
@@ -189,4 +188,12 @@ namespace as_values {
     ?>
     return o;
   }
+}
+
+namespace as_types{
+    <?php
+    foreach ($types as $type){
+        echo $type->is_astnode_defn();
+    }
+    ?>
 }

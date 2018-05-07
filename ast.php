@@ -8,7 +8,8 @@ $String_t = 3;
 $Label_t = 4;
 $Argument_pack_t = 5;
 $List_t = 6;
-$NODEMAX = 7;
+$Either_t = 7;
+$NODEMAX = 8;
 
 class Field{
         public $type;
@@ -38,6 +39,10 @@ class Field{
           $this->fields = $fields;
         }
 
+        public function encapsulator_name() : string{
+            return '$tnh_error';
+        }
+
         public function template_defn($prefix = ''){
           $type = $this;
           $out = '';
@@ -62,7 +67,7 @@ class Field{
          $type = $this;
         global $Argument_pack_t;
         assert ($type->type != $Argument_pack_t);
-        $out = type_name_helper($type->type);
+        $out = $this->encapsulator_name();
         $out = $out.'<'.($type->name);
         $field_num = count($type->fields);
         if ($field_num > 0) {
@@ -118,11 +123,17 @@ class Field{
         global $Statement_t;
         parent::__construct($type_name, $Statement_t, $fields);
       }
+      public function encapsulator_name() : string{
+          return 'Statement';
+      }
     }
     class Binding extends AST_node {
       public function __construct($type_name, ...$fields) {
         global $Binding_t;
         parent::__construct($type_name, $Binding_t, $fields);
+      }
+      public function encapsulator_name() : string{
+          return 'Binding';
       }
     }
     class Expression extends AST_node {
@@ -130,6 +141,24 @@ class Field{
         global $Expression_t;
         parent::__construct($type_name, $Expression_t, $fields);
       }
+      public function encapsulator_name() : string{
+          return 'Expression';
+      }
+    }
+    class Either extends AST_node {
+        public function __construct($type_name, ...$fields) {
+            global $Either_t;
+            parent::__construct($type_name, $Either_t, $fields);
+          }
+        public function encapsulator_name() : string{
+            //error!  Either needs to be treated specially.
+            assert(false);
+            return '';
+        }
+
+        public function encapsulator_names(){
+            return array('Statement','Expression');
+        }
     }
     class Argument_pack extends AST_node {
       public function __construct($type_name,$field_name) {
@@ -137,7 +166,19 @@ class Field{
         parent::__construct($type_name, $Argument_pack_t, array(new Field($field_name,$List_t)));
       }
       public function encapsulated_type_name($prefix = '') : string{
+        assert(false); //we don't encapsulate Argument_packs.
         return $this->name;
+      }
+      public function encapsulate_type() : string {
+          //this type is not encapsulated.
+          return '';
+      }
+      public function encapsulator_name() : string{
+          //this type is not encapsulated.
+          return '';
+      }
+      public function define_type() : string {
+          return "template<typename...> struct $this->name;";
       }
     }
 
@@ -145,6 +186,10 @@ class Field{
         public function __construct($type_name) {
             global $Statement_t;
             parent::__construct($type_name, $Statement_t, array());
+          }
+
+          public function encapsulator_name() : string{
+              return 'Statement';
           }
 
           public function template_defn($prefix = ''){
@@ -162,22 +207,6 @@ class Field{
       global $List_t; global $NODEMAX;
       if (is_int($node_t)){
         return $node_t >= $Expression_t && $node_t <= $NODEMAX;
-      }
-    }
-
-    function type_name_helper(int $node_t) : string{
-      global $Statement_t; global $Expression_t; global $Binding_t;
-      global $String_t; global $Label_t; global $Argument_pack_t;
-      global $List_t;
-      switch($node_t) {
-        case $Statement_t: return "Statement";
-        case $Expression_t: return "Expression";
-        case $Binding_t: return "Binding";
-        case $String_t: return '$String__tnht';
-        case $Label_t: return '$Label_t_tnh';
-        case $Argument_pack_t: return '$Argument_pack_t_tnh';
-        case $List_t: return '$list_t_tnh';
-        default: return "error";
       }
     }
 ?>
