@@ -1,9 +1,11 @@
-
 #pragma once
 #include "allocator.hpp"
 #include "mutils/type_utils.hpp"
 #include "union.hpp"
 #include <ostream>
+
+template<typename T>
+using plain_array = T[<?php echo $max_var_length?>];
 
 namespace as_values {
   <?php 
@@ -15,32 +17,12 @@ template <std::size_t budget>
 using AST_Allocator = Allocator<budget, <?php echo $types[0]->name;?>, AST_elem>;
 
 // Define structs. 
+struct Expression{constexpr Expression(){}};
+struct Statement{constexpr Statement(){}};
+struct Binding{constexpr Binding(){}};
 <?php
 foreach ($types as $type){
-  echo "struct $type->name { ";
-    foreach ($type->fields as $field){
-      echo $field->declare_struct_member();
-    }
-    echo "
-    //default constructor
-    constexpr $type->name(){}; 
-    //move constructor
-    constexpr $type->name($type->name &&p) ";
-    foreach ($type->fields as $i => $field){
-      if ($i === 0) echo ':';
-      echo "$field->name{std::move(p.$field->name)}";
-      if ($i +1 < count($type->fields)) echo ",";
-    }
-    echo '{}';
-    echo "
-    //move-assignment 
-    constexpr $type->name &operator=($type->name &&p) {"; 
-      foreach ($type->fields as $field){
-        echo "$field->name = std::move(p.$field->name);"; 
-      }
-      echo "return *this; 
-    } 
-  };";
+  echo $type->struct_declaration();
 }
 ?>
 } // namespace as_values

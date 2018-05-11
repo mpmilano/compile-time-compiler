@@ -30,7 +30,8 @@
                 "/usr/include",
                 "/usr/local/include",
                 "/usr/lib/gcc/x86_64-pc-linux-gnu/7.2.0/include/g++-v7",
-                "${workspaceRoot}"
+                "${workspaceRoot}",
+                "/usr/lib64/gcc/x86_64-pc-linux-gnu/6.4.0/include/g++-v6/parallel"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -88,5 +89,5 @@
             "cppStandard": "c++17"
         }
     ],
-    "version": 3
+    "version": 4
 }

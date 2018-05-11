@@ -1,6 +1,7 @@
 <?php
 
     require_once 'ast.php';
+    $max_var_length = 20;
 
     $types = array(new Statement('transaction',new Field('e',$Statement_t),new Field('payload','std::size_t','{0}')),
     new Expression('FieldReference', new Field('Struct',$Expression_t),new Field('Field',$String_t)),
