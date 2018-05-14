@@ -1805,102 +1805,102 @@ namespace as_types {
 
 template <typename AST_Allocator> struct as_values_ns_fns {
   using AST_elem = as_values::AST_elem;
-  template <typename e, std::size_t payload>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const Statement<transaction<e, payload>> &) {
+  constexpr as_values_ns_fns() = default;
+  as_values::AST_Allocator<budget> allocator;
+  template <typename T> struct converter {
+    static constexpr auto value() { return as_values_ns_fns::foo(); }
+  } template <typename e, std::size_t payload>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<transaction<e, payload>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::transaction>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.e = as_value(allocator, e{});
+    this_node.t.e = as_value(e{});
     this_node.t.payload = payload;
     return std::move(elem);
   }
   template <typename Struct, typename Field>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const Expression<FieldReference<Struct, Field>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<FieldReference<Struct, Field>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::FieldReference>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Struct = as_value(allocator, Struct{});
-    this_node.t.Field = as_value(allocator, Field{});
+    this_node.t.Struct = as_value(Struct{});
+    this_node.t.Field = as_value(Field{});
     return std::move(elem);
   }
   template <typename Struct, typename Field>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const Expression<FieldPointerReference<Struct, Field>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<FieldPointerReference<Struct, Field>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::FieldPointerReference>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Struct = as_value(allocator, Struct{});
-    this_node.t.Field = as_value(allocator, Field{});
+    this_node.t.Struct = as_value(Struct{});
+    this_node.t.Field = as_value(Field{});
     return std::move(elem);
   }
   template <typename Struct>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Expression<Dereference<Struct>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<Dereference<Struct>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::Dereference>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Struct = as_value(allocator, Struct{});
+    this_node.t.Struct = as_value(Struct{});
     return std::move(elem);
   }
   template <typename label, typename Hndl>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Expression<Endorse<label, Hndl>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<Endorse<label, Hndl>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Endorse>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.label = as_value(allocator, label{});
-    this_node.t.Hndl = as_value(allocator, Hndl{});
+    this_node.t.label = as_value(label{});
+    this_node.t.Hndl = as_value(Hndl{});
     return std::move(elem);
   }
   template <typename label, typename Hndl>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Expression<Ensure<label, Hndl>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<Ensure<label, Hndl>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Ensure>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.label = as_value(allocator, label{});
-    this_node.t.Hndl = as_value(allocator, Hndl{});
+    this_node.t.label = as_value(label{});
+    this_node.t.Hndl = as_value(Hndl{});
     return std::move(elem);
   }
   template <typename Hndl>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Expression<IsValid<Hndl>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<IsValid<Hndl>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::IsValid>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Hndl = as_value(allocator, Hndl{});
+    this_node.t.Hndl = as_value(Hndl{});
     return std::move(elem);
   }
   template <typename Var>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Expression<VarReference<Var>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<VarReference<Var>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::VarReference>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Var = as_value(allocator, Var{});
+    this_node.t.Var = as_value(Var{});
     return std::move(elem);
   }
   template <std::size_t i>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Expression<Constant<i>> &) {
+  constexpr allocated_ref<AST_elem> as_value(const Expression<Constant<i>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Constant>();
     this_node.is_this_elem = true;
@@ -1909,138 +1909,132 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     return std::move(elem);
   }
   template <char op, typename L, typename R>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Expression<BinOp<op, L, R>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<BinOp<op, L, R>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::BinOp>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
     this_node.t.op = op;
-    this_node.t.L = as_value(allocator, L{});
-    this_node.t.R = as_value(allocator, R{});
+    this_node.t.L = as_value(L{});
+    this_node.t.R = as_value(R{});
     return std::move(elem);
   }
   template <typename Binding, typename Body>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Statement<Let<Binding, Body>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<Let<Binding, Body>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Let>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Binding = as_value(allocator, Binding{});
-    this_node.t.Body = as_value(allocator, Body{});
+    this_node.t.Binding = as_value(Binding{});
+    this_node.t.Body = as_value(Body{});
     return std::move(elem);
   }
   template <typename Binding, typename Body>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const Statement<LetRemote<Binding, Body>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<LetRemote<Binding, Body>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::LetRemote>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Binding = as_value(allocator, Binding{});
-    this_node.t.Body = as_value(allocator, Body{});
+    this_node.t.Binding = as_value(Binding{});
+    this_node.t.Body = as_value(Body{});
     return std::move(elem);
   }
   template <typename exprs>
-  assert_fail_argument_packconstexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const operation_args_exprs &) {
+  assert_fail_argument_packconstexpr allocated_ref<AST_elem>
+  as_value(const operation_args_exprs &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::operation_args_exprs>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.exprs = as_value(allocator, exprs{});
+    this_node.t.exprs = as_value(exprs{});
     return std::move(elem);
   }
   template <typename vars>
-  assert_fail_argument_packconstexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const operation_args_varrefs &) {
+  assert_fail_argument_packconstexpr allocated_ref<AST_elem>
+  as_value(const operation_args_varrefs &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::operation_args_varrefs>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.vars = as_value(allocator, vars{});
+    this_node.t.vars = as_value(vars{});
     return std::move(elem);
   }
   template <typename name, typename Hndl, typename expr_args, typename var_args>
-  constexpr static allocated_ref<AST_elem> as_value(
-      AST_Allocator &allocator,
+  constexpr allocated_ref<AST_elem> as_value(
       const $error_identity_unset<Operation<name, Hndl, expr_args, var_args>>
           &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.name = as_value(allocator, name{});
-    this_node.t.Hndl = as_value(allocator, Hndl{});
-    this_node.t.expr_args = as_value(allocator, expr_args{});
-    this_node.t.var_args = as_value(allocator, var_args{});
+    this_node.t.name = as_value(name{});
+    this_node.t.Hndl = as_value(Hndl{});
+    this_node.t.expr_args = as_value(expr_args{});
+    this_node.t.var_args = as_value(var_args{});
     return std::move(elem);
   }
   template <typename Var, typename Expr>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Statement<Assignment<Var, Expr>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<Assignment<Var, Expr>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
         elem.get(allocator).template get_<as_values::Assignment>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Var = as_value(allocator, Var{});
-    this_node.t.Expr = as_value(allocator, Expr{});
+    this_node.t.Var = as_value(Var{});
+    this_node.t.Expr = as_value(Expr{});
     return std::move(elem);
   }
   template <typename Expr>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Statement<Return<Expr>> &) {
+  constexpr allocated_ref<AST_elem> as_value(const Statement<Return<Expr>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Return>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Expr = as_value(allocator, Expr{});
+    this_node.t.Expr = as_value(Expr{});
     return std::move(elem);
   }
   template <typename condition, typename then, typename els>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const Statement<If<condition, then, els>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<If<condition, then, els>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::If>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.condition = as_value(allocator, condition{});
-    this_node.t.then = as_value(allocator, then{});
-    this_node.t.els = as_value(allocator, els{});
+    this_node.t.condition = as_value(condition{});
+    this_node.t.then = as_value(then{});
+    this_node.t.els = as_value(els{});
     return std::move(elem);
   }
   template <typename condition, typename body>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator,
-           const Statement<While<condition, body>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<While<condition, body>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::While>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.condition = as_value(allocator, condition{});
-    this_node.t.body = as_value(allocator, body{});
+    this_node.t.condition = as_value(condition{});
+    this_node.t.body = as_value(body{});
     return std::move(elem);
   }
   template <typename e, typename next>
-  constexpr static allocated_ref<AST_elem>
-  as_value(AST_Allocator &allocator, const Statement<Sequence<e, next>> &) {
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<Sequence<e, next>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Sequence>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.e = as_value(allocator, e{});
-    this_node.t.next = as_value(allocator, next{});
+    this_node.t.e = as_value(e{});
+    this_node.t.next = as_value(next{});
     return std::move(elem);
   }
   template <>
-  constexpr static allocated_ref<AST_elem> as_value(AST_Allocator &allocator,
-                                                    const Statement<Skip> &) {
+  constexpr allocated_ref<AST_elem> as_value(const Statement<Skip> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Skip>();
     this_node.is_this_elem = true;
@@ -2052,12 +2046,11 @@ template <typename AST_Allocator> struct as_values_ns_fns {
 template <std::size_t budget, typename hd>
 constexpr as_values::AST_Allocator<budget> as_value() {
   static_assert(is_astnode_transaction<hd>::value);
-  as_values::AST_Allocator<budget> head;
-  head.top = std::move(
-      as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head, hd{})
-          .get(head)
-          .template get<as_values::transaction>());
-  return head;
+  as_values_ns_fns<as_values::AST_Allocator<budget>> ret;
+  ret.allocator.top = std::move(ret.as_value(hd{})
+                                    .get(ret.allocator)
+                                    .template get<as_values::transaction>());
+  return std::move(ret.allocator);
 }
 } // namespace as_types
 

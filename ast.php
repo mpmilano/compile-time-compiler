@@ -226,6 +226,24 @@ class AST_node{
 	$ret = $ret. "{};";
 	return $ret;
 	}
+
+	public function to_value() :string {
+		$ret = $ret. $type->full_template_defn();
+		$decl = $type->encapsulated_type_name();
+	  $ret = $ret. "constexpr allocated_ref<AST_elem> as_value(const $decl &){
+		auto elem = allocator.template allocate<AST_elem>();
+		auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
+		this_node.is_this_elem = true;
+		elem.get(allocator).is_initialized = true;";
+		foreach ($type->fields as $field){
+		  if (is_ast_node($field->type))
+			$ret = $ret. "this_node.t.$field->name = as_value($field->name{});";
+		  else $ret = $ret. "this_node.t.$field->name = $field->name;";
+		}
+		$ret = $ret. 'return std::move(elem);';
+	  $ret = $ret. "}\n";
+	  return $ret;
+	}
 }
 
 function cpp_list($type) : string{

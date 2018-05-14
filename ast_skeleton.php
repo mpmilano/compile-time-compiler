@@ -81,22 +81,14 @@ namespace as_types{
 template<typename AST_Allocator>
 struct as_values_ns_fns{
   using AST_elem = as_values::AST_elem;
+  constexpr as_values_ns_fns() = default;
+  as_values::AST_Allocator<budget> allocator;
+  template<typename T> struct converter {
+    static constexpr auto value() {return as_values_ns_fns::foo();}
+  }
   <?php 
   foreach ($types as $type){
-    echo $type->full_template_defn();
-    $decl = $type->encapsulated_type_name();
-  echo "constexpr static allocated_ref<AST_elem> as_value(AST_Allocator& allocator, const $decl &){
-    auto elem = allocator.template allocate<AST_elem>();
-    auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
-    this_node.is_this_elem = true;
-    elem.get(allocator).is_initialized = true;";
-    foreach ($type->fields as $field){
-      if (is_ast_node($field->type))
-        echo "this_node.t.$field->name = as_value(allocator, $field->name{});";
-      else echo "this_node.t.$field->name = $field->name;";
-    }
-    echo 'return std::move(elem);';
-  echo "}\n";
+    echo $type->to_value();
   }
   ?>
 };
@@ -104,9 +96,9 @@ struct as_values_ns_fns{
   template<std::size_t budget, typename hd>
   constexpr as_values::AST_Allocator<budget> as_value(){
     static_assert(is_astnode_transaction<hd>::value);
-    as_values::AST_Allocator<budget> head;
-    head.top = std::move(as_values_ns_fns<as_values::AST_Allocator<budget>>::as_value(head,hd{}).get(head).template get<as_values::transaction>());
-    return head;
+    as_values_ns_fns<as_values::AST_Allocator<budget>> ret;
+    ret.allocator.top = std::move(ret.as_value(hd{}).get(ret.allocator).template get<as_values::transaction>());
+    return std::move(ret.allocator);
   }
 }
 
