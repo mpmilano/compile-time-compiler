@@ -32,6 +32,16 @@ class Field{
 		return $this->value_type_name()." $this->name $this->initializer;";
 	}
 }
+
+class proto_field {
+		public $name;
+		public $type;
+		#type defaults to $Expression_t, but we can't use globals here.
+		public function __construct($name,$type = 0){
+			$this->name = $name;
+			$this->type = $type;
+		}
+}
 class AST_node{
 	public $name;
 	public $type;
@@ -157,7 +167,7 @@ class AST_node{
 
   public function struct_fields() : string {
 	  $out = '';
-	foreach ($this->fields as $field){
+		foreach ($this->fields as $field){
 			$out = $out.$field->declare_struct_member();
 		}
 		return $out;
@@ -173,10 +183,48 @@ class AST_node{
 		}
 		$out = $out."{ ".$this->struct_fields();
 		
-     $out = $out.$this->struct_constructor().
-     $this->struct_move_constructor().
-     $this->struct_move_assignment();
+		$out = $out.$this->struct_constructor().
+			$this->struct_move_constructor().
+			$this->struct_move_assignment();
 		return $out."};";
+	}
+	public function declare_arg($field, $i){
+		$type = $this;
+		return "struct arg$i {
+			#ifndef __clang__
+					  const AST_elem &e{F{}()};
+			#endif
+					  constexpr arg$i() {}
+					  constexpr const AST_elem &operator()() const {
+						return e.template get_<$type->name>().t.$field->name.get(allocator);
+					  }
+					};
+					
+					";
+	}
+	public function to_type_body() : string{
+		$type = $this; 
+		$ret = '';
+		foreach ($type->field_accessors() as $i => $field){
+			if (is_ast_node($field->type)) {
+				$ret = $ret. "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n".
+				$this->declare_arg($field,$i);
+			}
+			else $ret = $ret. "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
+		}
+    $ret = $ret. "return as_types::".$type->encapsulator_name()."<as_types::$type->name";
+    $field_count = count($type->field_accessors());
+    if ($field_count > 0) $ret = $ret. "<";
+    foreach ($type->field_accessors() as $i => $field){
+      $ret = $ret. "_arg$i";
+      if ($i + 1 != $field_count){
+        $ret = $ret. ",";
+      }
+    }
+    if ($field_count > 0) $ret = $ret. ">";
+    $ret = $ret. '>';
+	$ret = $ret. "{};";
+	return $ret;
 	}
 }
 
@@ -302,20 +350,51 @@ class Argument_pack extends AST_node {
 	  global $Expression_t;
 	  $ret = array();
 	  for ($i =0; $i < $max_var_length; ++$i){
-		array_push($ret,new class("$this->field_name[$i]",$Expression_t) {
-			public $name;
-			public $type;
-			public function __construct($name,$type){
-				$this->name = $name;
-				$this->type = $type;
-			}
-		 });
+			array_push($ret,new proto_field("$this->field_name[$i]"));
 	  }
 	  return $ret;
   }
-  	public function is_astnode_defn() : string {
-		  return '';
-	  }
+
+  public function assemble_to_type_return($max_var_length) : string {
+	$type = $this;
+	$ret = '';
+	$ret = $ret. "return as_types::".$type->encapsulator_name()."<as_types::$type->name<";
+	if ($max_var_length > 0){
+	    $field_count = $max_var_length;
+    	for ($j = 0; $j < $max_var_length; ++$j){
+      	$ret = $ret. "_arg$j";
+      	if ($j + 1 != $field_count){
+	        $ret = $ret. ",";
+      		}
+    	}
+	}
+	return $ret.">>{};";
+  }
+
+  public function to_type_body() : string{
+	  global $max_var_length;
+	  $ret = '';
+		#is always an AST node, apparently
+			for ($i = 0; $i < $max_var_length; ++$i){
+				$ret = $ret."if (there_is_anything_here){";
+				$field_name = "$this->field_name[$i]";
+				$ret = $ret. "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n".
+				$this->declare_arg(new proto_field($field_name),$i);
+				if ($i + 1 == $max_var_length) {
+					$ret = $ret.$this->assemble_to_type_return($max_var_length);
+				}
+			}
+			for ($i = 0; $i < $max_var_length - 1; ++$i){
+			$ret = $ret."} else {".
+				$this->assemble_to_type_return($max_var_length - $i - 1).
+				"}";
+			}
+		return $ret."}".$this->assemble_to_type_return(0);
+	}
+	
+	public function is_astnode_defn() : string {
+		return '';
+	}
 }
                 
 class Skip extends AST_node {

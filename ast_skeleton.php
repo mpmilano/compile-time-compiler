@@ -52,35 +52,8 @@ constexpr static auto as_type(std::enable_if_t<(budget > 0) && (budget < 50)>* =
     <?php foreach ($types as $i => $type){
       if ($i > 0) echo 'else ';
       echo "if constexpr (e.template get_<$type->name>().is_this_elem) {\n";
-      foreach ($type->field_accessors() as $i => $field){
-        if (is_ast_node($field->type)) {
-        echo "struct arg$i {
-#ifndef __clang__
-          const AST_elem &e{F{}()};
-#endif
-          constexpr arg$i() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<$type->name>().t.$field->name.get(allocator);
-          }
-        };
-        
-        ";
-          echo "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n";
-        }
-        else echo "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
-      }
-    echo "return as_types::".$type->encapsulator_name()."<as_types::$type->name";
-    $field_count = count($type->field_accessors());
-    if ($field_count > 0) echo "<";
-    foreach ($type->field_accessors() as $i => $field){
-      echo "_arg$i";
-      if ($i + 1 != $field_count){
-        echo ",";
-      }
-    }
-    if ($field_count > 0) echo ">";
-    echo '>';
-    echo "{};}\n";
+      echo $type->to_type_body();
+    echo "}\n";
   }?>
   else {struct error {};
     return error{};}
