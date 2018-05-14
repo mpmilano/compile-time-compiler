@@ -45,6 +45,10 @@ class AST_node{
 	public function encapsulator_name() : string{
 		return '$tnh_error';
 	}
+
+	public function field_accessors() {
+		return $this->fields;
+	}
     
 	public function template_defn($prefix = ''){
 		$type = $this;
@@ -288,8 +292,26 @@ class Argument_pack extends AST_node {
 			for (auto i = 0u; i < $max_var_length; ++i){
 				$this->field_name[i] = std::move(p.$this->field_name[i]);
 			}
+			return *this;
 		}
 		";
+  }
+
+  public function field_accessors() {
+	  global $max_var_length;
+	  global $Expression_t;
+	  $ret = array();
+	  for ($i =0; $i < $max_var_length; ++$i){
+		array_push($ret,new class("$this->field_name[$i]",$Expression_t) {
+			public $name;
+			public $type;
+			public function __construct($name,$type){
+				$this->name = $name;
+				$this->type = $type;
+			}
+		 });
+	  }
+	  return $ret;
   }
   	public function is_astnode_defn() : string {
 		  return '';

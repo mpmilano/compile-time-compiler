@@ -52,7 +52,7 @@ constexpr static auto as_type(std::enable_if_t<(budget > 0) && (budget < 50)>* =
     <?php foreach ($types as $i => $type){
       if ($i > 0) echo 'else ';
       echo "if constexpr (e.template get_<$type->name>().is_this_elem) {\n";
-      foreach ($type->fields as $i => $field){
+      foreach ($type->field_accessors() as $i => $field){
         if (is_ast_node($field->type)) {
         echo "struct arg$i {
 #ifndef __clang__
@@ -70,9 +70,9 @@ constexpr static auto as_type(std::enable_if_t<(budget > 0) && (budget < 50)>* =
         else echo "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
       }
     echo "return as_types::".$type->encapsulator_name()."<as_types::$type->name";
-    $field_count = count($type->fields);
+    $field_count = count($type->field_accessors());
     if ($field_count > 0) echo "<";
-    foreach ($type->fields as $i => $field){
+    foreach ($type->field_accessors() as $i => $field){
       echo "_arg$i";
       if ($i + 1 != $field_count){
         echo ",";

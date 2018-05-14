@@ -37,6 +37,11 @@
         "string_view": "cpp",
         "utility": "cpp",
         "valarray": "cpp",
-        "vector": "cpp"
-    }
+        "vector": "cpp",
+        "ostream": "cpp"
+    },
+    "clang.cxxflags": [
+        "--std=c++1z",
+        "--stdlib=libc++"
+    ]
 }

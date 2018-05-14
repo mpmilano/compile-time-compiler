@@ -221,6 +221,7 @@ struct operation_args_exprs {
     for (auto i = 0u; i < 20; ++i) {
       exprs[i] = std::move(p.exprs[i]);
     }
+    return *this;
   }
 };
 struct operation_args_varrefs {
@@ -240,6 +241,7 @@ struct operation_args_varrefs {
     for (auto i = 0u; i < 20; ++i) {
       vars[i] = std::move(p.vars[i]);
     }
+    return *this;
   }
 };
 struct Operation : public Statement, public Expression {
@@ -710,13 +712,244 @@ template <typename prev_holder> struct as_type_f {
 #endif
           constexpr arg0() {}
           constexpr const AST_elem &operator()() const {
-            return e.template get_<operation_args_exprs>().t.exprs.get(
+            return e.template get_<operation_args_exprs>().t.exprs[0].get(
                 allocator);
           }
         };
 
         using _arg0 = DECT(as_type<budget - 1, arg0>());
-        return as_types::<as_types::operation_args_exprs<_arg0>>{};
+        struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[1].get(
+                allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        struct arg2 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg2() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[2].get(
+                allocator);
+          }
+        };
+
+        using _arg2 = DECT(as_type<budget - 1, arg2>());
+        struct arg3 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg3() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[3].get(
+                allocator);
+          }
+        };
+
+        using _arg3 = DECT(as_type<budget - 1, arg3>());
+        struct arg4 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg4() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[4].get(
+                allocator);
+          }
+        };
+
+        using _arg4 = DECT(as_type<budget - 1, arg4>());
+        struct arg5 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg5() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[5].get(
+                allocator);
+          }
+        };
+
+        using _arg5 = DECT(as_type<budget - 1, arg5>());
+        struct arg6 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg6() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[6].get(
+                allocator);
+          }
+        };
+
+        using _arg6 = DECT(as_type<budget - 1, arg6>());
+        struct arg7 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg7() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[7].get(
+                allocator);
+          }
+        };
+
+        using _arg7 = DECT(as_type<budget - 1, arg7>());
+        struct arg8 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg8() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[8].get(
+                allocator);
+          }
+        };
+
+        using _arg8 = DECT(as_type<budget - 1, arg8>());
+        struct arg9 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg9() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[9].get(
+                allocator);
+          }
+        };
+
+        using _arg9 = DECT(as_type<budget - 1, arg9>());
+        struct arg10 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg10() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[10].get(
+                allocator);
+          }
+        };
+
+        using _arg10 = DECT(as_type<budget - 1, arg10>());
+        struct arg11 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg11() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[11].get(
+                allocator);
+          }
+        };
+
+        using _arg11 = DECT(as_type<budget - 1, arg11>());
+        struct arg12 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg12() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[12].get(
+                allocator);
+          }
+        };
+
+        using _arg12 = DECT(as_type<budget - 1, arg12>());
+        struct arg13 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg13() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[13].get(
+                allocator);
+          }
+        };
+
+        using _arg13 = DECT(as_type<budget - 1, arg13>());
+        struct arg14 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg14() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[14].get(
+                allocator);
+          }
+        };
+
+        using _arg14 = DECT(as_type<budget - 1, arg14>());
+        struct arg15 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg15() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[15].get(
+                allocator);
+          }
+        };
+
+        using _arg15 = DECT(as_type<budget - 1, arg15>());
+        struct arg16 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg16() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[16].get(
+                allocator);
+          }
+        };
+
+        using _arg16 = DECT(as_type<budget - 1, arg16>());
+        struct arg17 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg17() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[17].get(
+                allocator);
+          }
+        };
+
+        using _arg17 = DECT(as_type<budget - 1, arg17>());
+        struct arg18 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg18() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[18].get(
+                allocator);
+          }
+        };
+
+        using _arg18 = DECT(as_type<budget - 1, arg18>());
+        struct arg19 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg19() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_exprs>().t.exprs[19].get(
+                allocator);
+          }
+        };
+
+        using _arg19 = DECT(as_type<budget - 1, arg19>());
+        return as_types::<as_types::operation_args_exprs<
+            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8,
+            _arg9, _arg10, _arg11, _arg12, _arg13, _arg14, _arg15, _arg16,
+            _arg17, _arg18, _arg19>>{};
       } else if constexpr (e.template get_<operation_args_varrefs>()
                                .is_this_elem) {
         struct arg0 {
@@ -725,13 +958,244 @@ template <typename prev_holder> struct as_type_f {
 #endif
           constexpr arg0() {}
           constexpr const AST_elem &operator()() const {
-            return e.template get_<operation_args_varrefs>().t.vars.get(
+            return e.template get_<operation_args_varrefs>().t.vars[0].get(
                 allocator);
           }
         };
 
         using _arg0 = DECT(as_type<budget - 1, arg0>());
-        return as_types::<as_types::operation_args_varrefs<_arg0>>{};
+        struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[1].get(
+                allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        struct arg2 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg2() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[2].get(
+                allocator);
+          }
+        };
+
+        using _arg2 = DECT(as_type<budget - 1, arg2>());
+        struct arg3 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg3() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[3].get(
+                allocator);
+          }
+        };
+
+        using _arg3 = DECT(as_type<budget - 1, arg3>());
+        struct arg4 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg4() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[4].get(
+                allocator);
+          }
+        };
+
+        using _arg4 = DECT(as_type<budget - 1, arg4>());
+        struct arg5 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg5() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[5].get(
+                allocator);
+          }
+        };
+
+        using _arg5 = DECT(as_type<budget - 1, arg5>());
+        struct arg6 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg6() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[6].get(
+                allocator);
+          }
+        };
+
+        using _arg6 = DECT(as_type<budget - 1, arg6>());
+        struct arg7 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg7() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[7].get(
+                allocator);
+          }
+        };
+
+        using _arg7 = DECT(as_type<budget - 1, arg7>());
+        struct arg8 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg8() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[8].get(
+                allocator);
+          }
+        };
+
+        using _arg8 = DECT(as_type<budget - 1, arg8>());
+        struct arg9 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg9() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[9].get(
+                allocator);
+          }
+        };
+
+        using _arg9 = DECT(as_type<budget - 1, arg9>());
+        struct arg10 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg10() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[10].get(
+                allocator);
+          }
+        };
+
+        using _arg10 = DECT(as_type<budget - 1, arg10>());
+        struct arg11 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg11() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[11].get(
+                allocator);
+          }
+        };
+
+        using _arg11 = DECT(as_type<budget - 1, arg11>());
+        struct arg12 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg12() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[12].get(
+                allocator);
+          }
+        };
+
+        using _arg12 = DECT(as_type<budget - 1, arg12>());
+        struct arg13 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg13() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[13].get(
+                allocator);
+          }
+        };
+
+        using _arg13 = DECT(as_type<budget - 1, arg13>());
+        struct arg14 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg14() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[14].get(
+                allocator);
+          }
+        };
+
+        using _arg14 = DECT(as_type<budget - 1, arg14>());
+        struct arg15 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg15() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[15].get(
+                allocator);
+          }
+        };
+
+        using _arg15 = DECT(as_type<budget - 1, arg15>());
+        struct arg16 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg16() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[16].get(
+                allocator);
+          }
+        };
+
+        using _arg16 = DECT(as_type<budget - 1, arg16>());
+        struct arg17 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg17() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[17].get(
+                allocator);
+          }
+        };
+
+        using _arg17 = DECT(as_type<budget - 1, arg17>());
+        struct arg18 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg18() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[18].get(
+                allocator);
+          }
+        };
+
+        using _arg18 = DECT(as_type<budget - 1, arg18>());
+        struct arg19 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg19() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<operation_args_varrefs>().t.vars[19].get(
+                allocator);
+          }
+        };
+
+        using _arg19 = DECT(as_type<budget - 1, arg19>());
+        return as_types::<as_types::operation_args_varrefs<
+            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8,
+            _arg9, _arg10, _arg11, _arg12, _arg13, _arg14, _arg15, _arg16,
+            _arg17, _arg18, _arg19>>{};
       } else if constexpr (e.template get_<Operation>().is_this_elem) {
         struct arg0 {
 #ifndef __clang__
