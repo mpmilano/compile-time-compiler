@@ -188,6 +188,9 @@ class AST_node{
 			$this->struct_move_assignment();
 		return $out."};";
 	}
+	public function get_field_from_e($field){
+		return "e.template get_<$this->name>().t.$field->name";
+	}
 	public function declare_arg($field, $i){
 		$type = $this;
 		return "struct arg$i {
@@ -196,7 +199,7 @@ class AST_node{
 			#endif
 					  constexpr arg$i() {}
 					  constexpr const AST_elem &operator()() const {
-						return e.template get_<$type->name>().t.$field->name.get(allocator);
+						return ".$this->get_field_from_e($field).".get(allocator);
 					  }
 					};
 					
@@ -228,7 +231,9 @@ class AST_node{
 	}
 
 	public function to_value() :string {
-		$ret = $ret. $type->full_template_defn();
+		$type = $this;
+		$ret = ''.
+		$type->full_template_defn();
 		$decl = $type->encapsulated_type_name();
 	  $ret = $ret. "constexpr allocated_ref<AST_elem> as_value(const $decl &){
 		auto elem = allocator.template allocate<AST_elem>();
@@ -394,10 +399,11 @@ class Argument_pack extends AST_node {
 	  $ret = '';
 		#is always an AST node, apparently
 			for ($i = 0; $i < $max_var_length; ++$i){
-				$ret = $ret."if (there_is_anything_here){";
-				$field_name = "$this->field_name[$i]";
-				$ret = $ret. "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n".
-				$this->declare_arg(new proto_field($field_name),$i);
+				$proto_f = new proto_field("$this->field_name[$i]");
+				$ret = $ret.
+				"if (there_is_anything_here(".$this->get_field_from_e($proto_f).")){".
+				"using _arg$i = DECT(as_type<budget - 1, arg$i>());\n".
+				$this->declare_arg($proto_f,$i);
 				if ($i + 1 == $max_var_length) {
 					$ret = $ret.$this->assemble_to_type_return($max_var_length);
 				}

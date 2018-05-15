@@ -706,7 +706,8 @@ template <typename prev_holder> struct as_type_f {
         return as_types::Statement<as_types::LetRemote<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<operation_args_exprs>()
                                .is_this_elem) {
-        if (there_is_anything_here) {
+        if (there_is_anything_here(
+                e.template get_<operation_args_exprs>().t.exprs[0])) {
           using _arg0 = DECT(as_type<budget - 1, arg0>());
           struct arg0 {
 #ifndef __clang__
@@ -719,7 +720,8 @@ template <typename prev_holder> struct as_type_f {
             }
           };
 
-          if (there_is_anything_here) {
+          if (there_is_anything_here(
+                  e.template get_<operation_args_exprs>().t.exprs[1])) {
             using _arg1 = DECT(as_type<budget - 1, arg1>());
             struct arg1 {
 #ifndef __clang__
@@ -732,7 +734,8 @@ template <typename prev_holder> struct as_type_f {
               }
             };
 
-            if (there_is_anything_here) {
+            if (there_is_anything_here(
+                    e.template get_<operation_args_exprs>().t.exprs[2])) {
               using _arg2 = DECT(as_type<budget - 1, arg2>());
               struct arg2 {
 #ifndef __clang__
@@ -745,7 +748,8 @@ template <typename prev_holder> struct as_type_f {
                 }
               };
 
-              if (there_is_anything_here) {
+              if (there_is_anything_here(
+                      e.template get_<operation_args_exprs>().t.exprs[3])) {
                 using _arg3 = DECT(as_type<budget - 1, arg3>());
                 struct arg3 {
 #ifndef __clang__
@@ -759,7 +763,8 @@ template <typename prev_holder> struct as_type_f {
                   }
                 };
 
-                if (there_is_anything_here) {
+                if (there_is_anything_here(
+                        e.template get_<operation_args_exprs>().t.exprs[4])) {
                   using _arg4 = DECT(as_type<budget - 1, arg4>());
                   struct arg4 {
 #ifndef __clang__
@@ -773,7 +778,8 @@ template <typename prev_holder> struct as_type_f {
                     }
                   };
 
-                  if (there_is_anything_here) {
+                  if (there_is_anything_here(
+                          e.template get_<operation_args_exprs>().t.exprs[5])) {
                     using _arg5 = DECT(as_type<budget - 1, arg5>());
                     struct arg5 {
 #ifndef __clang__
@@ -787,7 +793,9 @@ template <typename prev_holder> struct as_type_f {
                       }
                     };
 
-                    if (there_is_anything_here) {
+                    if (there_is_anything_here(
+                            e.template get_<operation_args_exprs>()
+                                .t.exprs[6])) {
                       using _arg6 = DECT(as_type<budget - 1, arg6>());
                       struct arg6 {
 #ifndef __clang__
@@ -801,7 +809,9 @@ template <typename prev_holder> struct as_type_f {
                         }
                       };
 
-                      if (there_is_anything_here) {
+                      if (there_is_anything_here(
+                              e.template get_<operation_args_exprs>()
+                                  .t.exprs[7])) {
                         using _arg7 = DECT(as_type<budget - 1, arg7>());
                         struct arg7 {
 #ifndef __clang__
@@ -815,7 +825,9 @@ template <typename prev_holder> struct as_type_f {
                           }
                         };
 
-                        if (there_is_anything_here) {
+                        if (there_is_anything_here(
+                                e.template get_<operation_args_exprs>()
+                                    .t.exprs[8])) {
                           using _arg8 = DECT(as_type<budget - 1, arg8>());
                           struct arg8 {
 #ifndef __clang__
@@ -829,7 +841,9 @@ template <typename prev_holder> struct as_type_f {
                             }
                           };
 
-                          if (there_is_anything_here) {
+                          if (there_is_anything_here(
+                                  e.template get_<operation_args_exprs>()
+                                      .t.exprs[9])) {
                             using _arg9 = DECT(as_type<budget - 1, arg9>());
                             struct arg9 {
 #ifndef __clang__
@@ -843,7 +857,9 @@ template <typename prev_holder> struct as_type_f {
                               }
                             };
 
-                            if (there_is_anything_here) {
+                            if (there_is_anything_here(
+                                    e.template get_<operation_args_exprs>()
+                                        .t.exprs[10])) {
                               using _arg10 = DECT(as_type<budget - 1, arg10>());
                               struct arg10 {
 #ifndef __clang__
@@ -857,7 +873,9 @@ template <typename prev_holder> struct as_type_f {
                                 }
                               };
 
-                              if (there_is_anything_here) {
+                              if (there_is_anything_here(
+                                      e.template get_<operation_args_exprs>()
+                                          .t.exprs[11])) {
                                 using _arg11 =
                                     DECT(as_type<budget - 1, arg11>());
                                 struct arg11 {
@@ -873,7 +891,9 @@ template <typename prev_holder> struct as_type_f {
                                   }
                                 };
 
-                                if (there_is_anything_here) {
+                                if (there_is_anything_here(
+                                        e.template get_<operation_args_exprs>()
+                                            .t.exprs[12])) {
                                   using _arg12 =
                                       DECT(as_type<budget - 1, arg12>());
                                   struct arg12 {
@@ -890,7 +910,10 @@ template <typename prev_holder> struct as_type_f {
                                     }
                                   };
 
-                                  if (there_is_anything_here) {
+                                  if (there_is_anything_here(
+                                          e.template get_<
+                                               operation_args_exprs>()
+                                              .t.exprs[13])) {
                                     using _arg13 =
                                         DECT(as_type<budget - 1, arg13>());
                                     struct arg13 {
@@ -908,7 +931,10 @@ template <typename prev_holder> struct as_type_f {
                                       }
                                     };
 
-                                    if (there_is_anything_here) {
+                                    if (there_is_anything_here(
+                                            e.template get_<
+                                                 operation_args_exprs>()
+                                                .t.exprs[14])) {
                                       using _arg14 =
                                           DECT(as_type<budget - 1, arg14>());
                                       struct arg14 {
@@ -926,7 +952,10 @@ template <typename prev_holder> struct as_type_f {
                                         }
                                       };
 
-                                      if (there_is_anything_here) {
+                                      if (there_is_anything_here(
+                                              e.template get_<
+                                                   operation_args_exprs>()
+                                                  .t.exprs[15])) {
                                         using _arg15 =
                                             DECT(as_type<budget - 1, arg15>());
                                         struct arg15 {
@@ -944,7 +973,10 @@ template <typename prev_holder> struct as_type_f {
                                           }
                                         };
 
-                                        if (there_is_anything_here) {
+                                        if (there_is_anything_here(
+                                                e.template get_<
+                                                     operation_args_exprs>()
+                                                    .t.exprs[16])) {
                                           using _arg16 = DECT(
                                               as_type<budget - 1, arg16>());
                                           struct arg16 {
@@ -962,7 +994,10 @@ template <typename prev_holder> struct as_type_f {
                                             }
                                           };
 
-                                          if (there_is_anything_here) {
+                                          if (there_is_anything_here(
+                                                  e.template get_<
+                                                       operation_args_exprs>()
+                                                      .t.exprs[17])) {
                                             using _arg17 = DECT(
                                                 as_type<budget - 1, arg17>());
                                             struct arg17 {
@@ -980,7 +1015,10 @@ template <typename prev_holder> struct as_type_f {
                                               }
                                             };
 
-                                            if (there_is_anything_here) {
+                                            if (there_is_anything_here(
+                                                    e.template get_<
+                                                         operation_args_exprs>()
+                                                        .t.exprs[18])) {
                                               using _arg18 = DECT(
                                                   as_type<budget - 1, arg18>());
                                               struct arg18 {
@@ -998,7 +1036,10 @@ template <typename prev_holder> struct as_type_f {
                                                 }
                                               };
 
-                                              if (there_is_anything_here) {
+                                              if (there_is_anything_here(
+                                                      e.template get_<
+                                                           operation_args_exprs>()
+                                                          .t.exprs[19])) {
                                                 using _arg19 =
                                                     DECT(as_type<budget - 1,
                                                                  arg19>());
@@ -1154,7 +1195,8 @@ template <typename prev_holder> struct as_type_f {
         return as_types::<as_types::operation_args_exprs<>>{};
       } else if constexpr (e.template get_<operation_args_varrefs>()
                                .is_this_elem) {
-        if (there_is_anything_here) {
+        if (there_is_anything_here(
+                e.template get_<operation_args_varrefs>().t.vars[0])) {
           using _arg0 = DECT(as_type<budget - 1, arg0>());
           struct arg0 {
 #ifndef __clang__
@@ -1167,7 +1209,8 @@ template <typename prev_holder> struct as_type_f {
             }
           };
 
-          if (there_is_anything_here) {
+          if (there_is_anything_here(
+                  e.template get_<operation_args_varrefs>().t.vars[1])) {
             using _arg1 = DECT(as_type<budget - 1, arg1>());
             struct arg1 {
 #ifndef __clang__
@@ -1180,7 +1223,8 @@ template <typename prev_holder> struct as_type_f {
               }
             };
 
-            if (there_is_anything_here) {
+            if (there_is_anything_here(
+                    e.template get_<operation_args_varrefs>().t.vars[2])) {
               using _arg2 = DECT(as_type<budget - 1, arg2>());
               struct arg2 {
 #ifndef __clang__
@@ -1194,7 +1238,8 @@ template <typename prev_holder> struct as_type_f {
                 }
               };
 
-              if (there_is_anything_here) {
+              if (there_is_anything_here(
+                      e.template get_<operation_args_varrefs>().t.vars[3])) {
                 using _arg3 = DECT(as_type<budget - 1, arg3>());
                 struct arg3 {
 #ifndef __clang__
@@ -1208,7 +1253,8 @@ template <typename prev_holder> struct as_type_f {
                   }
                 };
 
-                if (there_is_anything_here) {
+                if (there_is_anything_here(
+                        e.template get_<operation_args_varrefs>().t.vars[4])) {
                   using _arg4 = DECT(as_type<budget - 1, arg4>());
                   struct arg4 {
 #ifndef __clang__
@@ -1222,7 +1268,9 @@ template <typename prev_holder> struct as_type_f {
                     }
                   };
 
-                  if (there_is_anything_here) {
+                  if (there_is_anything_here(
+                          e.template get_<operation_args_varrefs>()
+                              .t.vars[5])) {
                     using _arg5 = DECT(as_type<budget - 1, arg5>());
                     struct arg5 {
 #ifndef __clang__
@@ -1236,7 +1284,9 @@ template <typename prev_holder> struct as_type_f {
                       }
                     };
 
-                    if (there_is_anything_here) {
+                    if (there_is_anything_here(
+                            e.template get_<operation_args_varrefs>()
+                                .t.vars[6])) {
                       using _arg6 = DECT(as_type<budget - 1, arg6>());
                       struct arg6 {
 #ifndef __clang__
@@ -1250,7 +1300,9 @@ template <typename prev_holder> struct as_type_f {
                         }
                       };
 
-                      if (there_is_anything_here) {
+                      if (there_is_anything_here(
+                              e.template get_<operation_args_varrefs>()
+                                  .t.vars[7])) {
                         using _arg7 = DECT(as_type<budget - 1, arg7>());
                         struct arg7 {
 #ifndef __clang__
@@ -1264,7 +1316,9 @@ template <typename prev_holder> struct as_type_f {
                           }
                         };
 
-                        if (there_is_anything_here) {
+                        if (there_is_anything_here(
+                                e.template get_<operation_args_varrefs>()
+                                    .t.vars[8])) {
                           using _arg8 = DECT(as_type<budget - 1, arg8>());
                           struct arg8 {
 #ifndef __clang__
@@ -1278,7 +1332,9 @@ template <typename prev_holder> struct as_type_f {
                             }
                           };
 
-                          if (there_is_anything_here) {
+                          if (there_is_anything_here(
+                                  e.template get_<operation_args_varrefs>()
+                                      .t.vars[9])) {
                             using _arg9 = DECT(as_type<budget - 1, arg9>());
                             struct arg9 {
 #ifndef __clang__
@@ -1292,7 +1348,9 @@ template <typename prev_holder> struct as_type_f {
                               }
                             };
 
-                            if (there_is_anything_here) {
+                            if (there_is_anything_here(
+                                    e.template get_<operation_args_varrefs>()
+                                        .t.vars[10])) {
                               using _arg10 = DECT(as_type<budget - 1, arg10>());
                               struct arg10 {
 #ifndef __clang__
@@ -1307,7 +1365,9 @@ template <typename prev_holder> struct as_type_f {
                                 }
                               };
 
-                              if (there_is_anything_here) {
+                              if (there_is_anything_here(
+                                      e.template get_<operation_args_varrefs>()
+                                          .t.vars[11])) {
                                 using _arg11 =
                                     DECT(as_type<budget - 1, arg11>());
                                 struct arg11 {
@@ -1323,7 +1383,10 @@ template <typename prev_holder> struct as_type_f {
                                   }
                                 };
 
-                                if (there_is_anything_here) {
+                                if (there_is_anything_here(
+                                        e.template get_<
+                                             operation_args_varrefs>()
+                                            .t.vars[12])) {
                                   using _arg12 =
                                       DECT(as_type<budget - 1, arg12>());
                                   struct arg12 {
@@ -1341,7 +1404,10 @@ template <typename prev_holder> struct as_type_f {
                                     }
                                   };
 
-                                  if (there_is_anything_here) {
+                                  if (there_is_anything_here(
+                                          e.template get_<
+                                               operation_args_varrefs>()
+                                              .t.vars[13])) {
                                     using _arg13 =
                                         DECT(as_type<budget - 1, arg13>());
                                     struct arg13 {
@@ -1359,7 +1425,10 @@ template <typename prev_holder> struct as_type_f {
                                       }
                                     };
 
-                                    if (there_is_anything_here) {
+                                    if (there_is_anything_here(
+                                            e.template get_<
+                                                 operation_args_varrefs>()
+                                                .t.vars[14])) {
                                       using _arg14 =
                                           DECT(as_type<budget - 1, arg14>());
                                       struct arg14 {
@@ -1377,7 +1446,10 @@ template <typename prev_holder> struct as_type_f {
                                         }
                                       };
 
-                                      if (there_is_anything_here) {
+                                      if (there_is_anything_here(
+                                              e.template get_<
+                                                   operation_args_varrefs>()
+                                                  .t.vars[15])) {
                                         using _arg15 =
                                             DECT(as_type<budget - 1, arg15>());
                                         struct arg15 {
@@ -1395,7 +1467,10 @@ template <typename prev_holder> struct as_type_f {
                                           }
                                         };
 
-                                        if (there_is_anything_here) {
+                                        if (there_is_anything_here(
+                                                e.template get_<
+                                                     operation_args_varrefs>()
+                                                    .t.vars[16])) {
                                           using _arg16 = DECT(
                                               as_type<budget - 1, arg16>());
                                           struct arg16 {
@@ -1413,7 +1488,10 @@ template <typename prev_holder> struct as_type_f {
                                             }
                                           };
 
-                                          if (there_is_anything_here) {
+                                          if (there_is_anything_here(
+                                                  e.template get_<
+                                                       operation_args_varrefs>()
+                                                      .t.vars[17])) {
                                             using _arg17 = DECT(
                                                 as_type<budget - 1, arg17>());
                                             struct arg17 {
@@ -1431,7 +1509,10 @@ template <typename prev_holder> struct as_type_f {
                                               }
                                             };
 
-                                            if (there_is_anything_here) {
+                                            if (there_is_anything_here(
+                                                    e.template get_<
+                                                         operation_args_varrefs>()
+                                                        .t.vars[18])) {
                                               using _arg18 = DECT(
                                                   as_type<budget - 1, arg18>());
                                               struct arg18 {
@@ -1449,7 +1530,10 @@ template <typename prev_holder> struct as_type_f {
                                                 }
                                               };
 
-                                              if (there_is_anything_here) {
+                                              if (there_is_anything_here(
+                                                      e.template get_<
+                                                           operation_args_varrefs>()
+                                                          .t.vars[19])) {
                                                 using _arg19 =
                                                     DECT(as_type<budget - 1,
                                                                  arg19>());
@@ -1942,8 +2026,8 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.Body = as_value(Body{});
     return std::move(elem);
   }
-  template <typename exprs>
-  assert_fail_argument_packconstexpr allocated_ref<AST_elem>
+  assert_fail_argument_packtemplate<typename exprs> constexpr allocated_ref<
+      AST_elem>
   as_value(const operation_args_exprs &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
@@ -1953,8 +2037,8 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.exprs = as_value(exprs{});
     return std::move(elem);
   }
-  template <typename vars>
-  assert_fail_argument_packconstexpr allocated_ref<AST_elem>
+  assert_fail_argument_packtemplate<typename vars> constexpr allocated_ref<
+      AST_elem>
   as_value(const operation_args_varrefs &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node =
