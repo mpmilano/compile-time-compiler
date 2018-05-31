@@ -123,7 +123,10 @@ class AST_node{
 	public function value_declaration(){
 		return "struct $this->name;";
 	}
-        
+		
+	public function full_template_defn_for_method($prefix = '') : string{
+		return $this->full_template_defn($prefix);
+	}
 	public function full_template_defn($prefix = ''){
 		return $this->template_defn($prefix);
 	}
@@ -237,7 +240,7 @@ class AST_node{
 	public function to_value() :string {
 		$type = $this;
 		$ret = ''.
-		$type->full_template_defn();
+		$type->full_template_defn_for_method();
 		$decl = $type->encapsulated_type_name();
 	  $ret = $ret. "constexpr allocated_ref<AST_elem> as_value(const $decl &){
 		auto elem = allocator.template allocate<AST_elem>();
@@ -464,6 +467,9 @@ class Skip extends AST_node {
                   
 	public function full_template_defn($prefix = ''){
 		return 'template<>';
+	}
+	public function full_template_defn_for_method($prefix = '') : string {
+		return '';
 	}
 }
                 

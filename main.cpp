@@ -21,8 +21,8 @@ template <typename string> struct parse {
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
-    ret.get(allocator).template get_<as_values::number>().is_this_elem = true;
-    auto &voidref = ret.get(allocator).template get_<as_values::number>().t;
+    ret.get(allocator).template get_<as_values::Constant>().is_this_elem = true;
+    auto &voidref = ret.get(allocator).template get_<as_values::Constant>().t;
     (void)voidref;
     return ret;
   }
@@ -32,8 +32,8 @@ template <typename string> struct parse {
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
-    ret.get(allocator).template get_<as_values::skip>().is_this_elem = true;
-    auto &skipref = ret.get(allocator).template get_<as_values::skip>().t;
+    ret.get(allocator).template get_<as_values::Skip>().is_this_elem = true;
+    auto &skipref = ret.get(allocator).template get_<as_values::Skip>().t;
     (void)skipref;
     return ret;
   }
@@ -45,8 +45,8 @@ template <typename string> struct parse {
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
-    ret.get(allocator).template get_<as_values::sequence>().is_this_elem = true;
-    auto &seqref = ret.get(allocator).template get_<as_values::sequence>().t;
+    ret.get(allocator).template get_<as_values::Sequence>().is_this_elem = true;
+    auto &seqref = ret.get(allocator).template get_<as_values::Sequence>().t;
     auto *seq = &seqref;
     str_nc string_bufs[20] = {{0}};
     auto groups = split_outside_parens(';', str, string_bufs);
@@ -60,20 +60,20 @@ template <typename string> struct parse {
         allocated_ref<as_values::AST_elem> newret =
             allocator.template allocate<as_values::AST_elem>();
         newret.get(allocator)
-            .template get_<as_values::sequence>()
+            .template get_<as_values::Sequence>()
             .is_this_elem = true;
         auto &seqref =
-            newret.get(allocator).template get_<as_values::sequence>().t;
+            newret.get(allocator).template get_<as_values::Sequence>().t;
         seq->next = std::move(newret);
         seq = &seqref;
       } else {
 
         allocated_ref<as_values::AST_elem> skipref =
             allocator.template allocate<as_values::AST_elem>();
-        skipref.get(allocator).template get_<as_values::skip>().is_this_elem =
+        skipref.get(allocator).template get_<as_values::Skip>().is_this_elem =
             true;
         auto &voidref =
-            skipref.get(allocator).template get_<as_values::skip>().t;
+            skipref.get(allocator).template get_<as_values::Skip>().t;
         (void)voidref;
         seq->next = std::move(skipref);
       }
@@ -107,8 +107,10 @@ template <typename string> struct flatten {
 auto test_input() {
   using namespace as_types;
   return Statement<transaction<
-      Statement<sequence<Statement<skip>,
-                         Statement<return_val<Expression<number<5>>>>>>,
+      Statement<Sequence<
+          Statement<Skip>,
+          Statement<Sequence<Statement<Skip>,
+                             Statement<Return<Expression<Constant<5>>>>>>>>,
       0>>{};
 }
 using round_trip_send = DECT(test_input());
@@ -134,9 +136,14 @@ int main() {
   CSTR(wrapper, this is a string !);
   constexpr parse<wrapper> p;
   print(std::cout, p.allocator.top, p.allocator);
+  std::cout << std::endl;
   // constexpr flatten<wrapper> f;
   // flatten<str>::parse_t::print();
   // round_trip_return::print();
   static_assert(std::is_same<round_trip_return, round_trip_send>::value);
+  constexpr prev_t to_print;
+
+  print(std::cout, to_print.allocator.top, to_print.allocator);
+  std::cout << std::endl;
   return 0;
 }

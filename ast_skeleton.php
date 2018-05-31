@@ -46,6 +46,14 @@ namespace as_types {
 
 } // namespace as_types
 
+namespace as_types{
+    <?php
+    foreach ($types as $type){
+        echo $type->is_astnode_defn();
+    }
+    ?>
+}
+
 namespace as_values {
 template <typename prev_holder>
           struct as_type_f{
@@ -144,10 +152,3 @@ namespace as_values {
   }
 }
 
-namespace as_types{
-    <?php
-    foreach ($types as $type){
-        echo $type->is_astnode_defn();
-    }
-    ?>
-}

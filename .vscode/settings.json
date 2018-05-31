@@ -38,7 +38,8 @@
         "utility": "cpp",
         "valarray": "cpp",
         "vector": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "iosfwd": "cpp"
     },
     "clang.cxxflags": [
         "--std=c++1z",
