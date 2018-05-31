@@ -1,0 +1,15 @@
+Constexpr lambdas are a thing!  You can use these instead of the inline-declared structs that are oh so annoying to do right now.  From https://jguegant.github.io//jguegant.github.io/blogs/tech/meta-crush-saga.html:
+
+     
+
+This requirements should ring a bell to you. What we need is a constexpr lambda! And C++17 rightfully added the possibility to use the constexpr keyword on a lambda. We could rewrite the code sample in such a way:
+
+template <class LambdaType>
+constexpr auto parse_board(LambdaType&& get_game_state_string) {
+    std::array<CellType, parse_board_size(get_game_state_string())> board{};
+    //                                       ^ Allowed to call a constexpr lambda in this context.
+}
+
+parse_board([]() constexpr -> { return “...something...”; });
+
+
