@@ -38,5 +38,7 @@ public:
 		indx = o.indx;
 		return *this;
 	}
+
+	constexpr operator bool() const {return indx != 0;}
 	
 };

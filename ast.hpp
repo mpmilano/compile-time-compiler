@@ -36,6 +36,8 @@ using AST_elem =
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
+constexpr bool is_non_null(const allocated_ref<AST_elem> &e) { return e; }
+
 // Define structs.
 struct Expression {
   constexpr Expression() {}
@@ -249,17 +251,20 @@ struct Operation : public Statement, public Expression {
   allocated_ref<AST_elem> Hndl{};
   allocated_ref<AST_elem> expr_args{};
   allocated_ref<AST_elem> var_args{};
+  bool is_statement{};
   // default constructor
   constexpr Operation(){};
   constexpr Operation(Operation &&p)
       : name{std::move(p.name)}, Hndl{std::move(p.Hndl)},
-        expr_args{std::move(p.expr_args)}, var_args{std::move(p.var_args)} {}
+        expr_args{std::move(p.expr_args)}, var_args{std::move(p.var_args)},
+        is_statement{std::move(p.is_statement)} {}
   // move-assignment
   constexpr Operation &operator=(Operation &&p) {
     name = std::move(p.name);
     Hndl = std::move(p.Hndl);
     expr_args = std::move(p.expr_args);
     var_args = std::move(p.var_args);
+    is_statement = std::move(p.is_statement);
     return *this;
   }
 };
@@ -413,24 +418,31 @@ struct Statement<LetRemote<_Binding, _Body>> {
   using Body = _Body;
 };
 template <typename...> struct operation_args_exprs;
+template <typename...> struct operation_args_exprs {};
 template <typename...> struct operation_args_varrefs;
-template <typename name, typename Hndl, typename expr_args, typename var_args>
+template <typename...> struct operation_args_varrefs {};
+template <typename name, typename Hndl, typename expr_args, typename var_args,
+          bool is_statement>
 struct Operation {};
 template <typename _name, typename _Hndl, typename _expr_args,
-          typename _var_args>
-struct Statement<Operation<_name, _Hndl, _expr_args, _var_args>> {
+          typename _var_args, bool _is_statement>
+struct Statement<
+    Operation<_name, _Hndl, _expr_args, _var_args, _is_statement>> {
   using name = _name;
   using Hndl = _Hndl;
   using expr_args = _expr_args;
   using var_args = _var_args;
+  bool is_statement{_is_statement};
 };
 template <typename _name, typename _Hndl, typename _expr_args,
-          typename _var_args>
-struct Expression<Operation<_name, _Hndl, _expr_args, _var_args>> {
+          typename _var_args, bool _is_statement>
+struct Expression<
+    Operation<_name, _Hndl, _expr_args, _var_args, _is_statement>> {
   using name = _name;
   using Hndl = _Hndl;
   using expr_args = _expr_args;
   using var_args = _var_args;
+  bool is_statement{_is_statement};
 };
 template <typename Var, typename Expr> struct Assignment {};
 template <typename _Var, typename _Expr>
@@ -476,8 +488,7 @@ template <typename prev_holder> struct as_type_f {
     if constexpr (budget > 0) {
       constexpr const AST_elem &e = F{}();
       if constexpr (e.template get_<transaction>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -487,11 +498,11 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         constexpr auto _arg1 = e.template get_<transaction>().t.payload;
         return as_types::Statement<as_types::transaction<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<FieldReference>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -501,8 +512,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -512,11 +523,11 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Expression<as_types::FieldReference<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<FieldPointerReference>()
                                .is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -527,8 +538,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -539,11 +550,11 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Expression<
             as_types::FieldPointerReference<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Dereference>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -553,10 +564,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::Dereference<_arg0>>{};
       } else if constexpr (e.template get_<Endorse>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -566,8 +577,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -577,10 +588,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Expression<as_types::Endorse<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Ensure>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -590,8 +601,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -601,10 +612,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Expression<as_types::Ensure<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<IsValid>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -614,10 +625,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::IsValid<_arg0>>{};
       } else if constexpr (e.template get_<VarReference>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -627,14 +638,14 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::VarReference<_arg0>>{};
       } else if constexpr (e.template get_<Constant>().is_this_elem) {
         constexpr auto _arg0 = e.template get_<Constant>().t.i;
         return as_types::Expression<as_types::Constant<_arg0>>{};
       } else if constexpr (e.template get_<BinOp>().is_this_elem) {
         constexpr auto _arg0 = e.template get_<BinOp>().t.op;
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -644,8 +655,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg2 = DECT(as_type<budget - 1, arg2>());
-        struct arg2 {
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        /*Declaring arg!*/ struct arg2 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -655,10 +666,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg2 = DECT(as_type<budget - 1, arg2>());
         return as_types::Expression<as_types::BinOp<_arg0, _arg1, _arg2>>{};
       } else if constexpr (e.template get_<Let>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -668,8 +679,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -679,10 +690,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Statement<as_types::Let<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<LetRemote>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -692,8 +703,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -703,12 +714,11 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Statement<as_types::LetRemote<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<operation_args_exprs>()
                                .is_this_elem) {
-        if (there_is_anything_here(
-                e.template get_<operation_args_exprs>().t.exprs[0])) {
-          using _arg0 = DECT(as_type<budget - 1, arg0>());
+        if (is_non_null(e.template get_<operation_args_exprs>().t.exprs[0])) {
           struct arg0 {
 #ifndef __clang__
             const AST_elem &e{F{}()};
@@ -720,9 +730,8 @@ template <typename prev_holder> struct as_type_f {
             }
           };
 
-          if (there_is_anything_here(
-                  e.template get_<operation_args_exprs>().t.exprs[1])) {
-            using _arg1 = DECT(as_type<budget - 1, arg1>());
+          using _arg0 = DECT(as_type<budget - 1, arg0>());
+          if (is_non_null(e.template get_<operation_args_exprs>().t.exprs[1])) {
             struct arg1 {
 #ifndef __clang__
               const AST_elem &e{F{}()};
@@ -734,9 +743,9 @@ template <typename prev_holder> struct as_type_f {
               }
             };
 
-            if (there_is_anything_here(
+            using _arg1 = DECT(as_type<budget - 1, arg1>());
+            if (is_non_null(
                     e.template get_<operation_args_exprs>().t.exprs[2])) {
-              using _arg2 = DECT(as_type<budget - 1, arg2>());
               struct arg2 {
 #ifndef __clang__
                 const AST_elem &e{F{}()};
@@ -748,9 +757,9 @@ template <typename prev_holder> struct as_type_f {
                 }
               };
 
-              if (there_is_anything_here(
+              using _arg2 = DECT(as_type<budget - 1, arg2>());
+              if (is_non_null(
                       e.template get_<operation_args_exprs>().t.exprs[3])) {
-                using _arg3 = DECT(as_type<budget - 1, arg3>());
                 struct arg3 {
 #ifndef __clang__
                   const AST_elem &e{F{}()};
@@ -763,9 +772,9 @@ template <typename prev_holder> struct as_type_f {
                   }
                 };
 
-                if (there_is_anything_here(
+                using _arg3 = DECT(as_type<budget - 1, arg3>());
+                if (is_non_null(
                         e.template get_<operation_args_exprs>().t.exprs[4])) {
-                  using _arg4 = DECT(as_type<budget - 1, arg4>());
                   struct arg4 {
 #ifndef __clang__
                     const AST_elem &e{F{}()};
@@ -778,9 +787,9 @@ template <typename prev_holder> struct as_type_f {
                     }
                   };
 
-                  if (there_is_anything_here(
+                  using _arg4 = DECT(as_type<budget - 1, arg4>());
+                  if (is_non_null(
                           e.template get_<operation_args_exprs>().t.exprs[5])) {
-                    using _arg5 = DECT(as_type<budget - 1, arg5>());
                     struct arg5 {
 #ifndef __clang__
                       const AST_elem &e{F{}()};
@@ -793,10 +802,9 @@ template <typename prev_holder> struct as_type_f {
                       }
                     };
 
-                    if (there_is_anything_here(
-                            e.template get_<operation_args_exprs>()
-                                .t.exprs[6])) {
-                      using _arg6 = DECT(as_type<budget - 1, arg6>());
+                    using _arg5 = DECT(as_type<budget - 1, arg5>());
+                    if (is_non_null(e.template get_<operation_args_exprs>()
+                                        .t.exprs[6])) {
                       struct arg6 {
 #ifndef __clang__
                         const AST_elem &e{F{}()};
@@ -809,10 +817,9 @@ template <typename prev_holder> struct as_type_f {
                         }
                       };
 
-                      if (there_is_anything_here(
-                              e.template get_<operation_args_exprs>()
-                                  .t.exprs[7])) {
-                        using _arg7 = DECT(as_type<budget - 1, arg7>());
+                      using _arg6 = DECT(as_type<budget - 1, arg6>());
+                      if (is_non_null(e.template get_<operation_args_exprs>()
+                                          .t.exprs[7])) {
                         struct arg7 {
 #ifndef __clang__
                           const AST_elem &e{F{}()};
@@ -825,10 +832,9 @@ template <typename prev_holder> struct as_type_f {
                           }
                         };
 
-                        if (there_is_anything_here(
-                                e.template get_<operation_args_exprs>()
-                                    .t.exprs[8])) {
-                          using _arg8 = DECT(as_type<budget - 1, arg8>());
+                        using _arg7 = DECT(as_type<budget - 1, arg7>());
+                        if (is_non_null(e.template get_<operation_args_exprs>()
+                                            .t.exprs[8])) {
                           struct arg8 {
 #ifndef __clang__
                             const AST_elem &e{F{}()};
@@ -841,10 +847,10 @@ template <typename prev_holder> struct as_type_f {
                             }
                           };
 
-                          if (there_is_anything_here(
+                          using _arg8 = DECT(as_type<budget - 1, arg8>());
+                          if (is_non_null(
                                   e.template get_<operation_args_exprs>()
                                       .t.exprs[9])) {
-                            using _arg9 = DECT(as_type<budget - 1, arg9>());
                             struct arg9 {
 #ifndef __clang__
                               const AST_elem &e{F{}()};
@@ -857,10 +863,10 @@ template <typename prev_holder> struct as_type_f {
                               }
                             };
 
-                            if (there_is_anything_here(
+                            using _arg9 = DECT(as_type<budget - 1, arg9>());
+                            if (is_non_null(
                                     e.template get_<operation_args_exprs>()
                                         .t.exprs[10])) {
-                              using _arg10 = DECT(as_type<budget - 1, arg10>());
                               struct arg10 {
 #ifndef __clang__
                                 const AST_elem &e{F{}()};
@@ -873,11 +879,10 @@ template <typename prev_holder> struct as_type_f {
                                 }
                               };
 
-                              if (there_is_anything_here(
+                              using _arg10 = DECT(as_type<budget - 1, arg10>());
+                              if (is_non_null(
                                       e.template get_<operation_args_exprs>()
                                           .t.exprs[11])) {
-                                using _arg11 =
-                                    DECT(as_type<budget - 1, arg11>());
                                 struct arg11 {
 #ifndef __clang__
                                   const AST_elem &e{F{}()};
@@ -891,11 +896,11 @@ template <typename prev_holder> struct as_type_f {
                                   }
                                 };
 
-                                if (there_is_anything_here(
+                                using _arg11 =
+                                    DECT(as_type<budget - 1, arg11>());
+                                if (is_non_null(
                                         e.template get_<operation_args_exprs>()
                                             .t.exprs[12])) {
-                                  using _arg12 =
-                                      DECT(as_type<budget - 1, arg12>());
                                   struct arg12 {
 #ifndef __clang__
                                     const AST_elem &e{F{}()};
@@ -910,12 +915,11 @@ template <typename prev_holder> struct as_type_f {
                                     }
                                   };
 
-                                  if (there_is_anything_here(
-                                          e.template get_<
-                                               operation_args_exprs>()
-                                              .t.exprs[13])) {
-                                    using _arg13 =
-                                        DECT(as_type<budget - 1, arg13>());
+                                  using _arg12 =
+                                      DECT(as_type<budget - 1, arg12>());
+                                  if (is_non_null(e.template get_<
+                                                       operation_args_exprs>()
+                                                      .t.exprs[13])) {
                                     struct arg13 {
 #ifndef __clang__
                                       const AST_elem &e{F{}()};
@@ -931,12 +935,11 @@ template <typename prev_holder> struct as_type_f {
                                       }
                                     };
 
-                                    if (there_is_anything_here(
-                                            e.template get_<
-                                                 operation_args_exprs>()
-                                                .t.exprs[14])) {
-                                      using _arg14 =
-                                          DECT(as_type<budget - 1, arg14>());
+                                    using _arg13 =
+                                        DECT(as_type<budget - 1, arg13>());
+                                    if (is_non_null(e.template get_<
+                                                         operation_args_exprs>()
+                                                        .t.exprs[14])) {
                                       struct arg14 {
 #ifndef __clang__
                                         const AST_elem &e{F{}()};
@@ -952,12 +955,12 @@ template <typename prev_holder> struct as_type_f {
                                         }
                                       };
 
-                                      if (there_is_anything_here(
+                                      using _arg14 =
+                                          DECT(as_type<budget - 1, arg14>());
+                                      if (is_non_null(
                                               e.template get_<
                                                    operation_args_exprs>()
                                                   .t.exprs[15])) {
-                                        using _arg15 =
-                                            DECT(as_type<budget - 1, arg15>());
                                         struct arg15 {
 #ifndef __clang__
                                           const AST_elem &e{F{}()};
@@ -973,12 +976,12 @@ template <typename prev_holder> struct as_type_f {
                                           }
                                         };
 
-                                        if (there_is_anything_here(
+                                        using _arg15 =
+                                            DECT(as_type<budget - 1, arg15>());
+                                        if (is_non_null(
                                                 e.template get_<
                                                      operation_args_exprs>()
                                                     .t.exprs[16])) {
-                                          using _arg16 = DECT(
-                                              as_type<budget - 1, arg16>());
                                           struct arg16 {
 #ifndef __clang__
                                             const AST_elem &e{F{}()};
@@ -994,12 +997,12 @@ template <typename prev_holder> struct as_type_f {
                                             }
                                           };
 
-                                          if (there_is_anything_here(
+                                          using _arg16 = DECT(
+                                              as_type<budget - 1, arg16>());
+                                          if (is_non_null(
                                                   e.template get_<
                                                        operation_args_exprs>()
                                                       .t.exprs[17])) {
-                                            using _arg17 = DECT(
-                                                as_type<budget - 1, arg17>());
                                             struct arg17 {
 #ifndef __clang__
                                               const AST_elem &e{F{}()};
@@ -1015,12 +1018,12 @@ template <typename prev_holder> struct as_type_f {
                                               }
                                             };
 
-                                            if (there_is_anything_here(
+                                            using _arg17 = DECT(
+                                                as_type<budget - 1, arg17>());
+                                            if (is_non_null(
                                                     e.template get_<
                                                          operation_args_exprs>()
                                                         .t.exprs[18])) {
-                                              using _arg18 = DECT(
-                                                  as_type<budget - 1, arg18>());
                                               struct arg18 {
 #ifndef __clang__
                                                 const AST_elem &e{F{}()};
@@ -1036,13 +1039,12 @@ template <typename prev_holder> struct as_type_f {
                                                 }
                                               };
 
-                                              if (there_is_anything_here(
+                                              using _arg18 = DECT(
+                                                  as_type<budget - 1, arg18>());
+                                              if (is_non_null(
                                                       e.template get_<
                                                            operation_args_exprs>()
                                                           .t.exprs[19])) {
-                                                using _arg19 =
-                                                    DECT(as_type<budget - 1,
-                                                                 arg19>());
                                                 struct arg19 {
 #ifndef __clang__
                                                   const AST_elem &e{F{}()};
@@ -1058,146 +1060,130 @@ template <typename prev_holder> struct as_type_f {
                                                   }
                                                 };
 
-                                                return as_types::<
-                                                    as_types::
-                                                        operation_args_exprs<
-                                                            _arg0, _arg1, _arg2,
-                                                            _arg3, _arg4, _arg5,
-                                                            _arg6, _arg7, _arg8,
-                                                            _arg9, _arg10,
-                                                            _arg11, _arg12,
-                                                            _arg13, _arg14,
-                                                            _arg15, _arg16,
-                                                            _arg17, _arg18,
-                                                            _arg19>>{};
+                                                using _arg19 =
+                                                    DECT(as_type<budget - 1,
+                                                                 arg19>());
+                                                return as_types::
+                                                    operation_args_exprs<
+                                                        _arg0, _arg1, _arg2,
+                                                        _arg3, _arg4, _arg5,
+                                                        _arg6, _arg7, _arg8,
+                                                        _arg9, _arg10, _arg11,
+                                                        _arg12, _arg13, _arg14,
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18, _arg19>{};
                                               } else {
-                                                return as_types::<
-                                                    as_types::
-                                                        operation_args_exprs<
-                                                            _arg0, _arg1, _arg2,
-                                                            _arg3, _arg4, _arg5,
-                                                            _arg6, _arg7, _arg8,
-                                                            _arg9, _arg10,
-                                                            _arg11, _arg12,
-                                                            _arg13, _arg14,
-                                                            _arg15, _arg16,
-                                                            _arg17, _arg18>>{};
+                                                return as_types::
+                                                    operation_args_exprs<
+                                                        _arg0, _arg1, _arg2,
+                                                        _arg3, _arg4, _arg5,
+                                                        _arg6, _arg7, _arg8,
+                                                        _arg9, _arg10, _arg11,
+                                                        _arg12, _arg13, _arg14,
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18>{};
                                               }
                                             } else {
-                                              return as_types::<
-                                                  as_types::
-                                                      operation_args_exprs<
-                                                          _arg0, _arg1, _arg2,
-                                                          _arg3, _arg4, _arg5,
-                                                          _arg6, _arg7, _arg8,
-                                                          _arg9, _arg10, _arg11,
-                                                          _arg12, _arg13,
-                                                          _arg14, _arg15,
-                                                          _arg16, _arg17>>{};
+                                              return as_types::
+                                                  operation_args_exprs<
+                                                      _arg0, _arg1, _arg2,
+                                                      _arg3, _arg4, _arg5,
+                                                      _arg6, _arg7, _arg8,
+                                                      _arg9, _arg10, _arg11,
+                                                      _arg12, _arg13, _arg14,
+                                                      _arg15, _arg16, _arg17>{};
                                             }
                                           } else {
-                                            return as_types::<
-                                                as_types::operation_args_exprs<
+                                            return as_types::
+                                                operation_args_exprs<
                                                     _arg0, _arg1, _arg2, _arg3,
                                                     _arg4, _arg5, _arg6, _arg7,
                                                     _arg8, _arg9, _arg10,
                                                     _arg11, _arg12, _arg13,
-                                                    _arg14, _arg15, _arg16>>{};
+                                                    _arg14, _arg15, _arg16>{};
                                           }
                                         } else {
-                                          return as_types::<
-                                              as_types::operation_args_exprs<
-                                                  _arg0, _arg1, _arg2, _arg3,
-                                                  _arg4, _arg5, _arg6, _arg7,
-                                                  _arg8, _arg9, _arg10, _arg11,
-                                                  _arg12, _arg13, _arg14,
-                                                  _arg15>>{};
-                                        }
-                                      } else {
-                                        return as_types::<
-                                            as_types::operation_args_exprs<
-                                                _arg0, _arg1, _arg2, _arg3,
-                                                _arg4, _arg5, _arg6, _arg7,
-                                                _arg8, _arg9, _arg10, _arg11,
-                                                _arg12, _arg13, _arg14>>{};
-                                      }
-                                    } else {
-                                      return as_types::<
-                                          as_types::operation_args_exprs<
+                                          return as_types::operation_args_exprs<
                                               _arg0, _arg1, _arg2, _arg3, _arg4,
                                               _arg5, _arg6, _arg7, _arg8, _arg9,
-                                              _arg10, _arg11, _arg12,
-                                              _arg13>>{};
-                                    }
-                                  } else {
-                                    return as_types::<
-                                        as_types::operation_args_exprs<
+                                              _arg10, _arg11, _arg12, _arg13,
+                                              _arg14, _arg15>{};
+                                        }
+                                      } else {
+                                        return as_types::operation_args_exprs<
                                             _arg0, _arg1, _arg2, _arg3, _arg4,
                                             _arg5, _arg6, _arg7, _arg8, _arg9,
-                                            _arg10, _arg11, _arg12>>{};
-                                  }
-                                } else {
-                                  return as_types::<
-                                      as_types::operation_args_exprs<
+                                            _arg10, _arg11, _arg12, _arg13,
+                                            _arg14>{};
+                                      }
+                                    } else {
+                                      return as_types::operation_args_exprs<
                                           _arg0, _arg1, _arg2, _arg3, _arg4,
                                           _arg5, _arg6, _arg7, _arg8, _arg9,
-                                          _arg10, _arg11>>{};
-                                }
-                              } else {
-                                return as_types::<
-                                    as_types::operation_args_exprs<
+                                          _arg10, _arg11, _arg12, _arg13>{};
+                                    }
+                                  } else {
+                                    return as_types::operation_args_exprs<
                                         _arg0, _arg1, _arg2, _arg3, _arg4,
                                         _arg5, _arg6, _arg7, _arg8, _arg9,
-                                        _arg10>>{};
+                                        _arg10, _arg11, _arg12>{};
+                                  }
+                                } else {
+                                  return as_types::operation_args_exprs<
+                                      _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                      _arg6, _arg7, _arg8, _arg9, _arg10,
+                                      _arg11>{};
+                                }
+                              } else {
+                                return as_types::operation_args_exprs<
+                                    _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                    _arg6, _arg7, _arg8, _arg9, _arg10>{};
                               }
                             } else {
-                              return as_types::<as_types::operation_args_exprs<
+                              return as_types::operation_args_exprs<
                                   _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
-                                  _arg6, _arg7, _arg8, _arg9>>{};
+                                  _arg6, _arg7, _arg8, _arg9>{};
                             }
                           } else {
-                            return as_types::<as_types::operation_args_exprs<
+                            return as_types::operation_args_exprs<
                                 _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
-                                _arg7, _arg8>>{};
+                                _arg7, _arg8>{};
                           }
                         } else {
-                          return as_types::<as_types::operation_args_exprs<
+                          return as_types::operation_args_exprs<
                               _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
-                              _arg7>>{};
+                              _arg7>{};
                         }
                       } else {
-                        return as_types::<as_types::operation_args_exprs<
-                            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6>>{};
+                        return as_types::operation_args_exprs<
+                            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6>{};
                       }
                     } else {
-                      return as_types::<as_types::operation_args_exprs<
-                          _arg0, _arg1, _arg2, _arg3, _arg4, _arg5>>{};
+                      return as_types::operation_args_exprs<
+                          _arg0, _arg1, _arg2, _arg3, _arg4, _arg5>{};
                     }
                   } else {
-                    return as_types::<as_types::operation_args_exprs<
-                        _arg0, _arg1, _arg2, _arg3, _arg4>>{};
+                    return as_types::operation_args_exprs<_arg0, _arg1, _arg2,
+                                                          _arg3, _arg4>{};
                   }
                 } else {
-                  return as_types::<as_types::operation_args_exprs<
-                      _arg0, _arg1, _arg2, _arg3>>{};
+                  return as_types::operation_args_exprs<_arg0, _arg1, _arg2,
+                                                        _arg3>{};
                 }
               } else {
-                return as_types::<
-                    as_types::operation_args_exprs<_arg0, _arg1, _arg2>>{};
+                return as_types::operation_args_exprs<_arg0, _arg1, _arg2>{};
               }
             } else {
-              return as_types::<as_types::operation_args_exprs<_arg0, _arg1>>{};
+              return as_types::operation_args_exprs<_arg0, _arg1>{};
             }
           } else {
-            return as_types::<as_types::operation_args_exprs<_arg0>>{};
+            return as_types::operation_args_exprs<_arg0>{};
           }
         }
-        return as_types::<as_types::operation_args_exprs<>>{};
+        return as_types::operation_args_exprs<>{};
       } else if constexpr (e.template get_<operation_args_varrefs>()
                                .is_this_elem) {
-        if (there_is_anything_here(
-                e.template get_<operation_args_varrefs>().t.vars[0])) {
-          using _arg0 = DECT(as_type<budget - 1, arg0>());
+        if (is_non_null(e.template get_<operation_args_varrefs>().t.vars[0])) {
           struct arg0 {
 #ifndef __clang__
             const AST_elem &e{F{}()};
@@ -1209,9 +1195,9 @@ template <typename prev_holder> struct as_type_f {
             }
           };
 
-          if (there_is_anything_here(
+          using _arg0 = DECT(as_type<budget - 1, arg0>());
+          if (is_non_null(
                   e.template get_<operation_args_varrefs>().t.vars[1])) {
-            using _arg1 = DECT(as_type<budget - 1, arg1>());
             struct arg1 {
 #ifndef __clang__
               const AST_elem &e{F{}()};
@@ -1223,9 +1209,9 @@ template <typename prev_holder> struct as_type_f {
               }
             };
 
-            if (there_is_anything_here(
+            using _arg1 = DECT(as_type<budget - 1, arg1>());
+            if (is_non_null(
                     e.template get_<operation_args_varrefs>().t.vars[2])) {
-              using _arg2 = DECT(as_type<budget - 1, arg2>());
               struct arg2 {
 #ifndef __clang__
                 const AST_elem &e{F{}()};
@@ -1238,9 +1224,9 @@ template <typename prev_holder> struct as_type_f {
                 }
               };
 
-              if (there_is_anything_here(
+              using _arg2 = DECT(as_type<budget - 1, arg2>());
+              if (is_non_null(
                       e.template get_<operation_args_varrefs>().t.vars[3])) {
-                using _arg3 = DECT(as_type<budget - 1, arg3>());
                 struct arg3 {
 #ifndef __clang__
                   const AST_elem &e{F{}()};
@@ -1253,9 +1239,9 @@ template <typename prev_holder> struct as_type_f {
                   }
                 };
 
-                if (there_is_anything_here(
+                using _arg3 = DECT(as_type<budget - 1, arg3>());
+                if (is_non_null(
                         e.template get_<operation_args_varrefs>().t.vars[4])) {
-                  using _arg4 = DECT(as_type<budget - 1, arg4>());
                   struct arg4 {
 #ifndef __clang__
                     const AST_elem &e{F{}()};
@@ -1268,10 +1254,9 @@ template <typename prev_holder> struct as_type_f {
                     }
                   };
 
-                  if (there_is_anything_here(
-                          e.template get_<operation_args_varrefs>()
-                              .t.vars[5])) {
-                    using _arg5 = DECT(as_type<budget - 1, arg5>());
+                  using _arg4 = DECT(as_type<budget - 1, arg4>());
+                  if (is_non_null(e.template get_<operation_args_varrefs>()
+                                      .t.vars[5])) {
                     struct arg5 {
 #ifndef __clang__
                       const AST_elem &e{F{}()};
@@ -1284,10 +1269,9 @@ template <typename prev_holder> struct as_type_f {
                       }
                     };
 
-                    if (there_is_anything_here(
-                            e.template get_<operation_args_varrefs>()
-                                .t.vars[6])) {
-                      using _arg6 = DECT(as_type<budget - 1, arg6>());
+                    using _arg5 = DECT(as_type<budget - 1, arg5>());
+                    if (is_non_null(e.template get_<operation_args_varrefs>()
+                                        .t.vars[6])) {
                       struct arg6 {
 #ifndef __clang__
                         const AST_elem &e{F{}()};
@@ -1300,10 +1284,9 @@ template <typename prev_holder> struct as_type_f {
                         }
                       };
 
-                      if (there_is_anything_here(
-                              e.template get_<operation_args_varrefs>()
-                                  .t.vars[7])) {
-                        using _arg7 = DECT(as_type<budget - 1, arg7>());
+                      using _arg6 = DECT(as_type<budget - 1, arg6>());
+                      if (is_non_null(e.template get_<operation_args_varrefs>()
+                                          .t.vars[7])) {
                         struct arg7 {
 #ifndef __clang__
                           const AST_elem &e{F{}()};
@@ -1316,10 +1299,10 @@ template <typename prev_holder> struct as_type_f {
                           }
                         };
 
-                        if (there_is_anything_here(
+                        using _arg7 = DECT(as_type<budget - 1, arg7>());
+                        if (is_non_null(
                                 e.template get_<operation_args_varrefs>()
                                     .t.vars[8])) {
-                          using _arg8 = DECT(as_type<budget - 1, arg8>());
                           struct arg8 {
 #ifndef __clang__
                             const AST_elem &e{F{}()};
@@ -1332,10 +1315,10 @@ template <typename prev_holder> struct as_type_f {
                             }
                           };
 
-                          if (there_is_anything_here(
+                          using _arg8 = DECT(as_type<budget - 1, arg8>());
+                          if (is_non_null(
                                   e.template get_<operation_args_varrefs>()
                                       .t.vars[9])) {
-                            using _arg9 = DECT(as_type<budget - 1, arg9>());
                             struct arg9 {
 #ifndef __clang__
                               const AST_elem &e{F{}()};
@@ -1348,10 +1331,10 @@ template <typename prev_holder> struct as_type_f {
                               }
                             };
 
-                            if (there_is_anything_here(
+                            using _arg9 = DECT(as_type<budget - 1, arg9>());
+                            if (is_non_null(
                                     e.template get_<operation_args_varrefs>()
                                         .t.vars[10])) {
-                              using _arg10 = DECT(as_type<budget - 1, arg10>());
                               struct arg10 {
 #ifndef __clang__
                                 const AST_elem &e{F{}()};
@@ -1365,11 +1348,10 @@ template <typename prev_holder> struct as_type_f {
                                 }
                               };
 
-                              if (there_is_anything_here(
+                              using _arg10 = DECT(as_type<budget - 1, arg10>());
+                              if (is_non_null(
                                       e.template get_<operation_args_varrefs>()
                                           .t.vars[11])) {
-                                using _arg11 =
-                                    DECT(as_type<budget - 1, arg11>());
                                 struct arg11 {
 #ifndef __clang__
                                   const AST_elem &e{F{}()};
@@ -1383,12 +1365,11 @@ template <typename prev_holder> struct as_type_f {
                                   }
                                 };
 
-                                if (there_is_anything_here(
-                                        e.template get_<
-                                             operation_args_varrefs>()
-                                            .t.vars[12])) {
-                                  using _arg12 =
-                                      DECT(as_type<budget - 1, arg12>());
+                                using _arg11 =
+                                    DECT(as_type<budget - 1, arg11>());
+                                if (is_non_null(e.template get_<
+                                                     operation_args_varrefs>()
+                                                    .t.vars[12])) {
                                   struct arg12 {
 #ifndef __clang__
                                     const AST_elem &e{F{}()};
@@ -1404,12 +1385,11 @@ template <typename prev_holder> struct as_type_f {
                                     }
                                   };
 
-                                  if (there_is_anything_here(
-                                          e.template get_<
-                                               operation_args_varrefs>()
-                                              .t.vars[13])) {
-                                    using _arg13 =
-                                        DECT(as_type<budget - 1, arg13>());
+                                  using _arg12 =
+                                      DECT(as_type<budget - 1, arg12>());
+                                  if (is_non_null(e.template get_<
+                                                       operation_args_varrefs>()
+                                                      .t.vars[13])) {
                                     struct arg13 {
 #ifndef __clang__
                                       const AST_elem &e{F{}()};
@@ -1425,12 +1405,12 @@ template <typename prev_holder> struct as_type_f {
                                       }
                                     };
 
-                                    if (there_is_anything_here(
+                                    using _arg13 =
+                                        DECT(as_type<budget - 1, arg13>());
+                                    if (is_non_null(
                                             e.template get_<
                                                  operation_args_varrefs>()
                                                 .t.vars[14])) {
-                                      using _arg14 =
-                                          DECT(as_type<budget - 1, arg14>());
                                       struct arg14 {
 #ifndef __clang__
                                         const AST_elem &e{F{}()};
@@ -1446,12 +1426,12 @@ template <typename prev_holder> struct as_type_f {
                                         }
                                       };
 
-                                      if (there_is_anything_here(
+                                      using _arg14 =
+                                          DECT(as_type<budget - 1, arg14>());
+                                      if (is_non_null(
                                               e.template get_<
                                                    operation_args_varrefs>()
                                                   .t.vars[15])) {
-                                        using _arg15 =
-                                            DECT(as_type<budget - 1, arg15>());
                                         struct arg15 {
 #ifndef __clang__
                                           const AST_elem &e{F{}()};
@@ -1467,12 +1447,12 @@ template <typename prev_holder> struct as_type_f {
                                           }
                                         };
 
-                                        if (there_is_anything_here(
+                                        using _arg15 =
+                                            DECT(as_type<budget - 1, arg15>());
+                                        if (is_non_null(
                                                 e.template get_<
                                                      operation_args_varrefs>()
                                                     .t.vars[16])) {
-                                          using _arg16 = DECT(
-                                              as_type<budget - 1, arg16>());
                                           struct arg16 {
 #ifndef __clang__
                                             const AST_elem &e{F{}()};
@@ -1488,12 +1468,12 @@ template <typename prev_holder> struct as_type_f {
                                             }
                                           };
 
-                                          if (there_is_anything_here(
+                                          using _arg16 = DECT(
+                                              as_type<budget - 1, arg16>());
+                                          if (is_non_null(
                                                   e.template get_<
                                                        operation_args_varrefs>()
                                                       .t.vars[17])) {
-                                            using _arg17 = DECT(
-                                                as_type<budget - 1, arg17>());
                                             struct arg17 {
 #ifndef __clang__
                                               const AST_elem &e{F{}()};
@@ -1509,12 +1489,12 @@ template <typename prev_holder> struct as_type_f {
                                               }
                                             };
 
-                                            if (there_is_anything_here(
+                                            using _arg17 = DECT(
+                                                as_type<budget - 1, arg17>());
+                                            if (is_non_null(
                                                     e.template get_<
                                                          operation_args_varrefs>()
                                                         .t.vars[18])) {
-                                              using _arg18 = DECT(
-                                                  as_type<budget - 1, arg18>());
                                               struct arg18 {
 #ifndef __clang__
                                                 const AST_elem &e{F{}()};
@@ -1530,13 +1510,12 @@ template <typename prev_holder> struct as_type_f {
                                                 }
                                               };
 
-                                              if (there_is_anything_here(
+                                              using _arg18 = DECT(
+                                                  as_type<budget - 1, arg18>());
+                                              if (is_non_null(
                                                       e.template get_<
                                                            operation_args_varrefs>()
                                                           .t.vars[19])) {
-                                                using _arg19 =
-                                                    DECT(as_type<budget - 1,
-                                                                 arg19>());
                                                 struct arg19 {
 #ifndef __clang__
                                                   const AST_elem &e{F{}()};
@@ -1552,195 +1531,232 @@ template <typename prev_holder> struct as_type_f {
                                                   }
                                                 };
 
-                                                return as_types::<
-                                                    as_types::
-                                                        operation_args_varrefs<
-                                                            _arg0, _arg1, _arg2,
-                                                            _arg3, _arg4, _arg5,
-                                                            _arg6, _arg7, _arg8,
-                                                            _arg9, _arg10,
-                                                            _arg11, _arg12,
-                                                            _arg13, _arg14,
-                                                            _arg15, _arg16,
-                                                            _arg17, _arg18,
-                                                            _arg19>>{};
-                                              } else {
-                                                return as_types::<
-                                                    as_types::
-                                                        operation_args_varrefs<
-                                                            _arg0, _arg1, _arg2,
-                                                            _arg3, _arg4, _arg5,
-                                                            _arg6, _arg7, _arg8,
-                                                            _arg9, _arg10,
-                                                            _arg11, _arg12,
-                                                            _arg13, _arg14,
-                                                            _arg15, _arg16,
-                                                            _arg17, _arg18>>{};
-                                              }
-                                            } else {
-                                              return as_types::<
-                                                  as_types::
-                                                      operation_args_varrefs<
-                                                          _arg0, _arg1, _arg2,
-                                                          _arg3, _arg4, _arg5,
-                                                          _arg6, _arg7, _arg8,
-                                                          _arg9, _arg10, _arg11,
-                                                          _arg12, _arg13,
-                                                          _arg14, _arg15,
-                                                          _arg16, _arg17>>{};
-                                            }
-                                          } else {
-                                            return as_types::<
-                                                as_types::
+                                                using _arg19 =
+                                                    DECT(as_type<budget - 1,
+                                                                 arg19>());
+                                                return as_types::
                                                     operation_args_varrefs<
                                                         _arg0, _arg1, _arg2,
                                                         _arg3, _arg4, _arg5,
                                                         _arg6, _arg7, _arg8,
                                                         _arg9, _arg10, _arg11,
                                                         _arg12, _arg13, _arg14,
-                                                        _arg15, _arg16>>{};
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18, _arg19>{};
+                                              } else {
+                                                return as_types::
+                                                    operation_args_varrefs<
+                                                        _arg0, _arg1, _arg2,
+                                                        _arg3, _arg4, _arg5,
+                                                        _arg6, _arg7, _arg8,
+                                                        _arg9, _arg10, _arg11,
+                                                        _arg12, _arg13, _arg14,
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18>{};
+                                              }
+                                            } else {
+                                              return as_types::
+                                                  operation_args_varrefs<
+                                                      _arg0, _arg1, _arg2,
+                                                      _arg3, _arg4, _arg5,
+                                                      _arg6, _arg7, _arg8,
+                                                      _arg9, _arg10, _arg11,
+                                                      _arg12, _arg13, _arg14,
+                                                      _arg15, _arg16, _arg17>{};
+                                            }
+                                          } else {
+                                            return as_types::
+                                                operation_args_varrefs<
+                                                    _arg0, _arg1, _arg2, _arg3,
+                                                    _arg4, _arg5, _arg6, _arg7,
+                                                    _arg8, _arg9, _arg10,
+                                                    _arg11, _arg12, _arg13,
+                                                    _arg14, _arg15, _arg16>{};
                                           }
                                         } else {
-                                          return as_types::<
-                                              as_types::operation_args_varrefs<
+                                          return as_types::
+                                              operation_args_varrefs<
                                                   _arg0, _arg1, _arg2, _arg3,
                                                   _arg4, _arg5, _arg6, _arg7,
                                                   _arg8, _arg9, _arg10, _arg11,
                                                   _arg12, _arg13, _arg14,
-                                                  _arg15>>{};
+                                                  _arg15>{};
                                         }
                                       } else {
-                                        return as_types::<
-                                            as_types::operation_args_varrefs<
-                                                _arg0, _arg1, _arg2, _arg3,
-                                                _arg4, _arg5, _arg6, _arg7,
-                                                _arg8, _arg9, _arg10, _arg11,
-                                                _arg12, _arg13, _arg14>>{};
-                                      }
-                                    } else {
-                                      return as_types::<
-                                          as_types::operation_args_varrefs<
-                                              _arg0, _arg1, _arg2, _arg3, _arg4,
-                                              _arg5, _arg6, _arg7, _arg8, _arg9,
-                                              _arg10, _arg11, _arg12,
-                                              _arg13>>{};
-                                    }
-                                  } else {
-                                    return as_types::<
-                                        as_types::operation_args_varrefs<
+                                        return as_types::operation_args_varrefs<
                                             _arg0, _arg1, _arg2, _arg3, _arg4,
                                             _arg5, _arg6, _arg7, _arg8, _arg9,
-                                            _arg10, _arg11, _arg12>>{};
-                                  }
-                                } else {
-                                  return as_types::<
-                                      as_types::operation_args_varrefs<
+                                            _arg10, _arg11, _arg12, _arg13,
+                                            _arg14>{};
+                                      }
+                                    } else {
+                                      return as_types::operation_args_varrefs<
                                           _arg0, _arg1, _arg2, _arg3, _arg4,
                                           _arg5, _arg6, _arg7, _arg8, _arg9,
-                                          _arg10, _arg11>>{};
-                                }
-                              } else {
-                                return as_types::<
-                                    as_types::operation_args_varrefs<
+                                          _arg10, _arg11, _arg12, _arg13>{};
+                                    }
+                                  } else {
+                                    return as_types::operation_args_varrefs<
                                         _arg0, _arg1, _arg2, _arg3, _arg4,
                                         _arg5, _arg6, _arg7, _arg8, _arg9,
-                                        _arg10>>{};
+                                        _arg10, _arg11, _arg12>{};
+                                  }
+                                } else {
+                                  return as_types::operation_args_varrefs<
+                                      _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                      _arg6, _arg7, _arg8, _arg9, _arg10,
+                                      _arg11>{};
+                                }
+                              } else {
+                                return as_types::operation_args_varrefs<
+                                    _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                    _arg6, _arg7, _arg8, _arg9, _arg10>{};
                               }
                             } else {
-                              return as_types::<
-                                  as_types::operation_args_varrefs<
-                                      _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
-                                      _arg6, _arg7, _arg8, _arg9>>{};
+                              return as_types::operation_args_varrefs<
+                                  _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                  _arg6, _arg7, _arg8, _arg9>{};
                             }
                           } else {
-                            return as_types::<as_types::operation_args_varrefs<
+                            return as_types::operation_args_varrefs<
                                 _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
-                                _arg7, _arg8>>{};
+                                _arg7, _arg8>{};
                           }
                         } else {
-                          return as_types::<as_types::operation_args_varrefs<
+                          return as_types::operation_args_varrefs<
                               _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
-                              _arg7>>{};
+                              _arg7>{};
                         }
                       } else {
-                        return as_types::<as_types::operation_args_varrefs<
-                            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6>>{};
+                        return as_types::operation_args_varrefs<
+                            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6>{};
                       }
                     } else {
-                      return as_types::<as_types::operation_args_varrefs<
-                          _arg0, _arg1, _arg2, _arg3, _arg4, _arg5>>{};
+                      return as_types::operation_args_varrefs<
+                          _arg0, _arg1, _arg2, _arg3, _arg4, _arg5>{};
                     }
                   } else {
-                    return as_types::<as_types::operation_args_varrefs<
-                        _arg0, _arg1, _arg2, _arg3, _arg4>>{};
+                    return as_types::operation_args_varrefs<_arg0, _arg1, _arg2,
+                                                            _arg3, _arg4>{};
                   }
                 } else {
-                  return as_types::<as_types::operation_args_varrefs<
-                      _arg0, _arg1, _arg2, _arg3>>{};
+                  return as_types::operation_args_varrefs<_arg0, _arg1, _arg2,
+                                                          _arg3>{};
                 }
               } else {
-                return as_types::<
-                    as_types::operation_args_varrefs<_arg0, _arg1, _arg2>>{};
+                return as_types::operation_args_varrefs<_arg0, _arg1, _arg2>{};
               }
             } else {
-              return as_types::<
-                  as_types::operation_args_varrefs<_arg0, _arg1>>{};
+              return as_types::operation_args_varrefs<_arg0, _arg1>{};
             }
           } else {
-            return as_types::<as_types::operation_args_varrefs<_arg0>>{};
+            return as_types::operation_args_varrefs<_arg0>{};
           }
         }
-        return as_types::<as_types::operation_args_varrefs<>>{};
+        return as_types::operation_args_varrefs<>{};
       } else if constexpr (e.template get_<Operation>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        using is_statement =
+            std::integral_constant<bool,
+                                   e.template get_<Operation>().t.is_statement>;
+        if constexpr (is_statement::value) { /*Declaring arg!*/
+          struct arg0 {
 #ifndef __clang__
-          const AST_elem &e{F{}()};
+            const AST_elem &e{F{}()};
 #endif
-          constexpr arg0() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.name.get(allocator);
-          }
-        };
+            constexpr arg0() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.name.get(allocator);
+            }
+          };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+          using _arg0 = DECT(as_type<budget - 1, arg0>());
+          /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
-          const AST_elem &e{F{}()};
+            const AST_elem &e{F{}()};
 #endif
-          constexpr arg1() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.Hndl.get(allocator);
-          }
-        };
+            constexpr arg1() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.Hndl.get(allocator);
+            }
+          };
 
-        using _arg2 = DECT(as_type<budget - 1, arg2>());
-        struct arg2 {
+          using _arg1 = DECT(as_type<budget - 1, arg1>());
+          /*Declaring arg!*/ struct arg2 {
 #ifndef __clang__
-          const AST_elem &e{F{}()};
+            const AST_elem &e{F{}()};
 #endif
-          constexpr arg2() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.expr_args.get(allocator);
-          }
-        };
+            constexpr arg2() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.expr_args.get(allocator);
+            }
+          };
 
-        using _arg3 = DECT(as_type<budget - 1, arg3>());
-        struct arg3 {
+          using _arg2 = DECT(as_type<budget - 1, arg2>());
+          /*Declaring arg!*/ struct arg3 {
 #ifndef __clang__
-          const AST_elem &e{F{}()};
+            const AST_elem &e{F{}()};
 #endif
-          constexpr arg3() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<Operation>().t.var_args.get(allocator);
-          }
-        };
+            constexpr arg3() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.var_args.get(allocator);
+            }
+          };
 
-        return as_types::$error_identity_unset<
-            as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
+          using _arg3 = DECT(as_type<budget - 1, arg3>());
+          constexpr auto _arg4 = e.template get_<Operation>().t.is_statement;
+          return as_types::Statement<
+              as_types::Operation<_arg0, _arg1, _arg2, _arg3, _arg4>>{};
+        } else { /*Declaring arg!*/
+          struct arg0 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg0() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.name.get(allocator);
+            }
+          };
+
+          using _arg0 = DECT(as_type<budget - 1, arg0>());
+          /*Declaring arg!*/ struct arg1 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg1() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.Hndl.get(allocator);
+            }
+          };
+
+          using _arg1 = DECT(as_type<budget - 1, arg1>());
+          /*Declaring arg!*/ struct arg2 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg2() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.expr_args.get(allocator);
+            }
+          };
+
+          using _arg2 = DECT(as_type<budget - 1, arg2>());
+          /*Declaring arg!*/ struct arg3 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg3() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.var_args.get(allocator);
+            }
+          };
+
+          using _arg3 = DECT(as_type<budget - 1, arg3>());
+          constexpr auto _arg4 = e.template get_<Operation>().t.is_statement;
+          return as_types::Expression<
+              as_types::Operation<_arg0, _arg1, _arg2, _arg3, _arg4>>{};
+        }
       } else if constexpr (e.template get_<Assignment>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1750,8 +1766,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1761,10 +1777,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Statement<as_types::Assignment<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Return>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1774,10 +1790,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Statement<as_types::Return<_arg0>>{};
       } else if constexpr (e.template get_<If>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1787,8 +1803,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1798,8 +1814,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg2 = DECT(as_type<budget - 1, arg2>());
-        struct arg2 {
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        /*Declaring arg!*/ struct arg2 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1809,10 +1825,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg2 = DECT(as_type<budget - 1, arg2>());
         return as_types::Statement<as_types::If<_arg0, _arg1, _arg2>>{};
       } else if constexpr (e.template get_<While>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1822,8 +1838,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1833,10 +1849,10 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Statement<as_types::While<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Sequence>().is_this_elem) {
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
-        struct arg0 {
+        /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1846,8 +1862,8 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
-        using _arg1 = DECT(as_type<budget - 1, arg1>());
-        struct arg1 {
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        /*Declaring arg!*/ struct arg1 {
 #ifndef __clang__
           const AST_elem &e{F{}()};
 #endif
@@ -1857,6 +1873,7 @@ template <typename prev_holder> struct as_type_f {
           }
         };
 
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Statement<as_types::Sequence<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Skip>().is_this_elem) {
         return as_types::Statement<as_types::Skip>{};
@@ -1887,13 +1904,15 @@ template <typename prev_holder> constexpr auto as_type() {
 
 namespace as_types {
 
-template <typename AST_Allocator> struct as_values_ns_fns {
+template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
   using AST_elem = as_values::AST_elem;
   constexpr as_values_ns_fns() = default;
   as_values::AST_Allocator<budget> allocator;
-  template <typename T> struct converter {
-    static constexpr auto value() { return as_values_ns_fns::foo(); }
-  } template <typename e, std::size_t payload>
+  /*
+  template<typename T> struct converter {
+    static constexpr auto value() {return as_values_ns_fns::foo();}
+  };*/
+  template <typename e, std::size_t payload>
   constexpr allocated_ref<AST_elem>
   as_value(const Statement<transaction<e, payload>> &) {
     auto elem = allocator.template allocate<AST_elem>();
@@ -2048,10 +2067,11 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.vars = as_value(vars{});
     return std::move(elem);
   }
-  template <typename name, typename Hndl, typename expr_args, typename var_args>
-  constexpr allocated_ref<AST_elem> as_value(
-      const $error_identity_unset<Operation<name, Hndl, expr_args, var_args>>
-          &) {
+  template <typename name, typename Hndl, typename expr_args, typename var_args,
+            bool is_statement>
+  constexpr allocated_ref<AST_elem>
+  as_value(const $error_identity_unset<
+           Operation<name, Hndl, expr_args, var_args, is_statement>> &) {
     auto elem = allocator.template allocate<AST_elem>();
     auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
     this_node.is_this_elem = true;
@@ -2060,6 +2080,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
     this_node.t.Hndl = as_value(Hndl{});
     this_node.t.expr_args = as_value(expr_args{});
     this_node.t.var_args = as_value(var_args{});
+    this_node.t.is_statement = is_statement;
     return std::move(elem);
   }
   template <typename Var, typename Expr>
@@ -2130,7 +2151,7 @@ template <typename AST_Allocator> struct as_values_ns_fns {
 template <std::size_t budget, typename hd>
 constexpr as_values::AST_Allocator<budget> as_value() {
   static_assert(is_astnode_transaction<hd>::value);
-  as_values_ns_fns<as_values::AST_Allocator<budget>> ret;
+  as_values_ns_fns<as_values::AST_Allocator<budget>, budget> ret;
   ret.allocator.top = std::move(ret.as_value(hd{})
                                     .get(ret.allocator)
                                     .template get<as_values::transaction>());
@@ -2287,6 +2308,8 @@ std::ostream &print(std::ostream &o, const Operation &e,
   print(o, e.expr_args, allocator);
   o << ",";
   print(o, e.var_args, allocator);
+  o << ",";
+  print(o, e.is_statement, allocator);
   o << ",";
   return o << "}";
 }
@@ -2464,9 +2487,10 @@ template <typename Binding, typename Body>
 struct is_astnode_LetRemote<Statement<LetRemote<Binding, Body>>>
     : public std::true_type {};
 template <typename> struct is_astnode_Operation : public std::false_type {};
-template <typename name, typename Hndl, typename expr_args, typename var_args>
-struct is_astnode_Operation<
-    $error_identity_unset<Operation<name, Hndl, expr_args, var_args>>>
+template <typename name, typename Hndl, typename expr_args, typename var_args,
+          bool is_statement>
+struct is_astnode_Operation<$error_identity_unset<
+    Operation<name, Hndl, expr_args, var_args, is_statement>>>
     : public std::true_type {};
 template <typename> struct is_astnode_Assignment : public std::false_type {};
 template <typename Var, typename Expr>

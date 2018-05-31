@@ -172,7 +172,7 @@ class AST_node{
 		}
 		return $out;
   }
-                
+  	                
 	public function struct_declaration() : string{
 		$type = $this;
 		$out = "struct $type->name";
@@ -183,13 +183,17 @@ class AST_node{
 		}
 		$out = $out."{ ".$this->struct_fields();
 		
-		$out = $out.$this->struct_constructor().
+		$out = $out.
+			$this->struct_constructor().
 			$this->struct_move_constructor().
 			$this->struct_move_assignment();
 		return $out."};";
 	}
+	public function from_e(){
+		return "e.template get_<$this->name>().t";
+	}
 	public function get_field_from_e($field){
-		return "e.template get_<$this->name>().t.$field->name";
+		return $this->from_e().".$field->name";
 	}
 	public function declare_arg($field, $i){
 		$type = $this;
@@ -210,8 +214,8 @@ class AST_node{
 		$ret = '';
 		foreach ($type->field_accessors() as $i => $field){
 			if (is_ast_node($field->type)) {
-				$ret = $ret. "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n".
-				$this->declare_arg($field,$i);
+				$ret = $ret.'/*Declaring arg!*/'.$this->declare_arg($field,$i).
+				 "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n";
 			}
 			else $ret = $ret. "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
 		}
@@ -292,12 +296,13 @@ class Either extends AST_node {
 	}
 	public function __construct($type_name, ...$fields) {
 		global $Either_t;
+		array_push($fields,new Field("is_statement","bool"));
 		parent::__construct($type_name, $Either_t, $fields);
 	}
 	public function encapsulator_name() : string{
 		return $this->current_identity;
 	}
-                  
+			
 	public function encapsulator_names(){
 		return array('Statement','Expression');
 	}
@@ -310,6 +315,17 @@ class Either extends AST_node {
 		}
 		$this->reset_identity();
 		return $out;
+	}
+	public function to_type_body() : string {
+		$ret = "using is_statement = std::integral_constant<bool,".$this->from_e().".is_statement>;".
+		"if constexpr (is_statement::value) {";
+		$this->set_identity("Statement");
+		$ret = $ret.parent::to_type_body(). "}".
+		"else {";
+		$this->set_identity("Expression");
+		$ret = $ret.parent::to_type_body(). "}".
+		$this->reset_identity();
+		return $ret;
 	}
 }
 class Argument_pack extends AST_node {
@@ -327,10 +343,11 @@ class Argument_pack extends AST_node {
 	public function struct_fields() : string {
 		return cpp_list('allocated_ref<AST_elem>')." $this->field_name;";
 	}
+
 	public function encapsulate_type() : string {
-		//this type is not encapsulated.
-		return '';
+	return "template<typename...> struct $this->name {};";
 	}
+
 	public function encapsulator_name() : string{
 		//this type is not encapsulated.
 		return '';
@@ -380,8 +397,16 @@ class Argument_pack extends AST_node {
 
   public function assemble_to_type_return($max_var_length) : string {
 	$type = $this;
-	$ret = '';
-	$ret = $ret. "return as_types::".$type->encapsulator_name()."<as_types::$type->name<";
+	$ret = "return ";
+	if ($type->encapsulator_name() === ''){
+		$ret = $ret.'';
+	}
+	else {
+		$ret = $ret. "as_types::".$type->encapsulator_name()."<";
+		
+	}
+	$ret = $ret."as_types::$type->name<";
+	
 	if ($max_var_length > 0){
 	    $field_count = $max_var_length;
     	for ($j = 0; $j < $max_var_length; ++$j){
@@ -391,7 +416,9 @@ class Argument_pack extends AST_node {
       		}
     	}
 	}
-	return $ret.">>{};";
+	if ($type->encapsulator_name() === ''){}
+		else {$ret = $ret.">";}
+	return $ret.">{};";
   }
 
   public function to_type_body() : string{
@@ -401,9 +428,9 @@ class Argument_pack extends AST_node {
 			for ($i = 0; $i < $max_var_length; ++$i){
 				$proto_f = new proto_field("$this->field_name[$i]");
 				$ret = $ret.
-				"if (there_is_anything_here(".$this->get_field_from_e($proto_f).")){".
-				"using _arg$i = DECT(as_type<budget - 1, arg$i>());\n".
-				$this->declare_arg($proto_f,$i);
+				"if (is_non_null(".$this->get_field_from_e($proto_f).")){".
+				$this->declare_arg($proto_f,$i).
+				"using _arg$i = DECT(as_type<budget - 1, arg$i>());\n";
 				if ($i + 1 == $max_var_length) {
 					$ret = $ret.$this->assemble_to_type_return($max_var_length);
 				}

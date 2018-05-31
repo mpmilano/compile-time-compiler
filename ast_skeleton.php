@@ -7,6 +7,7 @@
 template<typename T>
 using plain_array = T[<?php echo $max_var_length?>];
 
+
 namespace as_values {
   <?php 
   foreach ($types as $type){
@@ -15,6 +16,11 @@ namespace as_values {
 using AST_elem = Union<<?php comma_separated(names($types))?>>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, <?php echo $types[0]->name;?>, AST_elem>;
+
+constexpr bool is_non_null(const allocated_ref<AST_elem> &e){
+  return e;
+}
+
 
 // Define structs. 
 struct Expression{constexpr Expression(){}};
@@ -78,14 +84,15 @@ template <typename prev_holder> constexpr auto as_type() {
 
 namespace as_types{
 
-template<typename AST_Allocator>
+template<typename AST_Allocator, std::size_t budget>
 struct as_values_ns_fns{
   using AST_elem = as_values::AST_elem;
   constexpr as_values_ns_fns() = default;
   as_values::AST_Allocator<budget> allocator;
+  /*
   template<typename T> struct converter {
     static constexpr auto value() {return as_values_ns_fns::foo();}
-  }
+  };*/
   <?php 
   foreach ($types as $type){
     echo $type->to_value();
@@ -96,7 +103,7 @@ struct as_values_ns_fns{
   template<std::size_t budget, typename hd>
   constexpr as_values::AST_Allocator<budget> as_value(){
     static_assert(is_astnode_transaction<hd>::value);
-    as_values_ns_fns<as_values::AST_Allocator<budget>> ret;
+    as_values_ns_fns<as_values::AST_Allocator<budget>, budget> ret;
     ret.allocator.top = std::move(ret.as_value(hd{}).get(ret.allocator).template get<as_values::transaction>());
     return std::move(ret.allocator);
   }
