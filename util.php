@@ -18,4 +18,15 @@ assert_options(ASSERT_QUIET_EVAL, 1);
         function names($arr){
           return array_map("name",$arr);
         }
+
+        function char_seq_from_cstring(string $string_name, int $string_size) : string {
+          $ret = '';
+          for ($i = 0; $i < $string_size; $i = $i + 1){
+            $ret = $ret.$string_name."[$i]";
+            if ($i < $string_size-1){
+              $ret = $ret.',';
+            }
+          }
+          return $ret;
+        }
 ?>

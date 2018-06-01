@@ -25,7 +25,9 @@ class Field{
 	}
     
 	public function value_type_name(){
+		global $String_t;
 		if (is_ast_node($this->type)) return "allocated_ref<AST_elem>";
+		else if ($this->type == $String_t) return "plain_array<char>";
 		else return $this->type;
 	}
 	public function declare_struct_member(){
@@ -61,6 +63,7 @@ class AST_node{
 	}
     
 	public function template_defn($prefix = ''){
+		global $String_t;
 		$type = $this;
 		$out = '';
 		$field_num = count($type->fields);
@@ -68,6 +71,9 @@ class AST_node{
 			$out = $out."template <";
 			foreach ($type->fields as $i => $field){
 				if (is_ast_node($field->type)){
+					$out = $out."typename ";
+				}
+				else if ($field->type === $String_t){
 					$out = $out."typename ";
 				}
 				else {$out = $out. "$field->type ";}
@@ -109,7 +115,11 @@ class AST_node{
 		$tmp = $this->full_template_defn('_');
 		$out = "$tmp struct ".$this->encapsulated_type_name('_')."{";
 		foreach ($this->fields as $field){
+			global $String_t;
 			if (is_ast_node($field->type)){
+				$out = $out."using $field->name = _$field->name;";
+			}
+			elseif ($field->type === $String_t){
 				$out = $out."using $field->name = _$field->name;";
 			}
 			else {
@@ -148,20 +158,36 @@ class AST_node{
 	}
 	public function struct_move_constructor() : string{
 		//move constructor
+		global $String_t;
 		$out = "constexpr $this->name($this->name &&p) ";
+		$has_string_field = false;
 		foreach ($this->fields as $i => $field){
-			if ($i === 0) $out = $out.':';
-			$out = $out."$field->name{std::move(p.$field->name)}";
+			if ($i === 0 && ($field->type != $String_t || count($this->fields) > 1)) $out = $out.':';
+			if ($field->type === $String_t){
+				$string_field = $field;
+				$has_string_field = true;
+			}
+			else $out = $out."$field->name{std::move(p.$field->name)}";
 			if ($i +1 < count($this->fields)) $out = $out.",";
 		}
-		return $out.'{}';
+		$extra = '';
+		if ($has_string_field){
+			$extra = "mutils::cstring::str_cpy($field->name, p.$field->name);";
+		}
+		return $out.'{'.$extra.'}';
 	}
 	public function struct_move_assignment() : string{
+		global $String_t;
 		$out =  "
                   //move-assignment 
                   constexpr $this->name &operator=($this->name &&p) {"; 
 		foreach ($this->fields as $field){
-			$out =  $out. "$field->name = std::move(p.$field->name);";
+			if ($field->type === $String_t){
+				$out =  $out."mutils::cstring::str_cpy($field->name, p.$field->name);";
+			}
+			else {
+				$out =  $out. "$field->name = std::move(p.$field->name);";
+			}
 		}
 		$out =  $out. "return *this; 
                   } ";
@@ -213,12 +239,19 @@ class AST_node{
 					";
 	}
 	public function to_type_body() : string{
+		global $max_var_length;
 		$type = $this; 
 		$ret = '';
 		foreach ($type->field_accessors() as $i => $field){
+			global $String_t;
 			if (is_ast_node($field->type)) {
 				$ret = $ret.'/*Declaring arg!*/'.$this->declare_arg($field,$i).
 				 "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n";
+			}
+			elseif ($field->type === $String_t){
+				$ret = $ret."
+				constexpr auto& __str$i = e.template get_<$type->name>().t.$field->name;
+				using _arg$i = DECT(mutils::String<".char_seq_from_cstring("__str$i",$max_var_length).">::trim_ends());";
 			}
 			else $ret = $ret. "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
 		}
@@ -238,6 +271,7 @@ class AST_node{
 	}
 
 	public function to_value() :string {
+		global $String_t;
 		$type = $this;
 		$ret = ''.
 		$type->full_template_defn_for_method();
@@ -250,6 +284,9 @@ class AST_node{
 		foreach ($type->fields as $field){
 		  if (is_ast_node($field->type))
 			$ret = $ret. "this_node.t.$field->name = as_value($field->name{});";
+		elseif($field->type === $String_t){
+			$ret = $ret. "mutils::cstring::str_cpy(this_node.t.$field->name, $field->name{}.string);";
+		}
 		  else $ret = $ret. "this_node.t.$field->name = $field->name;";
 		}
 		$ret = $ret. 'return std::move(elem);';
@@ -478,7 +515,7 @@ function is_ast_node($node_t){
 	global $String_t; global $Label_t; global $Argument_pack_t;
 	global $List_t; global $NODEMAX;
 	if (is_int($node_t)){
-		return $node_t >= $Expression_t && $node_t <= $NODEMAX;
+		return $node_t >= $Expression_t && $node_t <= $NODEMAX && $node_t != $String_t;
 	}
 }
 ?>

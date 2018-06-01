@@ -1,6 +1,8 @@
 #pragma once
 #include "allocator.hpp"
 #include "mutils/type_utils.hpp"
+#include "mutils/CTString.hpp"
+#include "mutils/cstring.hpp"
 #include "union.hpp"
 #include <ostream>
 
@@ -13,7 +15,8 @@ namespace as_values {
   foreach ($types as $type){
     echo $type->value_declaration();
   } ?>
-using AST_elem = Union<<?php comma_separated(names($types))?>>;
+  struct Binding;
+using AST_elem = Union<<?php comma_separated(names($types))?>, Binding>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, <?php echo $types[0]->name;?>, AST_elem>;
 
@@ -25,7 +28,11 @@ constexpr bool is_non_null(const allocated_ref<AST_elem> &e){
 // Define structs. 
 struct Expression{constexpr Expression(){}};
 struct Statement{constexpr Statement(){}};
-struct Binding{constexpr Binding(){}};
+struct Binding{
+  allocated_ref<AST_elem> rhs{};
+  char var[<?php echo $max_var_length ?>] = {0};
+  constexpr Binding(){}
+};
 <?php
 foreach ($types as $type){
   echo $type->struct_declaration();
@@ -36,7 +43,10 @@ foreach ($types as $type){
 namespace as_types {
   template<typename> struct Expression;
   template<typename> struct Statement;
-  template<typename,typename> struct Binding;
+
+  template<typename var_name,typename expr> struct Binding;
+  template<char... var_name,typename expr> 
+  struct Binding<mutils::String<var_name...>, Expression<expr> >{};
   
 <?php foreach ($types as $type){
      echo $type->define_type();
@@ -69,6 +79,23 @@ constexpr static auto as_type(std::enable_if_t<(budget > 0) && (budget < 50)>* =
       echo $type->to_type_body();
     echo "}\n";
   }?>
+  else if constexpr (e.template get_<Binding>().is_this_elem){
+    constexpr const auto& str = e.template get_<Binding>().t.var;
+    using _arg0 = DECT(mutils::String<<?php echo char_seq_from_cstring("str",$max_var_length); ?>>::trim_ends());
+    /*Declaring arg!*/ struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Binding>().t.rhs.get(allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        
+        return as_types::Binding<_arg0, _arg1>{};
+  }
   else {struct error {};
     return error{};}
   } else {
@@ -106,6 +133,18 @@ struct as_values_ns_fns{
     echo $type->to_value();
   }
   ?>
+
+  template<char... str, typename t> 
+  constexpr allocated_ref<AST_elem> as_value(const Binding<mutils::String<str...>, Expression<t> >&){
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node =
+        elem.get(allocator).template get_<as_values::Binding>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    this_node.t.rhs = as_value(Expression<t>{});
+    mutils::cstring::str_cpy(this_node.t.var, mutils::String<str...>{}.string);
+    return std::move(elem);
+  }
 };
 
   template<std::size_t budget, typename hd>
@@ -139,6 +178,24 @@ namespace as_values {
     }";
   }
   ?>
+
+  template<typename Allocator>
+  std::ostream& print(std::ostream& o, const Binding& b, const Allocator &allocator){
+    o << b.var << " = ";
+    return print(o,b.rhs,allocator);
+  }
+
+  template<char... c, typename Allocator>
+  std::ostream& print(std::ostream &o, const mutils::String<c...>, const Allocator&){
+    return o << mutils::String<c...>{}.string;
+  }
+
+  template<typename Allocator>
+  std::ostream& print(std::ostream &o, const plain_array<char> &cstr, const Allocator&){
+    const char* str = cstr;
+    return o << str;
+  }
+
   template<typename Allocator>
   std::ostream& print(std::ostream& o, const AST_elem& e, const Allocator &allocator){
     <?php 
@@ -148,6 +205,9 @@ namespace as_values {
       }";
     }
     ?>
+    if (e.template get_<Binding>().is_this_elem){
+      return print(o,e.template get<Binding>(),allocator);
+    }
     return o;
   }
 }

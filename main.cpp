@@ -107,10 +107,14 @@ template <typename string> struct flatten {
 auto test_input() {
   using namespace as_types;
   return Statement<transaction<
-      Statement<Sequence<
-          Statement<Skip>,
-          Statement<Sequence<Statement<Skip>,
-                             Statement<Return<Expression<Constant<5>>>>>>>>,
+      Statement<
+          Sequence<Statement<Skip>,
+                   Statement<Sequence<
+                       Statement<Let<Binding<mutils::String<'f', 'o', 'o'>,
+                                             Expression<Constant<7>>>,
+                                     Statement<Skip>>>,
+                       Statement<Return<Expression<
+                           VarReference<mutils::String<'f', 'o', 'o'>>>>>>>>>,
       0>>{};
 }
 using round_trip_send = DECT(test_input());

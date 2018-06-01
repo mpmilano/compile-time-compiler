@@ -1,5 +1,7 @@
 #pragma once
 #include "allocator.hpp"
+#include "mutils/CTString.hpp"
+#include "mutils/cstring.hpp"
 #include "mutils/type_utils.hpp"
 #include "union.hpp"
 #include <ostream>
@@ -20,9 +22,10 @@ struct If;
 struct While;
 struct Sequence;
 struct Skip;
+struct Binding;
 using AST_elem =
     Union<transaction, IsValid, VarReference, Constant, BinOp, Let, LetRemote,
-          Assignment, Return, If, While, Sequence, Skip>;
+          Assignment, Return, If, While, Sequence, Skip, Binding>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
@@ -36,6 +39,8 @@ struct Statement {
   constexpr Statement() {}
 };
 struct Binding {
+  allocated_ref<AST_elem> rhs{};
+  char var[20] = {0};
   constexpr Binding() {}
 };
 struct transaction : public Statement {
@@ -64,13 +69,15 @@ struct IsValid : public Expression {
   }
 };
 struct VarReference : public Expression {
-  allocated_ref<AST_elem> Var{};
+  plain_array<char> Var{};
   // default constructor
   constexpr VarReference(){};
-  constexpr VarReference(VarReference &&p) : Var{std::move(p.Var)} {}
+  constexpr VarReference(VarReference &&p) {
+    mutils::cstring::str_cpy(Var, p.Var);
+  }
   // move-assignment
   constexpr VarReference &operator=(VarReference &&p) {
-    Var = std::move(p.Var);
+    mutils::cstring::str_cpy(Var, p.Var);
     return *this;
   }
 };
@@ -211,7 +218,10 @@ struct Skip : public Statement {
 namespace as_types {
 template <typename> struct Expression;
 template <typename> struct Statement;
-template <typename, typename> struct Binding;
+
+template <typename var_name, typename expr> struct Binding;
+template <char... var_name, typename expr>
+struct Binding<mutils::String<var_name...>, Expression<expr>> {};
 
 template <typename e, std::size_t payload> struct transaction {};
 template <typename _e, std::size_t _payload>
@@ -369,17 +379,15 @@ template <typename prev_holder> struct as_type_f {
         using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::IsValid<_arg0>>{};
       } else if constexpr (e.template get_<VarReference>().is_this_elem) {
-        /*Declaring arg!*/ struct arg0 {
-#ifndef __clang__
-          const AST_elem &e{F{}()};
-#endif
-          constexpr arg0() {}
-          constexpr const AST_elem &operator()() const {
-            return e.template get_<VarReference>().t.Var.get(allocator);
-          }
-        };
 
-        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        constexpr auto &__str0 = e.template get_<VarReference>().t.Var;
+        using _arg0 =
+            DECT(mutils::String<__str0[0], __str0[1], __str0[2], __str0[3],
+                                __str0[4], __str0[5], __str0[6], __str0[7],
+                                __str0[8], __str0[9], __str0[10], __str0[11],
+                                __str0[12], __str0[13], __str0[14], __str0[15],
+                                __str0[16], __str0[17], __str0[18],
+                                __str0[19]>::trim_ends());
         return as_types::Expression<as_types::VarReference<_arg0>>{};
       } else if constexpr (e.template get_<Constant>().is_this_elem) {
         constexpr auto _arg0 = e.template get_<Constant>().t.i;
@@ -579,6 +587,26 @@ template <typename prev_holder> struct as_type_f {
         return as_types::Statement<as_types::Sequence<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<Skip>().is_this_elem) {
         return as_types::Statement<as_types::Skip>{};
+      } else if constexpr (e.template get_<Binding>().is_this_elem) {
+        constexpr const auto &str = e.template get_<Binding>().t.var;
+        using _arg0 = DECT(
+            mutils::String<str[0], str[1], str[2], str[3], str[4], str[5],
+                           str[6], str[7], str[8], str[9], str[10], str[11],
+                           str[12], str[13], str[14], str[15], str[16], str[17],
+                           str[18], str[19]>::trim_ends());
+        /*Declaring arg!*/ struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Binding>().t.rhs.get(allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+
+        return as_types::Binding<_arg0, _arg1>{};
       } else {
         struct error {};
         return error{};
@@ -644,7 +672,7 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
         elem.get(allocator).template get_<as_values::VarReference>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    this_node.t.Var = as_value(Var{});
+    mutils::cstring::str_cpy(this_node.t.Var, Var{}.string);
     return std::move(elem);
   }
   template <std::size_t i>
@@ -750,6 +778,18 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     auto &this_node = elem.get(allocator).template get_<as_values::Skip>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
+    return std::move(elem);
+  }
+
+  template <char... str, typename t>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Binding<mutils::String<str...>, Expression<t>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.get(allocator).template get_<as_values::Binding>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    this_node.t.rhs = as_value(Expression<t>{});
+    mutils::cstring::str_cpy(this_node.t.var, mutils::String<str...>{}.string);
     return std::move(elem);
   }
 };
@@ -895,6 +935,26 @@ std::ostream &print(std::ostream &o, const Skip &e,
   return o << "}";
 }
 template <typename Allocator>
+std::ostream &print(std::ostream &o, const Binding &b,
+                    const Allocator &allocator) {
+  o << b.var << " = ";
+  return print(o, b.rhs, allocator);
+}
+
+template <char... c, typename Allocator>
+std::ostream &print(std::ostream &o, const mutils::String<c...>,
+                    const Allocator &) {
+  return o << mutils::String<c...>{}.string;
+}
+
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const plain_array<char> &cstr,
+                    const Allocator &) {
+  const char *str = cstr;
+  return o << str;
+}
+
+template <typename Allocator>
 std::ostream &print(std::ostream &o, const AST_elem &e,
                     const Allocator &allocator) {
   if (e.template get_<transaction>().is_this_elem) {
@@ -935,6 +995,9 @@ std::ostream &print(std::ostream &o, const AST_elem &e,
   }
   if (e.template get_<Skip>().is_this_elem) {
     return print(o, e.template get<Skip>(), allocator);
+  }
+  if (e.template get_<Binding>().is_this_elem) {
+    return print(o, e.template get<Binding>(), allocator);
   }
   return o;
 }
