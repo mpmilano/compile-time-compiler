@@ -88,13 +88,13 @@ auto test_input(){
     return Statement<
     transaction<
     Statement<
-    Sequence<Statement<Skip>,
+    Sequence<Statement<LetRemote<Binding<mutils::String<'b','a','r'>, Expression<Constant<9>>>,Statement<Skip>>>,
     Statement<Sequence<Statement<Let<Binding<mutils::String<'f','o','o'>, Expression<Constant<7>>>, Statement<Skip> >>,Statement<Return<Expression<VarReference<mutils::String<'f','o','o'>>>>>
     >>>>,0>>{};
   }
 using round_trip_send = DECT(test_input());
 struct prev_t{
-    as_values::AST_Allocator<10> allocator = as_types::as_value<10,round_trip_send>();
+    as_values::AST_Allocator<50> allocator = as_types::as_value<50,round_trip_send>();
     constexpr prev_t() {}
   };
 struct round_trip_test{
