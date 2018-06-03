@@ -40,7 +40,8 @@
         "vector": "cpp",
         "ostream": "cpp",
         "iosfwd": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "extras": "cpp"
     },
     "clang.cxxflags": [
         "--std=c++1z",

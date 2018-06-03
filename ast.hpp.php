@@ -4,9 +4,9 @@
     $max_var_length = 20;
 
     $types = array(new Statement('transaction',new Field('e',$Statement_t),new Field('payload','std::size_t','{0}')),
-    //new Expression('FieldReference', new Field('Struct',$Expression_t),new Field('Field',$String_t)),
-    //new Expression('FieldPointerReference',new Field('Struct',$Expression_t),new Field('Field',$String_t)),
-    //new Expression('Dereference',new Field('Struct',$Expression_t)),
+    new Expression('FieldReference', new Field('Struct',$Expression_t),new Field('Field',$String_t)),
+    new Expression('FieldPointerReference',new Field('Struct',$Expression_t),new Field('Field',$String_t)),
+    new Expression('Dereference',new Field('Struct',$Expression_t)),
     //new Expression('Endorse',new Field('label',$Label_t),new Field('Hndl',$Expression_t)),
     //new Expression('Ensure',new Field('label',$Label_t),new Field('Hndl',$Expression_t)),
     new Expression('IsValid',new Field('Hndl',$Expression_t)),

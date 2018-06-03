@@ -1,4 +1,4 @@
-#pragma
+#pragma once
 
 template<std::size_t size, typename T> struct SingleAllocator;
 
