@@ -10,6 +10,9 @@ template <typename T> using plain_array = T[20];
 
 namespace as_values {
 struct transaction;
+struct FieldReference;
+struct FieldPointerReference;
+struct Dereference;
 struct IsValid;
 struct VarReference;
 struct Constant;
@@ -24,8 +27,9 @@ struct Sequence;
 struct Skip;
 struct Binding;
 using AST_elem =
-    Union<transaction, IsValid, VarReference, Constant, BinOp, Let, LetRemote,
-          Assignment, Return, If, While, Sequence, Skip, Binding>;
+    Union<transaction, FieldReference, FieldPointerReference, Dereference,
+          IsValid, VarReference, Constant, BinOp, Let, LetRemote, Assignment,
+          Return, If, While, Sequence, Skip, Binding>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
@@ -54,6 +58,48 @@ struct transaction : public Statement {
   constexpr transaction &operator=(transaction &&p) {
     e = std::move(p.e);
     payload = std::move(p.payload);
+    return *this;
+  }
+};
+struct FieldReference : public Expression {
+  allocated_ref<AST_elem> Struct{};
+  plain_array<char> Field{};
+  // default constructor
+  constexpr FieldReference(){};
+  constexpr FieldReference(FieldReference &&p) : Struct{std::move(p.Struct)} {
+    mutils::cstring::str_cpy(Field, p.Field);
+  }
+  // move-assignment
+  constexpr FieldReference &operator=(FieldReference &&p) {
+    Struct = std::move(p.Struct);
+    mutils::cstring::str_cpy(Field, p.Field);
+    return *this;
+  }
+};
+struct FieldPointerReference : public Expression {
+  allocated_ref<AST_elem> Struct{};
+  plain_array<char> Field{};
+  // default constructor
+  constexpr FieldPointerReference(){};
+  constexpr FieldPointerReference(FieldPointerReference &&p)
+      : Struct{std::move(p.Struct)} {
+    mutils::cstring::str_cpy(Field, p.Field);
+  }
+  // move-assignment
+  constexpr FieldPointerReference &operator=(FieldPointerReference &&p) {
+    Struct = std::move(p.Struct);
+    mutils::cstring::str_cpy(Field, p.Field);
+    return *this;
+  }
+};
+struct Dereference : public Expression {
+  allocated_ref<AST_elem> Struct{};
+  // default constructor
+  constexpr Dereference(){};
+  constexpr Dereference(Dereference &&p) : Struct{std::move(p.Struct)} {}
+  // move-assignment
+  constexpr Dereference &operator=(Dereference &&p) {
+    Struct = std::move(p.Struct);
     return *this;
   }
 };
@@ -229,6 +275,22 @@ struct Statement<transaction<_e, _payload>> {
   using e = _e;
   std::size_t payload{_payload};
 };
+template <typename Struct, typename Field> struct FieldReference {};
+template <typename _Struct, typename _Field>
+struct Expression<FieldReference<_Struct, _Field>> {
+  using Struct = _Struct;
+  using Field = _Field;
+};
+template <typename Struct, typename Field> struct FieldPointerReference {};
+template <typename _Struct, typename _Field>
+struct Expression<FieldPointerReference<_Struct, _Field>> {
+  using Struct = _Struct;
+  using Field = _Field;
+};
+template <typename Struct> struct Dereference {};
+template <typename _Struct> struct Expression<Dereference<_Struct>> {
+  using Struct = _Struct;
+};
 template <typename Hndl> struct IsValid {};
 template <typename _Hndl> struct Expression<IsValid<_Hndl>> {
   using Hndl = _Hndl;
@@ -298,6 +360,21 @@ template <typename> struct is_astnode_transaction : public std::false_type {};
 template <typename e, std::size_t payload>
 struct is_astnode_transaction<Statement<transaction<e, payload>>>
     : public std::true_type {};
+template <typename>
+struct is_astnode_FieldReference : public std::false_type {};
+template <typename Struct, typename Field>
+struct is_astnode_FieldReference<Expression<FieldReference<Struct, Field>>>
+    : public std::true_type {};
+template <typename>
+struct is_astnode_FieldPointerReference : public std::false_type {};
+template <typename Struct, typename Field>
+struct is_astnode_FieldPointerReference<
+    Expression<FieldPointerReference<Struct, Field>>> : public std::true_type {
+};
+template <typename> struct is_astnode_Dereference : public std::false_type {};
+template <typename Struct>
+struct is_astnode_Dereference<Expression<Dereference<Struct>>>
+    : public std::true_type {};
 template <typename> struct is_astnode_IsValid : public std::false_type {};
 template <typename Hndl>
 struct is_astnode_IsValid<Expression<IsValid<Hndl>>> : public std::true_type {};
@@ -365,6 +442,67 @@ template <typename prev_holder> struct as_type_f {
         using _arg0 = DECT(as_type<budget - 1, arg0>());
         constexpr auto _arg1 = e.template get_<transaction>().t.payload;
         return as_types::Statement<as_types::transaction<_arg0, _arg1>>{};
+      } else if constexpr (e.template get_<FieldReference>().is_this_elem) {
+        /*Declaring arg!*/ struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<FieldReference>().t.Struct.get(allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+
+        constexpr auto &__str1 = e.template get_<FieldReference>().t.Field;
+        using _arg1 =
+            DECT(mutils::String<__str1[0], __str1[1], __str1[2], __str1[3],
+                                __str1[4], __str1[5], __str1[6], __str1[7],
+                                __str1[8], __str1[9], __str1[10], __str1[11],
+                                __str1[12], __str1[13], __str1[14], __str1[15],
+                                __str1[16], __str1[17], __str1[18],
+                                __str1[19]>::trim_ends());
+        return as_types::Expression<as_types::FieldReference<_arg0, _arg1>>{};
+      } else if constexpr (e.template get_<FieldPointerReference>()
+                               .is_this_elem) {
+        /*Declaring arg!*/ struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<FieldPointerReference>().t.Struct.get(
+                allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+
+        constexpr auto &__str1 =
+            e.template get_<FieldPointerReference>().t.Field;
+        using _arg1 =
+            DECT(mutils::String<__str1[0], __str1[1], __str1[2], __str1[3],
+                                __str1[4], __str1[5], __str1[6], __str1[7],
+                                __str1[8], __str1[9], __str1[10], __str1[11],
+                                __str1[12], __str1[13], __str1[14], __str1[15],
+                                __str1[16], __str1[17], __str1[18],
+                                __str1[19]>::trim_ends());
+        return as_types::Expression<
+            as_types::FieldPointerReference<_arg0, _arg1>>{};
+      } else if constexpr (e.template get_<Dereference>().is_this_elem) {
+        /*Declaring arg!*/ struct arg0 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg0() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Dereference>().t.Struct.get(allocator);
+          }
+        };
+
+        using _arg0 = DECT(as_type<budget - 1, arg0>());
+        return as_types::Expression<as_types::Dereference<_arg0>>{};
       } else if constexpr (e.template get_<IsValid>().is_this_elem) {
         /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
@@ -654,6 +792,41 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     this_node.t.payload = payload;
     return std::move(elem);
   }
+  template <typename Struct, typename Field>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<FieldReference<Struct, Field>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node =
+        elem.get(allocator).template get_<as_values::FieldReference>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    this_node.t.Struct = as_value(Struct{});
+    mutils::cstring::str_cpy(this_node.t.Field, Field{}.string);
+    return std::move(elem);
+  }
+  template <typename Struct, typename Field>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<FieldPointerReference<Struct, Field>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node =
+        elem.get(allocator).template get_<as_values::FieldPointerReference>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    this_node.t.Struct = as_value(Struct{});
+    mutils::cstring::str_cpy(this_node.t.Field, Field{}.string);
+    return std::move(elem);
+  }
+  template <typename Struct>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<Dereference<Struct>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node =
+        elem.get(allocator).template get_<as_values::Dereference>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    this_node.t.Struct = as_value(Struct{});
+    return std::move(elem);
+  }
   template <typename Hndl>
   constexpr allocated_ref<AST_elem>
   as_value(const Expression<IsValid<Hndl>> &) {
@@ -825,6 +998,34 @@ std::ostream &print(std::ostream &o, const transaction &e,
   return o << "}";
 }
 template <typename Allocator>
+std::ostream &print(std::ostream &o, const FieldReference &e,
+                    const Allocator &allocator) {
+  o << "FieldReference{";
+  print(o, e.Struct, allocator);
+  o << ",";
+  print(o, e.Field, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const FieldPointerReference &e,
+                    const Allocator &allocator) {
+  o << "FieldPointerReference{";
+  print(o, e.Struct, allocator);
+  o << ",";
+  print(o, e.Field, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const Dereference &e,
+                    const Allocator &allocator) {
+  o << "Dereference{";
+  print(o, e.Struct, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
 std::ostream &print(std::ostream &o, const IsValid &e,
                     const Allocator &allocator) {
   o << "IsValid{";
@@ -959,6 +1160,15 @@ std::ostream &print(std::ostream &o, const AST_elem &e,
                     const Allocator &allocator) {
   if (e.template get_<transaction>().is_this_elem) {
     return print(o, e.template get<transaction>(), allocator);
+  }
+  if (e.template get_<FieldReference>().is_this_elem) {
+    return print(o, e.template get<FieldReference>(), allocator);
+  }
+  if (e.template get_<FieldPointerReference>().is_this_elem) {
+    return print(o, e.template get<FieldPointerReference>(), allocator);
+  }
+  if (e.template get_<Dereference>().is_this_elem) {
+    return print(o, e.template get<Dereference>(), allocator);
   }
   if (e.template get_<IsValid>().is_this_elem) {
     return print(o, e.template get<IsValid>(), allocator);

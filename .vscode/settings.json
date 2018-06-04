@@ -41,7 +41,8 @@
         "ostream": "cpp",
         "iosfwd": "cpp",
         "complex": "cpp",
-        "extras": "cpp"
+        "extras": "cpp",
+        "*.tcc": "cpp"
     },
     "clang.cxxflags": [
         "--std=c++1z",

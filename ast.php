@@ -167,9 +167,12 @@ class AST_node{
 				$string_field = $field;
 				$has_string_field = true;
 			}
-			else $out = $out."$field->name{std::move(p.$field->name)}";
-			if ($i +1 < count($this->fields)) $out = $out.",";
+			else { $out = $out."$field->name{std::move(p.$field->name)}"; 
+				$out = $out.",";
+			}
+			
 		}
+		$out = substr($out,0,-1);
 		$extra = '';
 		if ($has_string_field){
 			$extra = "mutils::cstring::str_cpy($field->name, p.$field->name);";
