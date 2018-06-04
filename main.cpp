@@ -59,10 +59,10 @@ int main() {
   parse<wrapper> p;
   print(std::cout, p.allocator.top, p.allocator);
   std::cout << std::endl << "Original string: " << wrapper{}.str << std::endl;
-  // constexpr flatten<wrapper> f;
-  // constexpr auto second_allocator = as_types::as_value<50,typename
-  // flatten<wrapper>::parse_t>();  print(std::cout, second_allocator.top,
-  // second_allocator);
+  constexpr flatten<wrapper> f;
+  constexpr auto second_allocator =
+      as_types::as_value<50, typename flatten<wrapper>::parse_t>();
+  print(std::cout, second_allocator.top, second_allocator);
   std::cout << std::endl << std::endl;
   // print(std::cout, f.prev.allocator.top,f.prev.allocator);
   // std::cout << std::endl;
