@@ -5,7 +5,7 @@
 <?php require_once 'common.php'; require_once 'util.php'; ?>
 */
 
-using Alloc = as_values::AST_Allocator<15>;
+using Alloc = as_values::AST_Allocator<50>;
 
 template <typename string> struct parse {
   const string _str;
@@ -22,11 +22,27 @@ template <typename string> struct parse {
     return ret;
   }
 
+  constexpr allocated_ref<as_values::AST_elem> parse_binding(const str_t &str){
+    using namespace mutils;
+    using namespace cstring;
+    <?php alloc("ret","binding","Binding")?>;
+    str_nc binding_components[2] = {{0}};
+    single_split('=',str,binding_components);
+    trim(binding.var,binding_components[0]);
+    binding.rhs = parse_expression(binding_components[1]);
+    return ret;
+  }
+
 constexpr allocated_ref<as_values::AST_elem> parse_var(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","skipref","Skip")?>
-    (void)skipref;
+    <?php alloc("ret","var","Let")?>
+    str_nc let_expr = {0};
+    remove_first_word(let_expr,str);
+    str_nc let_components[2] = {{0}};
+    single_split(',',let_expr,let_components);
+    var.Binding = parse_binding(let_components[0]);
+    var.Body = parse_statement(let_components[1]);
     return ret;
 }
 constexpr allocated_ref<as_values::AST_elem> parse_return(const str_t &str) {
@@ -55,22 +71,42 @@ constexpr allocated_ref<as_values::AST_elem> parse_while(const str_t &str) {
 constexpr allocated_ref<as_values::AST_elem> parse_if(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","skipref","Skip")?>
-    (void)skipref;
+    <?php alloc("ret","ifref","If")?>
+    str_nc if_condition = {0};
+    auto if_offset = next_paren_group(if_condition,str);
+    const char* post_condition = str + if_offset;
+    str_nc then_body = {0};
+    auto then_offset = next_paren_group(then_body,post_condition);
+    const char* post_then = then_offset + post_condition;
+    str_nc else_body = {0};
+    ifref.condition = parse_expression(if_condition);
+    ifref.then = parse_statement(then_body);
+    if (first_word_is("else",post_then)){
+      next_paren_group(else_body,post_then);
+      ifref.els = parse_statement(else_body);
+    }
+    else {
+      <?php alloc("ptr","skipref","Skip")?>
+      (void)skipref;
+      ifref.els = std::move(ptr);
+    }
     return ret;
 }
 constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","skipref","Skip")?>
-    (void)skipref;
+    <?php alloc("ret","assignment","Assignment")?>
+    str_nc string_bufs[2] = {{0}};
+    split_outside_parens('=',str,string_bufs);
+    assignment.Var = parse_expression(string_bufs[0]);
+    assignment.Expr = parse_expression(string_bufs[1]);
     return ret;
 }
 
-/* <?php function statement_case($target) { 
+/* <?php function parse_case($target) { 
     return "
     if (contains_outside_parens(\"$target\",str)) {
-        assert(first_word_is(\"$target\",str));
+        //assert(first_word_is(\"$target\",str));
         return parse_$target(str);
     }
     ";
@@ -79,13 +115,15 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
   constexpr allocated_ref<as_values::AST_elem> parse_statement(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    if (contains_outside_parens(',',str)){
+    if (first_word_is("var",str)){
+      return parse_var(str);
+    }
+    else if (contains_outside_parens(',',str)){
         return parse_sequence(str);
     }
-    else <?php echo statement_case("var")?>
-    else <?php echo statement_case("return")?>
-    else <?php echo statement_case("while")?>
-    else <?php echo statement_case("if")?>
+    else <?php echo parse_case("return")?>
+    else <?php echo parse_case("while")?>
+    else <?php echo parse_case("if")?>
     else if (contains_outside_parens("=",str)){
         return parse_assignment(str);
     }
@@ -131,6 +169,6 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
     }
     // all parsing implemented in the constructor, so that
     // future things can just build this and expect it to work
-    allocator.top.e = parse_sequence(local_copy);
+    allocator.top.e = parse_statement(local_copy);
   }
 };

@@ -5,7 +5,7 @@
 
 */
 
-using Alloc = as_values::AST_Allocator<15>;
+using Alloc = as_values::AST_Allocator<50>;
 
 template <typename string> struct parse {
   const string _str;
@@ -29,15 +29,36 @@ template <typename string> struct parse {
     return ret;
   }
 
+  constexpr allocated_ref<as_values::AST_elem> parse_binding(const str_t &str) {
+    using namespace mutils;
+    using namespace cstring;
+
+    allocated_ref<as_values::AST_elem> ret =
+        allocator.template allocate<as_values::AST_elem>();
+    ret.get(allocator).template get_<as_values::Binding>().is_this_elem = true;
+    auto &binding = ret.get(allocator).template get_<as_values::Binding>().t;
+    ;
+    str_nc binding_components[2] = {{0}};
+    single_split('=', str, binding_components);
+    trim(binding.var, binding_components[0]);
+    binding.rhs = parse_expression(binding_components[1]);
+    return ret;
+  }
+
   constexpr allocated_ref<as_values::AST_elem> parse_var(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
-    ret.get(allocator).template get_<as_values::Skip>().is_this_elem = true;
-    auto &skipref = ret.get(allocator).template get_<as_values::Skip>().t;
-    (void)skipref;
+    ret.get(allocator).template get_<as_values::Let>().is_this_elem = true;
+    auto &var = ret.get(allocator).template get_<as_values::Let>().t;
+    str_nc let_expr = {0};
+    remove_first_word(let_expr, str);
+    str_nc let_components[2] = {{0}};
+    single_split(',', let_expr, let_components);
+    var.Binding = parse_binding(let_components[0]);
+    var.Body = parse_statement(let_components[1]);
     return ret;
   }
   constexpr allocated_ref<as_values::AST_elem> parse_return(const str_t &str) {
@@ -77,9 +98,29 @@ template <typename string> struct parse {
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
-    ret.get(allocator).template get_<as_values::Skip>().is_this_elem = true;
-    auto &skipref = ret.get(allocator).template get_<as_values::Skip>().t;
-    (void)skipref;
+    ret.get(allocator).template get_<as_values::If>().is_this_elem = true;
+    auto &ifref = ret.get(allocator).template get_<as_values::If>().t;
+    str_nc if_condition = {0};
+    auto if_offset = next_paren_group(if_condition, str);
+    const char *post_condition = str + if_offset;
+    str_nc then_body = {0};
+    auto then_offset = next_paren_group(then_body, post_condition);
+    const char *post_then = then_offset + post_condition;
+    str_nc else_body = {0};
+    ifref.condition = parse_expression(if_condition);
+    ifref.then = parse_statement(then_body);
+    if (first_word_is("else", post_then)) {
+      next_paren_group(else_body, post_then);
+      ifref.els = parse_statement(else_body);
+    } else {
+
+      allocated_ref<as_values::AST_elem> ptr =
+          allocator.template allocate<as_values::AST_elem>();
+      ptr.get(allocator).template get_<as_values::Skip>().is_this_elem = true;
+      auto &skipref = ptr.get(allocator).template get_<as_values::Skip>().t;
+      (void)skipref;
+      ifref.els = std::move(ptr);
+    }
     return ret;
   }
   constexpr allocated_ref<as_values::AST_elem>
@@ -89,9 +130,14 @@ template <typename string> struct parse {
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
-    ret.get(allocator).template get_<as_values::Skip>().is_this_elem = true;
-    auto &skipref = ret.get(allocator).template get_<as_values::Skip>().t;
-    (void)skipref;
+    ret.get(allocator).template get_<as_values::Assignment>().is_this_elem =
+        true;
+    auto &assignment =
+        ret.get(allocator).template get_<as_values::Assignment>().t;
+    str_nc string_bufs[2] = {{0}};
+    split_outside_parens('=', str, string_bufs);
+    assignment.Var = parse_expression(string_bufs[0]);
+    assignment.Expr = parse_expression(string_bufs[1]);
     return ret;
   }
 
@@ -101,19 +147,18 @@ template <typename string> struct parse {
   parse_statement(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    if (contains_outside_parens(',', str)) {
-      return parse_sequence(str);
-    } else if (contains_outside_parens("var", str)) {
-      assert(first_word_is("var", str));
+    if (first_word_is("var", str)) {
       return parse_var(str);
+    } else if (contains_outside_parens(',', str)) {
+      return parse_sequence(str);
     } else if (contains_outside_parens("return", str)) {
-      assert(first_word_is("return", str));
+      // assert(first_word_is("return",str));
       return parse_return(str);
     } else if (contains_outside_parens("while", str)) {
-      assert(first_word_is("while", str));
+      // assert(first_word_is("while",str));
       return parse_while(str);
     } else if (contains_outside_parens("if", str)) {
-      assert(first_word_is("if", str));
+      // assert(first_word_is("if",str));
       return parse_if(str);
     } else if (contains_outside_parens("=", str)) {
       return parse_assignment(str);
@@ -176,6 +221,6 @@ template <typename string> struct parse {
     }
     // all parsing implemented in the constructor, so that
     // future things can just build this and expect it to work
-    allocator.top.e = parse_sequence(local_copy);
+    allocator.top.e = parse_statement(local_copy);
   }
 };

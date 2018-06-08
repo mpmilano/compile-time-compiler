@@ -1,0 +1,9 @@
+Introduce a normal error node:
+
+<?php new Either('Operation',new Field('Message',$String_t) ?>
+
+whenever you encounter it, have a MTL-wide boolean determine whether you're going to try and handle the error with a comprehensive message, or just fail out with a "re-run in debug mode to get the error" thing.  
+
+"Debug Mode", meanwhile, will involve a runtime component that grabs the AST and learns something about the error, then prints it for you. 
+
+If we just make this part of the static initializer, I *think* that will have the net result of making it print out during program load.  So maybe we can just always do this

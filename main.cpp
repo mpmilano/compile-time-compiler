@@ -55,14 +55,16 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
 
 int main() {
   CSTR(wrapper, var iterator = users, var b1 = 0, var b2 = 0,
+       if (true) { return b1 } else {return b2},
        while (iterator.isValid()){iterator = iterator->next}, return b1);
   parse<wrapper> p;
   print(std::cout, p.allocator.top, p.allocator);
   std::cout << std::endl << "Original string: " << wrapper{}.str << std::endl;
+
   constexpr flatten<wrapper> f;
   constexpr auto second_allocator =
       as_types::as_value<50, typename flatten<wrapper>::parse_t>();
-  print(std::cout, second_allocator.top, second_allocator);
+  print(std::cout, second_allocator.top, second_allocator); //*/
   std::cout << std::endl << std::endl;
   // print(std::cout, f.prev.allocator.top,f.prev.allocator);
   // std::cout << std::endl;
