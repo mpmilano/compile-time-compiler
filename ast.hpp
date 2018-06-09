@@ -1211,4 +1211,100 @@ std::ostream &print(std::ostream &o, const AST_elem &e,
   }
   return o;
 }
+
+} // namespace as_values
+namespace as_values {
+
+template <typename Allocator, typename size_t>
+std::ostream &pretty_print(
+    std::ostream &o, const size_t &st, const Allocator &,
+    std::enable_if_t<std::is_same_v<size_t, std::size_t>> * = nullptr) {
+  return o << st;
+}
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const AST_elem &e,
+                           const Allocator &allocator);
+
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const Binding &b,
+                           const Allocator &allocator) {
+  o << b.var << " = ";
+  return pretty_print(o, b.rhs, allocator);
+}
+
+template <char... c, typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const mutils::String<c...>,
+                           const Allocator &) {
+  return o << mutils::String<c...>{}.string;
+}
+
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const char *cstr,
+                           const Allocator &) {
+  return o << cstr;
+}
+
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const char cstr,
+                           const Allocator &) {
+  char str[2] = {cstr, 0};
+  return o << str;
+}
+
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const AST_elem &e,
+                           const Allocator &allocator) {
+  if (e.template get_<transaction>().is_this_elem) {
+    return pretty_print(o, e.template get<transaction>(), allocator);
+  }
+  if (e.template get_<FieldReference>().is_this_elem) {
+    return pretty_print(o, e.template get<FieldReference>(), allocator);
+  }
+  if (e.template get_<FieldPointerReference>().is_this_elem) {
+    return pretty_print(o, e.template get<FieldPointerReference>(), allocator);
+  }
+  if (e.template get_<Dereference>().is_this_elem) {
+    return pretty_print(o, e.template get<Dereference>(), allocator);
+  }
+  if (e.template get_<IsValid>().is_this_elem) {
+    return pretty_print(o, e.template get<IsValid>(), allocator);
+  }
+  if (e.template get_<VarReference>().is_this_elem) {
+    return pretty_print(o, e.template get<VarReference>(), allocator);
+  }
+  if (e.template get_<Constant>().is_this_elem) {
+    return pretty_print(o, e.template get<Constant>(), allocator);
+  }
+  if (e.template get_<BinOp>().is_this_elem) {
+    return pretty_print(o, e.template get<BinOp>(), allocator);
+  }
+  if (e.template get_<Let>().is_this_elem) {
+    return pretty_print(o, e.template get<Let>(), allocator);
+  }
+  if (e.template get_<LetRemote>().is_this_elem) {
+    return pretty_print(o, e.template get<LetRemote>(), allocator);
+  }
+  if (e.template get_<Assignment>().is_this_elem) {
+    return pretty_print(o, e.template get<Assignment>(), allocator);
+  }
+  if (e.template get_<Return>().is_this_elem) {
+    return pretty_print(o, e.template get<Return>(), allocator);
+  }
+  if (e.template get_<If>().is_this_elem) {
+    return pretty_print(o, e.template get<If>(), allocator);
+  }
+  if (e.template get_<While>().is_this_elem) {
+    return pretty_print(o, e.template get<While>(), allocator);
+  }
+  if (e.template get_<Sequence>().is_this_elem) {
+    return pretty_print(o, e.template get<Sequence>(), allocator);
+  }
+  if (e.template get_<Skip>().is_this_elem) {
+    return pretty_print(o, e.template get<Skip>(), allocator);
+  }
+  if (e.template get_<Binding>().is_this_elem) {
+    return pretty_print(o, e.template get<Binding>(), allocator);
+  }
+  return o;
+}
 } // namespace as_values

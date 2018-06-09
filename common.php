@@ -5,5 +5,9 @@
     $elem.get(allocator).template get_<as_values::$type>().is_this_elem = true;
     auto& $objname = $elem.get(allocator).template get_<as_values::$type>().t;";
   }
+
+  function deref($expr){
+    return "$expr.get(allocator)";
+  }
 ?>
 

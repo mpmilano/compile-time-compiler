@@ -14,12 +14,123 @@ template <typename string> struct parse {
   using str_nc = char[string_length::value + 1];
   Alloc allocator;
 
+/*
+<?php function parse_expr($subcase, ...$symbols ) : string {
+  $ret = "";
+  foreach ($symbols as $symbol){
+    $ret = $ret."if (contains_outside_parens(\"$symbol\",str)){
+      return parse_$subcase(str,\"$symbol\");
+    } else ";
+  }
+  return $ret;
+
+} ?>
+*/
+
+  constexpr allocated_ref<as_values::AST_elem> parse_binop(const str_t& str, const char* cause){
+    using namespace mutils;
+    using namespace cstring;
+    <?php alloc("ret", "ref","BinOp")?>
+    str_nc operands[2] = {0};
+    last_split(cause,str,operands);
+    ref.L = parse_expression(operands[0]);
+    ref.R = parse_expression(operands[1]);
+    ref.op = cause[0];
+    return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem> parse_isvalid(const str_t& str, const char*){
+    using namespace mutils;
+    using namespace cstring;
+    str_nc trimmed = {0};
+    trim(trimmed,str);
+    auto len = str_len(trimmed);
+    assert(streq(".isValid()",trimmed + (len - str_len(".isValid()"))));
+    // we should really end with .isValid() here
+    for (auto i = len - str_len(".isValid()"); i < len; ++i){
+      trimmed[i] = 0;
+    }
+    <?php alloc("ret", "ref","IsValid")?>
+    ref.Hndl = parse_expression(trimmed);
+    return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem> parse_fieldref(const str_t& str, const char* ){
+    using namespace mutils;
+    using namespace cstring;
+    str_nc trimmed = {0};
+    str_nc operands[2] = {{0}};
+    trim(trimmed,str);
+    last_split('.',trimmed,operands);
+    <?php alloc("ret", "ref","FieldReference")?>
+    ref.Struct = parse_expression(operands[0]);
+    str_nc field_trimmed = {0};
+    trim(field_trimmed,operands[1]);
+    str_cpy(ref.Field, field_trimmed);
+    return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem> parse_fieldptrref(const str_t& str, const char* cause){
+    using namespace mutils;
+    using namespace cstring;
+    str_nc trimmed = {0};
+    str_nc operands[2] = {{0}};
+    trim(trimmed,str);
+    last_split("->",trimmed,operands);
+    <?php alloc("ret", "ref","FieldPointerReference")?>
+    ref.Struct = parse_expression(operands[0]);
+    str_nc field_trimmed = {0};
+    trim(field_trimmed,operands[1]);
+    str_cpy(ref.Field, field_trimmed);
+    return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem> parse_deref(const str_t& str, const char* cause){
+    using namespace mutils;
+    using namespace cstring;
+    str_nc trimmed = {0};
+    trim(trimmed,str);
+    assert(trimmed[0] = '*'); //this better be true;
+    str_nc body = {0};
+    str_cpy(body,trimmed+1);
+    <?php alloc("ret", "ref","Dereference")?>
+    ref.Struct = parse_expression(body);
+    return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem> parse_constant(const str_t& str){
+    using namespace mutils;
+    using namespace cstring;
+    <?php alloc("ret", "ref","Constant")?>
+    ref.i = parse_int(str);
+    return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem> parse_varref(const str_t& str){
+    using namespace mutils;
+    using namespace cstring;
+    <?php alloc("ret", "ref","VarReference")?>
+    str_cpy(ref.Var,str);
+    return ret;
+  }
+
   constexpr allocated_ref<as_values::AST_elem> parse_expression(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","voidref","Constant")?>
-    (void)voidref;
-    return ret;
+    <?php echo parse_expr("binop","+","- ","*","/","==","&&","||","!=") ?>
+    <?php echo parse_expr("isvalid",".isValid()") ?>
+    <?php echo parse_expr("fieldref",".")?>
+    <?php echo parse_expr("fieldptrref","->")?>
+    <?php echo parse_expr("deref","*")?>
+    {
+      //constants and variables here.
+      str_nc atom = {0};
+      trim(atom,str);
+      static_assert('0' < '9');
+      if (atom[0] >= '0' && atom[0] <= '9') return parse_constant(atom);
+      else return parse_varref(atom);
+    }
+    throw "Ran off the end!";
   }
 
   constexpr allocated_ref<as_values::AST_elem> parse_binding(const str_t &str){
@@ -27,7 +138,7 @@ template <typename string> struct parse {
     using namespace cstring;
     <?php alloc("ret","binding","Binding")?>;
     str_nc binding_components[2] = {{0}};
-    single_split('=',str,binding_components);
+    first_split('=',str,binding_components);
     trim(binding.var,binding_components[0]);
     binding.rhs = parse_expression(binding_components[1]);
     return ret;
@@ -40,7 +151,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_var(const str_t &str) {
     str_nc let_expr = {0};
     remove_first_word(let_expr,str);
     str_nc let_components[2] = {{0}};
-    single_split(',',let_expr,let_components);
+    first_split(',',let_expr,let_components);
     var.Binding = parse_binding(let_components[0]);
     var.Body = parse_statement(let_components[1]);
     return ret;

@@ -210,5 +210,53 @@ namespace as_values {
     }
     return o;
   }
+
+}
+namespace as_values {
+
+    template<typename Allocator, typename size_t>
+  std::ostream& pretty_print(std::ostream& o, const size_t& st, const Allocator &, std::enable_if_t<std::is_same_v<size_t,std::size_t>>* = nullptr){
+    return o << st;
+  }
+  template<typename Allocator>
+  std::ostream& pretty_print(std::ostream& o, const AST_elem& e, const Allocator &allocator);
+  
+
+  template<typename Allocator>
+  std::ostream& pretty_print(std::ostream& o, const Binding& b, const Allocator &allocator){
+    o << b.var << " = ";
+    return pretty_print(o,b.rhs,allocator);
+  }
+
+  template<char... c, typename Allocator>
+  std::ostream& pretty_print(std::ostream &o, const mutils::String<c...>, const Allocator&){
+    return o << mutils::String<c...>{}.string;
+  }
+
+  template<typename Allocator>
+  std::ostream& pretty_print(std::ostream &o, const char* cstr, const Allocator&){
+    return o << cstr;
+  }
+
+  template<typename Allocator>
+  std::ostream& pretty_print(std::ostream &o, const char cstr, const Allocator&){
+    char str[2] = {cstr,0};
+    return o << str;
+  }
+
+  template<typename Allocator>
+  std::ostream& pretty_print(std::ostream& o, const AST_elem& e, const Allocator &allocator){
+    <?php 
+    foreach ($types as $type){
+      echo "if (e.template get_<$type->name>().is_this_elem) {
+          return pretty_print(o,e.template get<$type->name>(),allocator);
+      }";
+    }
+    ?>
+    if (e.template get_<Binding>().is_this_elem){
+      return pretty_print(o,e.template get<Binding>(),allocator);
+    }
+    return o;
+  }
 }
 

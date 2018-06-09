@@ -116,3 +116,16 @@ std::ostream& print(std::ostream& o, const allocated_ref<T>& ptr, const SingleAl
 	print(o,ptr.get(allocator),allocator);
 	return o << ")";
 }
+
+template<typename T, std::size_t s, typename Top, typename... Subs>
+std::ostream& pretty_print(std::ostream& o, const allocated_ref<T>& ptr, const Allocator<s,Top,Subs...> &_allocator){
+	const SingleAllocator<s,T> &allocator = _allocator;
+	pretty_print(o,ptr.get(allocator),allocator);
+	return o;
+}
+
+template<typename T, std::size_t s>
+std::ostream& pretty_print(std::ostream& o, const allocated_ref<T>& ptr, const SingleAllocator<s,T> &allocator){
+	pretty_print(o,ptr.get(allocator),allocator);
+	return o;
+}

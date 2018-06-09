@@ -5,9 +5,9 @@ CPPFLAGS=-g --std=c++1z
 LDFLAGS= -pthread
 
 SOURCES = main.cpp
-CXX = clang++ -ferror-limit=1
-HEADERS = allocated_ref.hpp  allocator.hpp  array.hpp  ast.hpp  mutils/cstring.hpp ctutils.hpp  ctutils-old.hpp  union.hpp parse.hpp Makefile mutils/cstring_tests.hpp
-PHP_HEADERS = ast.php common.php util.php
+CXX = clang++ -ferror-limit=1 -fconstexpr-steps=20048576
+HEADERS = allocated_ref.hpp  pretty_print.hpp allocator.hpp  array.hpp  ast.hpp  mutils/cstring.hpp ctutils.hpp  ctutils-old.hpp  union.hpp parse.hpp Makefile mutils/cstring_tests.hpp
+PHP_HEADERS = ast.php common.php util.php ast_skeleton.php
 OBJECTS=$(SOURCES:.cpp=.oo)
 
 TARGET = main
