@@ -36,25 +36,55 @@ template <typename string> struct parse {
     return ret;
   }
 
-  constexpr allocated_ref<as_values::AST_elem> parse_isvalid(const str_t &str,
-                                                             const char *) {
+  constexpr allocated_ref<as_values::AST_elem>
+  parse_builtin_op(const str_t &str, const char *specific_op) {
+    /*
+     */
     using namespace mutils;
     using namespace cstring;
     str_nc trimmed = {0};
     trim(trimmed, str);
-    auto len = str_len(trimmed);
-    assert(streq(".isValid()", trimmed + (len - str_len(".isValid()"))));
-    // we should really end with .isValid() here
-    for (auto i = len - str_len(".isValid()"); i < len; ++i) {
-      trimmed[i] = 0;
+    str_nc split[2] = {{0}};
+    last_split('.', trimmed, split);
+    str_nc op_args = {0};
+    copy_within_parens(op_args, split[1]);
+    switch (specific_op[3]) {
+    case 'd': {
+      allocated_ref<as_values::AST_elem> ret =
+          allocator.template allocate<as_values::AST_elem>();
+      ret.get(allocator).template get_<as_values::Endorse>().is_this_elem =
+          true;
+      auto &ref = ret.get(allocator).template get_<as_values::Endorse>().t;
+      str_nc final_str = {0};
+      ref.Hndl = parse_expression(split[0]);
+      str_cpy(ref.label.label, op_args);
+      return ret;
     }
-
-    allocated_ref<as_values::AST_elem> ret =
-        allocator.template allocate<as_values::AST_elem>();
-    ret.get(allocator).template get_<as_values::IsValid>().is_this_elem = true;
-    auto &ref = ret.get(allocator).template get_<as_values::IsValid>().t;
-    ref.Hndl = parse_expression(trimmed);
-    return ret;
+      // endorse
+    case 's': {
+      allocated_ref<as_values::AST_elem> ret =
+          allocator.template allocate<as_values::AST_elem>();
+      ret.get(allocator).template get_<as_values::Ensure>().is_this_elem = true;
+      auto &ref = ret.get(allocator).template get_<as_values::Ensure>().t;
+      str_nc final_str = {0};
+      ref.Hndl = parse_expression(split[0]);
+      str_cpy(ref.label.label, op_args);
+      return ret;
+    }
+      // ensure
+    case 'V': {
+      allocated_ref<as_values::AST_elem> ret =
+          allocator.template allocate<as_values::AST_elem>();
+      ret.get(allocator).template get_<as_values::IsValid>().is_this_elem =
+          true;
+      auto &ref = ret.get(allocator).template get_<as_values::IsValid>().t;
+      str_nc final_str = {0};
+      ref.Hndl = parse_expression(split[0]);
+      return ret;
+    }
+      // isValid
+    }
+    throw "ran off the end";
   }
 
   constexpr allocated_ref<as_values::AST_elem> parse_fieldref(const str_t &str,
@@ -166,8 +196,12 @@ template <typename string> struct parse {
       return parse_binop(str, "||");
     } else if (contains_outside_parens("!=", str)) {
       return parse_binop(str, "!=");
-    } else if (contains_outside_parens(".isValid()", str)) {
-      return parse_isvalid(str, ".isValid()");
+    } else if (contains_outside_parens(".isValid(", str)) {
+      return parse_builtin_op(str, ".isValid(");
+    } else if (contains_outside_parens(".endorse(", str)) {
+      return parse_builtin_op(str, ".endorse(");
+    } else if (contains_outside_parens(".ensure(", str)) {
+      return parse_builtin_op(str, ".ensure(");
     } else if (contains_outside_parens(".", str)) {
       return parse_fieldref(str, ".");
     } else if (contains_outside_parens("->", str)) {

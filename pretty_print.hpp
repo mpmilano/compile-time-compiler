@@ -126,4 +126,18 @@ std::ostream &pretty_print(std::ostream &o, const Skip &, const Allocator &) {
   return o;
 }
 
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const Endorse &e,
+                           const Allocator &allocator) {
+  pretty_print(o, e.Hndl, allocator);
+  return o << ".Endorse(" << e.label.label << ")";
+}
+
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const Ensure &e,
+                           const Allocator &allocator) {
+  pretty_print(o, e.Hndl, allocator);
+  return o << ".Ensure(" << e.label.label << ")";
+}
+
 } // namespace as_values

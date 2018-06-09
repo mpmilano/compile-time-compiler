@@ -30,7 +30,7 @@ template <typename string> struct parse {
   constexpr allocated_ref<as_values::AST_elem> parse_binop(const str_t& str, const char* cause){
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret", "ref","BinOp")?>
+    <?php echo alloc("ret", "ref","BinOp")?>
     str_nc operands[2] = {0};
     last_split(cause,str,operands);
     ref.L = parse_expression(operands[0]);
@@ -39,20 +39,33 @@ template <typename string> struct parse {
     return ret;
   }
 
-  constexpr allocated_ref<as_values::AST_elem> parse_isvalid(const str_t& str, const char*){
+  constexpr allocated_ref<as_values::AST_elem> parse_builtin_op(const str_t& str, const char* specific_op){
+    /*
+    <?php function instantiate_builtin_op($type, $arg = "") : string{
+      return "
+      {".alloc("ret", "ref","$type")."
+      str_nc final_str = {0};
+      ref.Hndl = parse_expression(split[0]); ".
+      ($arg !== "" ? 
+        "str_cpy(ref.$arg.label, op_args);" : "")."
+      return ret;}
+      ";
+    }?>
+*/
     using namespace mutils;
     using namespace cstring;
     str_nc trimmed = {0};
     trim(trimmed,str);
-    auto len = str_len(trimmed);
-    assert(streq(".isValid()",trimmed + (len - str_len(".isValid()"))));
-    // we should really end with .isValid() here
-    for (auto i = len - str_len(".isValid()"); i < len; ++i){
-      trimmed[i] = 0;
+    str_nc split[2] = {{0}};
+    last_split('.',trimmed,split);
+    str_nc op_args = {0};
+    copy_within_parens(op_args,split[1]);
+    switch (specific_op[3]){
+      case 'd': <?php echo instantiate_builtin_op("Endorse","label") ?> //endorse
+      case 's': <?php echo instantiate_builtin_op("Ensure","label") ?> //ensure
+      case 'V': <?php echo instantiate_builtin_op("IsValid") ?> //isValid
     }
-    <?php alloc("ret", "ref","IsValid")?>
-    ref.Hndl = parse_expression(trimmed);
-    return ret;
+    throw "ran off the end";
   }
 
   constexpr allocated_ref<as_values::AST_elem> parse_fieldref(const str_t& str, const char* ){
@@ -62,7 +75,7 @@ template <typename string> struct parse {
     str_nc operands[2] = {{0}};
     trim(trimmed,str);
     last_split('.',trimmed,operands);
-    <?php alloc("ret", "ref","FieldReference")?>
+    <?php echo alloc("ret", "ref","FieldReference")?>
     ref.Struct = parse_expression(operands[0]);
     str_nc field_trimmed = {0};
     trim(field_trimmed,operands[1]);
@@ -77,7 +90,7 @@ template <typename string> struct parse {
     str_nc operands[2] = {{0}};
     trim(trimmed,str);
     last_split("->",trimmed,operands);
-    <?php alloc("ret", "ref","FieldPointerReference")?>
+    <?php echo alloc("ret", "ref","FieldPointerReference")?>
     ref.Struct = parse_expression(operands[0]);
     str_nc field_trimmed = {0};
     trim(field_trimmed,operands[1]);
@@ -93,7 +106,7 @@ template <typename string> struct parse {
     assert(trimmed[0] = '*'); //this better be true;
     str_nc body = {0};
     str_cpy(body,trimmed+1);
-    <?php alloc("ret", "ref","Dereference")?>
+    <?php echo alloc("ret", "ref","Dereference")?>
     ref.Struct = parse_expression(body);
     return ret;
   }
@@ -101,7 +114,7 @@ template <typename string> struct parse {
   constexpr allocated_ref<as_values::AST_elem> parse_constant(const str_t& str){
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret", "ref","Constant")?>
+    <?php echo alloc("ret", "ref","Constant")?>
     ref.i = parse_int(str);
     return ret;
   }
@@ -109,7 +122,7 @@ template <typename string> struct parse {
   constexpr allocated_ref<as_values::AST_elem> parse_varref(const str_t& str){
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret", "ref","VarReference")?>
+    <?php echo alloc("ret", "ref","VarReference")?>
     str_cpy(ref.Var,str);
     return ret;
   }
@@ -118,7 +131,7 @@ template <typename string> struct parse {
     using namespace mutils;
     using namespace cstring;
     <?php echo parse_expr("binop","+","- ","*","/","==","&&","||","!=") ?>
-    <?php echo parse_expr("isvalid",".isValid()") ?>
+    <?php echo parse_expr("builtin_op",".isValid(",".endorse(",".ensure(") ?>
     <?php echo parse_expr("fieldref",".")?>
     <?php echo parse_expr("fieldptrref","->")?>
     <?php echo parse_expr("deref","*")?>
@@ -136,7 +149,7 @@ template <typename string> struct parse {
   constexpr allocated_ref<as_values::AST_elem> parse_binding(const str_t &str){
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","binding","Binding")?>;
+    <?php echo alloc("ret","binding","Binding")?>;
     str_nc binding_components[2] = {{0}};
     first_split('=',str,binding_components);
     trim(binding.var,binding_components[0]);
@@ -147,7 +160,7 @@ template <typename string> struct parse {
 constexpr allocated_ref<as_values::AST_elem> parse_var(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","var","Let")?>
+    <?php echo alloc("ret","var","Let")?>
     str_nc let_expr = {0};
     remove_first_word(let_expr,str);
     str_nc let_components[2] = {{0}};
@@ -159,7 +172,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_var(const str_t &str) {
 constexpr allocated_ref<as_values::AST_elem> parse_return(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","retref","Return")?>
+    <?php echo alloc("ret","retref","Return")?>
     str_nc next = {0};
     remove_first_word(next,str);
     retref.Expr = parse_expression(next);
@@ -168,7 +181,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_return(const str_t &str) {
 constexpr allocated_ref<as_values::AST_elem> parse_while(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","whileref","While")?>
+    <?php echo alloc("ret","whileref","While")?>
     str_nc without_first = {0};
     remove_first_word(without_first,str);
     str_nc condition = {0};
@@ -182,7 +195,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_while(const str_t &str) {
 constexpr allocated_ref<as_values::AST_elem> parse_if(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","ifref","If")?>
+    <?php echo alloc("ret","ifref","If")?>
     str_nc if_condition = {0};
     auto if_offset = next_paren_group(if_condition,str);
     const char* post_condition = str + if_offset;
@@ -197,7 +210,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_if(const str_t &str) {
       ifref.els = parse_statement(else_body);
     }
     else {
-      <?php alloc("ptr","skipref","Skip")?>
+      <?php echo alloc("ptr","skipref","Skip")?>
       (void)skipref;
       ifref.els = std::move(ptr);
     }
@@ -206,7 +219,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_if(const str_t &str) {
 constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","assignment","Assignment")?>
+    <?php echo alloc("ret","assignment","Assignment")?>
     str_nc string_bufs[2] = {{0}};
     split_outside_parens('=',str,string_bufs);
     assignment.Var = parse_expression(string_bufs[0]);
@@ -254,7 +267,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
   constexpr allocated_ref<as_values::AST_elem> parse_sequence(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php alloc("ret","seqref","Sequence") ?>
+    <?php echo alloc("ret","seqref","Sequence") ?>
     auto *seq = &seqref;
     str_nc string_bufs[20] = {{0}};
     auto groups = split_outside_parens(',', str, string_bufs);
@@ -264,12 +277,12 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
     for (auto i = 0u; i < groups; ++i){
       seq->e = parse_statement(string_bufs[i]);
       if ((i + 1) < groups){
-        <?php alloc("newret","seqref","Sequence")?>
+        <?php echo alloc("newret","seqref","Sequence")?>
         seq->next = std::move(newret);
         seq = &seqref;
       }
       else {
-        <?php alloc("skipref","voidref","Skip")?>
+        <?php echo alloc("skipref","voidref","Skip")?>
         (void)voidref;
         seq->next = std::move(skipref);
       }

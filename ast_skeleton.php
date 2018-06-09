@@ -11,6 +11,20 @@ using plain_array = T[<?php echo $max_var_length?>];
 
 
 namespace as_values {
+
+  struct Label{
+    plain_array<char> label = {0};
+    constexpr Label() = default;
+    constexpr Label(const Label&) = delete;
+    constexpr Label(Label&& l){
+      ::mutils::cstring::str_cpy(label,l.label);
+    }
+    constexpr Label& operator=(Label&& l){
+      ::mutils::cstring::str_cpy(label,l.label);
+      return *this;
+    }
+  };
+
   <?php 
   foreach ($types as $type){
     echo $type->value_declaration();
@@ -41,6 +55,8 @@ foreach ($types as $type){
 } // namespace as_values
 
 namespace as_types {
+  template<typename> struct Label;
+  template<char... c> struct Label<mutils::String<c...>>{using label = mutils::String<c...>; constexpr Label() = default;};
   template<typename> struct Expression;
   template<typename> struct Statement;
 

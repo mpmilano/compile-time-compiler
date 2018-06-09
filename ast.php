@@ -7,12 +7,13 @@ assert_options(ASSERT_QUIET_EVAL, 1);
 $Expression_t = 0;
 $Statement_t = 1;
 $Binding_t = 2;
-$String_t = 3;
-$Label_t = 4;
-$Argument_pack_t = 5;
-$List_t = 6;
-$Either_t = 7;
+$Argument_pack_t = 3;
+$List_t = 4;
+$Either_t = 5;
+$String_t = 6;
+$Label_t = 7;
 $NODEMAX = 8;
+$ASTMAX = 5;
 
 class Field{
   public $type;
@@ -25,9 +26,10 @@ class Field{
 	}
     
 	public function value_type_name(){
-		global $String_t;
+		global $String_t; global $Label_t;
 		if (is_ast_node($this->type)) return "allocated_ref<AST_elem>";
 		else if ($this->type == $String_t) return "plain_array<char>";
+		else if ($this->type == $Label_t) return "Label";
 		else return $this->type;
 	}
 	public function declare_struct_member(){
@@ -63,17 +65,14 @@ class AST_node{
 	}
     
 	public function template_defn($prefix = ''){
-		global $String_t;
+		global $String_t; global $Label_t;
 		$type = $this;
 		$out = '';
 		$field_num = count($type->fields);
 		if ($field_num > 0) {
 			$out = $out."template <";
 			foreach ($type->fields as $i => $field){
-				if (is_ast_node($field->type)){
-					$out = $out."typename ";
-				}
-				else if ($field->type === $String_t){
+				if (is_ast_node($field->type) || $field->type === $String_t || $field->type === $Label_t){
 					$out = $out."typename ";
 				}
 				else {$out = $out. "$field->type ";}
@@ -115,11 +114,8 @@ class AST_node{
 		$tmp = $this->full_template_defn('_');
 		$out = "$tmp struct ".$this->encapsulated_type_name('_')."{";
 		foreach ($this->fields as $field){
-			global $String_t;
-			if (is_ast_node($field->type)){
-				$out = $out."using $field->name = _$field->name;";
-			}
-			elseif ($field->type === $String_t){
+			global $String_t; global $Label_t;
+			if (is_ast_node($field->type) || $field->type === $String_t || $field->type === $Label_t){
 				$out = $out."using $field->name = _$field->name;";
 			}
 			else {
@@ -246,7 +242,7 @@ class AST_node{
 		$type = $this; 
 		$ret = '';
 		foreach ($type->field_accessors() as $i => $field){
-			global $String_t;
+			global $String_t; global $Label_t;
 			if (is_ast_node($field->type)) {
 				$ret = $ret.'/*Declaring arg!*/'.$this->declare_arg($field,$i).
 				 "using _arg$i = DECT(as_type<budget - 1, arg$i>());\n";
@@ -255,6 +251,11 @@ class AST_node{
 				$ret = $ret."
 				constexpr auto& __str$i = e.template get_<$type->name>().t.$field->name;
 				using _arg$i = DECT(mutils::String<".char_seq_from_cstring("__str$i",$max_var_length).">::trim_ends());";
+			}
+			elseif ($field->type === $Label_t){
+				$ret = $ret."
+				constexpr auto& __lbl$i = e.template get_<$type->name>().t.$field->name;
+				using _arg$i = as_types::Label<DECT(mutils::String<".char_seq_from_cstring("__lbl$i.label",$max_var_length).">::trim_ends())>;";
 			}
 			else $ret = $ret. "constexpr auto _arg$i = e.template get_<$type->name>().t.$field->name;\n";
 		}
@@ -274,7 +275,7 @@ class AST_node{
 	}
 
 	public function to_value() :string {
-		global $String_t;
+		global $String_t; global $Label_t;
 		$type = $this;
 		$ret = ''.
 		$type->full_template_defn_for_method();
@@ -289,6 +290,11 @@ class AST_node{
 			$ret = $ret. "this_node.t.$field->name = as_value($field->name{});";
 		elseif($field->type === $String_t){
 			$ret = $ret. "mutils::cstring::str_cpy(this_node.t.$field->name, $field->name{}.string);";
+		}
+		elseif($field->type === $Label_t){
+			$ret = $ret. "
+			using ____label = typename $field->name::label;
+			mutils::cstring::str_cpy(this_node.t.$field->name.label, ____label{}.string);";
 		}
 		  else $ret = $ret. "this_node.t.$field->name = $field->name;";
 		}
@@ -516,9 +522,9 @@ class Skip extends AST_node {
 function is_ast_node($node_t){
 	global $Statement_t; global $Expression_t; global $Binding_t;
 	global $String_t; global $Label_t; global $Argument_pack_t;
-	global $List_t; global $NODEMAX;
+	global $List_t; global $ASTMAX;
 	if (is_int($node_t)){
-		return $node_t >= $Expression_t && $node_t <= $NODEMAX && $node_t != $String_t;
+		return $node_t >= $Expression_t && $node_t <= $ASTMAX;
 	}
 }
 ?>

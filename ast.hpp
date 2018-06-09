@@ -9,10 +9,24 @@
 template <typename T> using plain_array = T[20];
 
 namespace as_values {
+
+struct Label {
+  plain_array<char> label = {0};
+  constexpr Label() = default;
+  constexpr Label(const Label &) = delete;
+  constexpr Label(Label &&l) { ::mutils::cstring::str_cpy(label, l.label); }
+  constexpr Label &operator=(Label &&l) {
+    ::mutils::cstring::str_cpy(label, l.label);
+    return *this;
+  }
+};
+
 struct transaction;
 struct FieldReference;
 struct FieldPointerReference;
 struct Dereference;
+struct Endorse;
+struct Ensure;
 struct IsValid;
 struct VarReference;
 struct Constant;
@@ -28,8 +42,8 @@ struct Skip;
 struct Binding;
 using AST_elem =
     Union<transaction, FieldReference, FieldPointerReference, Dereference,
-          IsValid, VarReference, Constant, BinOp, Let, LetRemote, Assignment,
-          Return, If, While, Sequence, Skip, Binding>;
+          Endorse, Ensure, IsValid, VarReference, Constant, BinOp, Let,
+          LetRemote, Assignment, Return, If, While, Sequence, Skip, Binding>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
@@ -100,6 +114,34 @@ struct Dereference : public Expression {
   // move-assignment
   constexpr Dereference &operator=(Dereference &&p) {
     Struct = std::move(p.Struct);
+    return *this;
+  }
+};
+struct Endorse : public Expression {
+  Label label{};
+  allocated_ref<AST_elem> Hndl{};
+  // default constructor
+  constexpr Endorse(){};
+  constexpr Endorse(Endorse &&p)
+      : label{std::move(p.label)}, Hndl{std::move(p.Hndl)} {}
+  // move-assignment
+  constexpr Endorse &operator=(Endorse &&p) {
+    label = std::move(p.label);
+    Hndl = std::move(p.Hndl);
+    return *this;
+  }
+};
+struct Ensure : public Expression {
+  Label label{};
+  allocated_ref<AST_elem> Hndl{};
+  // default constructor
+  constexpr Ensure(){};
+  constexpr Ensure(Ensure &&p)
+      : label{std::move(p.label)}, Hndl{std::move(p.Hndl)} {}
+  // move-assignment
+  constexpr Ensure &operator=(Ensure &&p) {
+    label = std::move(p.label);
+    Hndl = std::move(p.Hndl);
     return *this;
   }
 };
@@ -262,6 +304,11 @@ struct Skip : public Statement {
 } // namespace as_values
 
 namespace as_types {
+template <typename> struct Label;
+template <char... c> struct Label<mutils::String<c...>> {
+  using label = mutils::String<c...>;
+  constexpr Label() = default;
+};
 template <typename> struct Expression;
 template <typename> struct Statement;
 
@@ -290,6 +337,18 @@ struct Expression<FieldPointerReference<_Struct, _Field>> {
 template <typename Struct> struct Dereference {};
 template <typename _Struct> struct Expression<Dereference<_Struct>> {
   using Struct = _Struct;
+};
+template <typename label, typename Hndl> struct Endorse {};
+template <typename _label, typename _Hndl>
+struct Expression<Endorse<_label, _Hndl>> {
+  using label = _label;
+  using Hndl = _Hndl;
+};
+template <typename label, typename Hndl> struct Ensure {};
+template <typename _label, typename _Hndl>
+struct Expression<Ensure<_label, _Hndl>> {
+  using label = _label;
+  using Hndl = _Hndl;
 };
 template <typename Hndl> struct IsValid {};
 template <typename _Hndl> struct Expression<IsValid<_Hndl>> {
@@ -374,6 +433,14 @@ struct is_astnode_FieldPointerReference<
 template <typename> struct is_astnode_Dereference : public std::false_type {};
 template <typename Struct>
 struct is_astnode_Dereference<Expression<Dereference<Struct>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Endorse : public std::false_type {};
+template <typename label, typename Hndl>
+struct is_astnode_Endorse<Expression<Endorse<label, Hndl>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Ensure : public std::false_type {};
+template <typename label, typename Hndl>
+struct is_astnode_Ensure<Expression<Ensure<label, Hndl>>>
     : public std::true_type {};
 template <typename> struct is_astnode_IsValid : public std::false_type {};
 template <typename Hndl>
@@ -503,6 +570,54 @@ template <typename prev_holder> struct as_type_f {
 
         using _arg0 = DECT(as_type<budget - 1, arg0>());
         return as_types::Expression<as_types::Dereference<_arg0>>{};
+      } else if constexpr (e.template get_<Endorse>().is_this_elem) {
+
+        constexpr auto &__lbl0 = e.template get_<Endorse>().t.label;
+        using _arg0 = as_types::Label<DECT(
+            mutils::String<__lbl0.label[0], __lbl0.label[1], __lbl0.label[2],
+                           __lbl0.label[3], __lbl0.label[4], __lbl0.label[5],
+                           __lbl0.label[6], __lbl0.label[7], __lbl0.label[8],
+                           __lbl0.label[9], __lbl0.label[10], __lbl0.label[11],
+                           __lbl0.label[12], __lbl0.label[13], __lbl0.label[14],
+                           __lbl0.label[15], __lbl0.label[16], __lbl0.label[17],
+                           __lbl0.label[18],
+                           __lbl0.label[19]>::trim_ends())>; /*Declaring arg!*/
+        struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Endorse>().t.Hndl.get(allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        return as_types::Expression<as_types::Endorse<_arg0, _arg1>>{};
+      } else if constexpr (e.template get_<Ensure>().is_this_elem) {
+
+        constexpr auto &__lbl0 = e.template get_<Ensure>().t.label;
+        using _arg0 = as_types::Label<DECT(
+            mutils::String<__lbl0.label[0], __lbl0.label[1], __lbl0.label[2],
+                           __lbl0.label[3], __lbl0.label[4], __lbl0.label[5],
+                           __lbl0.label[6], __lbl0.label[7], __lbl0.label[8],
+                           __lbl0.label[9], __lbl0.label[10], __lbl0.label[11],
+                           __lbl0.label[12], __lbl0.label[13], __lbl0.label[14],
+                           __lbl0.label[15], __lbl0.label[16], __lbl0.label[17],
+                           __lbl0.label[18],
+                           __lbl0.label[19]>::trim_ends())>; /*Declaring arg!*/
+        struct arg1 {
+#ifndef __clang__
+          const AST_elem &e{F{}()};
+#endif
+          constexpr arg1() {}
+          constexpr const AST_elem &operator()() const {
+            return e.template get_<Ensure>().t.Hndl.get(allocator);
+          }
+        };
+
+        using _arg1 = DECT(as_type<budget - 1, arg1>());
+        return as_types::Expression<as_types::Ensure<_arg0, _arg1>>{};
       } else if constexpr (e.template get_<IsValid>().is_this_elem) {
         /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
@@ -827,6 +942,30 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     this_node.t.Struct = as_value(Struct{});
     return std::move(elem);
   }
+  template <typename label, typename Hndl>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<Endorse<label, Hndl>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.get(allocator).template get_<as_values::Endorse>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    using ____label = typename label::label;
+    mutils::cstring::str_cpy(this_node.t.label.label, ____label{}.string);
+    this_node.t.Hndl = as_value(Hndl{});
+    return std::move(elem);
+  }
+  template <typename label, typename Hndl>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<Ensure<label, Hndl>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.get(allocator).template get_<as_values::Ensure>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    using ____label = typename label::label;
+    mutils::cstring::str_cpy(this_node.t.label.label, ____label{}.string);
+    this_node.t.Hndl = as_value(Hndl{});
+    return std::move(elem);
+  }
   template <typename Hndl>
   constexpr allocated_ref<AST_elem>
   as_value(const Expression<IsValid<Hndl>> &) {
@@ -1026,6 +1165,26 @@ std::ostream &print(std::ostream &o, const Dereference &e,
   return o << "}";
 }
 template <typename Allocator>
+std::ostream &print(std::ostream &o, const Endorse &e,
+                    const Allocator &allocator) {
+  o << "Endorse{";
+  print(o, e.label, allocator);
+  o << ",";
+  print(o, e.Hndl, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const Ensure &e,
+                    const Allocator &allocator) {
+  o << "Ensure{";
+  print(o, e.label, allocator);
+  o << ",";
+  print(o, e.Hndl, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
 std::ostream &print(std::ostream &o, const IsValid &e,
                     const Allocator &allocator) {
   o << "IsValid{";
@@ -1170,6 +1329,12 @@ std::ostream &print(std::ostream &o, const AST_elem &e,
   if (e.template get_<Dereference>().is_this_elem) {
     return print(o, e.template get<Dereference>(), allocator);
   }
+  if (e.template get_<Endorse>().is_this_elem) {
+    return print(o, e.template get<Endorse>(), allocator);
+  }
+  if (e.template get_<Ensure>().is_this_elem) {
+    return print(o, e.template get<Ensure>(), allocator);
+  }
   if (e.template get_<IsValid>().is_this_elem) {
     return print(o, e.template get<IsValid>(), allocator);
   }
@@ -1265,6 +1430,12 @@ std::ostream &pretty_print(std::ostream &o, const AST_elem &e,
   }
   if (e.template get_<Dereference>().is_this_elem) {
     return pretty_print(o, e.template get<Dereference>(), allocator);
+  }
+  if (e.template get_<Endorse>().is_this_elem) {
+    return pretty_print(o, e.template get<Endorse>(), allocator);
+  }
+  if (e.template get_<Ensure>().is_this_elem) {
+    return pretty_print(o, e.template get<Ensure>(), allocator);
   }
   if (e.template get_<IsValid>().is_this_elem) {
     return pretty_print(o, e.template get<IsValid>(), allocator);

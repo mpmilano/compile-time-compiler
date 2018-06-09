@@ -26,3 +26,6 @@ clean:
 
 $(TARGET) : $(OBJECTS)
 	$(CXX) $(CFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
+
+php:
+	git status | grep 'deleted:' | awk '{print $$2}' | xargs make
