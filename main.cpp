@@ -55,8 +55,9 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
   };
 
 int main() {
-  CSTR(wrapper, var iterator = users, var b1 = 89, var b2 = 4894,
-       if (true) { return b1 } else {return b2},
+  CSTR(wrapper, var iterator = users, var b1 = 89, var b2 = 4894, b2 = 2341,
+       var b3 = *b2.field.more.field->field.isValid(),
+       if (true || false) { return b1 } else {return b2},
        while (iterator.isValid()){iterator = iterator->next}, return b1);
   parse<wrapper> p;
   pretty_print(std::cout, p.allocator.top, p.allocator);

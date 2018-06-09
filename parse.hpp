@@ -324,6 +324,15 @@ template <typename string> struct parse {
       str_nc new_string = {0};
       copy_within_parens(new_string, str);
       return parse_statement(new_string);
+    } else if (str[0] == 0) {
+
+      allocated_ref<as_values::AST_elem> ret =
+          allocator.template allocate<as_values::AST_elem>();
+      ret.get(allocator).template get_<as_values::Skip>().is_this_elem = true;
+      auto &sr = ret.get(allocator).template get_<as_values::Skip>().t;
+      ;
+      (void)sr;
+      return ret;
     } else
       throw "Ran off the end!";
   }

@@ -243,6 +243,11 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
         copy_within_parens(new_string, str);
         return parse_statement(new_string);
     }
+    else if (str[0] == 0) {
+      <?php echo alloc("ret","sr","Skip") ?>;
+      (void) sr;
+      return ret;
+    }
     else throw "Ran off the end!";
   }
 
