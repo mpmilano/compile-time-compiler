@@ -22,17 +22,22 @@ template <typename string> struct flatten {
 
 auto test_input() {
   using namespace as_types;
+  using namespace mutils;
   return Statement<transaction<
       Statement<Sequence<
-          Statement<LetRemote<
-              Binding<mutils::String<'b', 'a', 'r'>, Expression<Constant<9>>>,
-              Statement<Skip>>>,
-          Statement<
-              Sequence<Statement<Let<Binding<mutils::String<'f', 'o', 'o'>,
-                                             Expression<Constant<7>>>,
-                                     Statement<Skip>>>,
-                       Statement<Return<Expression<
-                           VarReference<mutils::String<'f', 'o', 'o'>>>>>>>>>,
+          Statement<Operation<String<'t'>, Expression<Constant<5>>,
+                              operation_args_exprs<>,
+                              operation_args_varrefs<>> /*Skip*/>,
+          Statement<Sequence<
+              Statement<LetRemote<Binding<mutils::String<'b', 'a', 'r'>,
+                                          Expression<Constant<9>>>,
+                                  Statement<Skip>>>,
+              Statement<
+                  Sequence<Statement<Let<Binding<mutils::String<'f', 'o', 'o'>,
+                                                 Expression<Constant<7>>>,
+                                         Statement<Skip>>>,
+                           Statement<Return<Expression<VarReference<
+                               mutils::String<'f', 'o', 'o'>>>>>>>>>>>,
       0>>{};
 }
 using round_trip_send = DECT(test_input());

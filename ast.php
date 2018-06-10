@@ -152,13 +152,16 @@ class AST_node{
               //default constructor
               constexpr $this->name(){}; ";
 	}
+	public function struct_fieldlist() {
+		return $this->fields;
+	}
 	public function struct_move_constructor() : string{
 		//move constructor
 		global $String_t;
 		$out = "constexpr $this->name($this->name &&p) ";
 		$has_string_field = false;
-		foreach ($this->fields as $i => $field){
-			if ($i === 0 && ($field->type != $String_t || count($this->fields) > 1)) $out = $out.':';
+		foreach ($this->struct_fieldlist() as $i => $field){
+			if ($i === 0 && ($field->type != $String_t || count($this->struct_fieldlist()) > 1)) $out = $out.':';
 			if ($field->type === $String_t){
 				$string_field = $field;
 				$has_string_field = true;
@@ -180,7 +183,7 @@ class AST_node{
 		$out =  "
                   //move-assignment 
                   constexpr $this->name &operator=($this->name &&p) {"; 
-		foreach ($this->fields as $field){
+		foreach ($this->struct_fieldlist() as $field){
 			if ($field->type === $String_t){
 				$out =  $out."mutils::cstring::str_cpy($field->name, p.$field->name);";
 			}
@@ -195,7 +198,7 @@ class AST_node{
 
   public function struct_fields() : string {
 	  $out = '';
-		foreach ($this->fields as $field){
+		foreach ($this->struct_fieldlist() as $field){
 			$out = $out.$field->declare_struct_member();
 		}
 		return $out;
@@ -345,7 +348,7 @@ class Either extends AST_node {
 	}
 	public function __construct($type_name, ...$fields) {
 		global $Either_t;
-		array_push($fields,new Field("is_statement","bool"));
+		//array_push($fields,new Field("is_statement","bool"));
 		parent::__construct($type_name, $Either_t, $fields);
 	}
 	public function encapsulator_name() : string{
@@ -354,6 +357,12 @@ class Either extends AST_node {
 			
 	public function encapsulator_names(){
 		return array('Statement','Expression');
+	}
+
+	public function struct_fieldlist(){
+		$ret = parent::struct_fieldlist();
+		array_push($ret,new Field("is_statement","bool"));
+		return $ret;
 	}
 
 	public function is_astnode_defn(){
@@ -368,42 +377,13 @@ class Either extends AST_node {
 	}
 	public function to_value() : string {
 		$ret = '';
-		foreach ($this->encapsulator_names as $name){
+		foreach ($this->encapsulator_names() as $name){
 			$this->set_identity($name);
 			$ret = $ret.parent::to_value();
 		}
 		$this->reset_identity();
 		return $ret;
 	}
-/*
-	public function to_value() :string {
-		global $String_t; global $Label_t;
-		$type = $this;
-		$ret = ''.
-		$type->full_template_defn_for_method();
-		$decl = $type->encapsulated_type_name();
-	  $ret = $ret. "constexpr allocated_ref<AST_elem> as_value(const $decl &){
-		auto elem = allocator.template allocate<AST_elem>();
-		auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
-		this_node.is_this_elem = true;
-		elem.get(allocator).is_initialized = true;";
-		foreach ($type->fields as $field){
-		  if (is_ast_node($field->type))
-			$ret = $ret. "this_node.t.$field->name = as_value($field->name{});";
-		elseif($field->type === $String_t){
-			$ret = $ret. "mutils::cstring::str_cpy(this_node.t.$field->name, $field->name{}.string);";
-		}
-		elseif($field->type === $Label_t){
-			$ret = $ret. "
-			using ____label = typename $field->name::label;
-			mutils::cstring::str_cpy(this_node.t.$field->name.label, ____label{}.string);";
-		}
-		  else $ret = $ret. "this_node.t.$field->name = $field->name;";
-		}
-		$ret = $ret. 'return std::move(elem);';
-	  $ret = $ret. "}\n";
-	  return $ret;
-	}*/
                   
 	public function encapsulate_type() : string{
 		$out = '';

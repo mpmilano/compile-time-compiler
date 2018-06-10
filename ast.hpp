@@ -453,28 +453,23 @@ template <typename...> struct operation_args_exprs;
 template <typename...> struct operation_args_exprs {};
 template <typename...> struct operation_args_varrefs;
 template <typename...> struct operation_args_varrefs {};
-template <typename name, typename Hndl, typename expr_args, typename var_args,
-          bool is_statement>
+template <typename name, typename Hndl, typename expr_args, typename var_args>
 struct Operation {};
 template <typename _name, typename _Hndl, typename _expr_args,
-          typename _var_args, bool _is_statement>
-struct Statement<
-    Operation<_name, _Hndl, _expr_args, _var_args, _is_statement>> {
+          typename _var_args>
+struct Statement<Operation<_name, _Hndl, _expr_args, _var_args>> {
   using name = _name;
   using Hndl = _Hndl;
   using expr_args = _expr_args;
   using var_args = _var_args;
-  bool is_statement{_is_statement};
 };
 template <typename _name, typename _Hndl, typename _expr_args,
-          typename _var_args, bool _is_statement>
-struct Expression<
-    Operation<_name, _Hndl, _expr_args, _var_args, _is_statement>> {
+          typename _var_args>
+struct Expression<Operation<_name, _Hndl, _expr_args, _var_args>> {
   using name = _name;
   using Hndl = _Hndl;
   using expr_args = _expr_args;
   using var_args = _var_args;
-  bool is_statement{_is_statement};
 };
 template <typename Var, typename Expr> struct Assignment {};
 template <typename _Var, typename _Expr>
@@ -558,15 +553,13 @@ template <typename Binding, typename Body>
 struct is_astnode_LetRemote<Statement<LetRemote<Binding, Body>>>
     : public std::true_type {};
 template <typename> struct is_astnode_Operation : public std::false_type {};
-template <typename name, typename Hndl, typename expr_args, typename var_args,
-          bool is_statement>
+template <typename name, typename Hndl, typename expr_args, typename var_args>
 struct is_astnode_Operation<
-    Statement<Operation<name, Hndl, expr_args, var_args, is_statement>>>
+    Statement<Operation<name, Hndl, expr_args, var_args>>>
     : public std::true_type {};
-template <typename name, typename Hndl, typename expr_args, typename var_args,
-          bool is_statement>
+template <typename name, typename Hndl, typename expr_args, typename var_args>
 struct is_astnode_Operation<
-    Expression<Operation<name, Hndl, expr_args, var_args, is_statement>>>
+    Expression<Operation<name, Hndl, expr_args, var_args>>>
     : public std::true_type {};
 template <typename> struct is_astnode_Assignment : public std::false_type {};
 template <typename Var, typename Expr>
@@ -1808,9 +1801,8 @@ template <typename prev_holder> struct as_type_f {
           };
 
           using _arg3 = DECT(as_type<budget - 1, arg3>());
-          constexpr auto _arg4 = e.template get_<Operation>().t.is_statement;
           return as_types::Statement<
-              as_types::Operation<_arg0, _arg1, _arg2, _arg3, _arg4>>{};
+              as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
         } else {
           constexpr auto &__str0 = e.template get_<Operation>().t.name;
           using _arg0 = DECT(
@@ -1853,9 +1845,8 @@ template <typename prev_holder> struct as_type_f {
           };
 
           using _arg3 = DECT(as_type<budget - 1, arg3>());
-          constexpr auto _arg4 = e.template get_<Operation>().t.is_statement;
           return as_types::Expression<
-              as_types::Operation<_arg0, _arg1, _arg2, _arg3, _arg4>>{};
+              as_types::Operation<_arg0, _arg1, _arg2, _arg3>>{};
         }
       } else if constexpr (e.template get_<Assignment>().is_this_elem) {
         /*Declaring arg!*/ struct arg0 {
@@ -2216,6 +2207,32 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     sequence_assign<Args...>(this_node.t.vars);
     return std::move(elem);
   }
+  template <typename name, typename Hndl, typename expr_args, typename var_args>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Statement<Operation<name, Hndl, expr_args, var_args>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    mutils::cstring::str_cpy(this_node.t.name, name{}.string);
+    this_node.t.Hndl = as_value(Hndl{});
+    this_node.t.expr_args = as_value(expr_args{});
+    this_node.t.var_args = as_value(var_args{});
+    return std::move(elem);
+  }
+  template <typename name, typename Hndl, typename expr_args, typename var_args>
+  constexpr allocated_ref<AST_elem>
+  as_value(const Expression<Operation<name, Hndl, expr_args, var_args>> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node = elem.get(allocator).template get_<as_values::Operation>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    mutils::cstring::str_cpy(this_node.t.name, name{}.string);
+    this_node.t.Hndl = as_value(Hndl{});
+    this_node.t.expr_args = as_value(expr_args{});
+    this_node.t.var_args = as_value(var_args{});
+    return std::move(elem);
+  }
   template <typename Var, typename Expr>
   constexpr allocated_ref<AST_elem>
   as_value(const Statement<Assignment<Var, Expr>> &) {
@@ -2452,8 +2469,6 @@ std::ostream &print(std::ostream &o, const Operation &e,
   print(o, e.expr_args, allocator);
   o << ",";
   print(o, e.var_args, allocator);
-  o << ",";
-  print(o, e.is_statement, allocator);
   o << ",";
   return o << "}";
 }
