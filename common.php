@@ -1,4 +1,6 @@
 <?php
+
+  $max_var_length = 20;
   function alloc(string $elem, string $objname, string $type){
     return "
     allocated_ref<as_values::AST_elem> $elem = allocator.template allocate<as_values::AST_elem>();

@@ -55,6 +55,18 @@ template <typename string> struct parse {
     throw "Internal Error: ran off the end";
   }
 
+  constexpr allocated_ref<as_values::AST_elem> parse_args(const str_t &str){
+    using namespace mutils;
+    using namespace cstring;
+    <?php echo alloc("eargs","evags","operation_args_exprs")?>
+    str_nc expr_strs[<?php echo $max_var_length ?>] = {{0}};
+    split_outside_parens(',',str,expr_strs);
+    for (auto i = 0u; i < <?php echo $max_var_length ?>; ++i){
+      if (expr_strs[i][0]) evags.exprs[i] = parse_expression(expr_strs[i]);
+    }
+    return eargs;
+  }
+
   constexpr allocated_ref<as_values::AST_elem> parse_expr_operation(const str_t &str){
     using namespace mutils;
     using namespace cstring;
@@ -63,12 +75,16 @@ template <typename string> struct parse {
     auto& Struct = splits[0];
     auto& Call = splits[1];
     <?php echo alloc("ret", "ref","Operation")?>
-    <?php echo alloc("eargs","reags","operation_args_exprs")?>
     <?php echo alloc("vargs","rvags","operation_args_varrefs")?>
+    (void) rvags;
     ref.is_statement = false;
-    ref.expr_args = std::move(eargs);
     ref.var_args = std::move(vargs);
-    str_cpy(ref.name, "cannot_parse_yet");
+    str_nc method_name = {0};
+    pre_paren(method_name,Call);
+    str_cpy(ref.name, method_name);
+    str_nc argseq = {0};
+    next_paren_group(argseq,Call);
+    ref.expr_args = parse_args(argseq);
     ref.Hndl = parse_expression(Struct);
     return ret;
   }
@@ -320,10 +336,10 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
     using namespace cstring;
     <?php echo alloc("ret","seqref","Sequence") ?>
     auto *seq = &seqref;
-    str_nc string_bufs[20] = {{0}};
+    str_nc string_bufs[<?php echo $max_var_length ?>] = {{0}};
     auto groups = split_outside_parens(',', str, string_bufs);
     bool sequence_empty = true;
-    assert(groups < 20);
+    assert(groups < <?php echo $max_var_length ?>);
     assert(groups > 0);
     for (auto i = 0u; i < groups; ++i){
       seq->e = parse_statement(string_bufs[i]);

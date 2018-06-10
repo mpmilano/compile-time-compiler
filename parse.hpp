@@ -84,6 +84,26 @@ template <typename string> struct parse {
     throw "Internal Error: ran off the end";
   }
 
+  constexpr allocated_ref<as_values::AST_elem> parse_args(const str_t &str) {
+    using namespace mutils;
+    using namespace cstring;
+
+    allocated_ref<as_values::AST_elem> eargs =
+        allocator.template allocate<as_values::AST_elem>();
+    eargs.get(allocator)
+        .template get_<as_values::operation_args_exprs>()
+        .is_this_elem = true;
+    auto &evags =
+        eargs.get(allocator).template get_<as_values::operation_args_exprs>().t;
+    str_nc expr_strs[20] = {{0}};
+    split_outside_parens(',', str, expr_strs);
+    for (auto i = 0u; i < 20; ++i) {
+      if (expr_strs[i][0])
+        evags.exprs[i] = parse_expression(expr_strs[i]);
+    }
+    return eargs;
+  }
+
   constexpr allocated_ref<as_values::AST_elem>
   parse_expr_operation(const str_t &str) {
     using namespace mutils;
@@ -98,13 +118,6 @@ template <typename string> struct parse {
     ret.get(allocator).template get_<as_values::Operation>().is_this_elem =
         true;
     auto &ref = ret.get(allocator).template get_<as_values::Operation>().t;
-    allocated_ref<as_values::AST_elem> eargs =
-        allocator.template allocate<as_values::AST_elem>();
-    eargs.get(allocator)
-        .template get_<as_values::operation_args_exprs>()
-        .is_this_elem = true;
-    auto &reags =
-        eargs.get(allocator).template get_<as_values::operation_args_exprs>().t;
     allocated_ref<as_values::AST_elem> vargs =
         allocator.template allocate<as_values::AST_elem>();
     vargs.get(allocator)
@@ -113,10 +126,15 @@ template <typename string> struct parse {
     auto &rvags = vargs.get(allocator)
                       .template get_<as_values::operation_args_varrefs>()
                       .t;
+    (void)rvags;
     ref.is_statement = false;
-    ref.expr_args = std::move(eargs);
     ref.var_args = std::move(vargs);
-    str_cpy(ref.name, "cannot_parse_yet");
+    str_nc method_name = {0};
+    pre_paren(method_name, Call);
+    str_cpy(ref.name, method_name);
+    str_nc argseq = {0};
+    next_paren_group(argseq, Call);
+    ref.expr_args = parse_args(argseq);
     ref.Hndl = parse_expression(Struct);
     return ret;
   }
