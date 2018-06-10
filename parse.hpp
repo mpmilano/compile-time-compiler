@@ -16,9 +16,6 @@ template <typename string> struct parse {
   using str_nc = char[string_length::value + 1];
   Alloc allocator;
 
-  /*
-   */
-
   constexpr allocated_ref<as_values::AST_elem> parse_binop(const str_t &str,
                                                            const char *cause) {
     using namespace mutils;
@@ -87,14 +84,35 @@ template <typename string> struct parse {
     throw "ran off the end";
   }
 
-  constexpr allocated_ref<as_values::AST_elem> parse_fieldref(const str_t &str,
-                                                              const char *) {
+  constexpr allocated_ref<as_values::AST_elem>
+  parse_operation(const str_t &str) {
+    using namespace mutils;
+    using namespace cstring;
+
+    allocated_ref<as_values::AST_elem> ret =
+        allocator.template allocate<as_values::AST_elem>();
+    ret.get(allocator).template get_<as_values::Constant>().is_this_elem = true;
+    auto &ref = ret.get(allocator).template get_<as_values::Constant>().t;
+    return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem>
+  parse_fieldref(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
     str_nc trimmed = {0};
     str_nc operands[2] = {{0}};
     trim(trimmed, str);
     last_split('.', trimmed, operands);
+    {
+      // error checking
+      if (contains_paren(operands[1]))
+        throw "Parse error: We thought this was a fieldref, but it contains "
+              "parens";
+      if (contains_outside_parens('.', operands[1]))
+        throw "Parse error: This should be a field, but it contains a '.', "
+              "which is not allowed";
+    }
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
@@ -116,6 +134,15 @@ template <typename string> struct parse {
     str_nc operands[2] = {{0}};
     trim(trimmed, str);
     last_split("->", trimmed, operands);
+    {
+      // error checking
+      if (contains_paren(operands[1]))
+        throw "Parse error: We thought this should be a field, but it contains "
+              "parens";
+      if (contains_outside_parens('.', operands[1]))
+        throw "Parse error: This should be a field, but it contains a '.', "
+              "which is not allowed";
+    }
 
     allocated_ref<as_values::AST_elem> ret =
         allocator.template allocate<as_values::AST_elem>();
@@ -173,8 +200,20 @@ template <typename string> struct parse {
         true;
     auto &ref = ret.get(allocator).template get_<as_values::VarReference>().t;
     str_cpy(ref.Var, str);
+    {
+      // error checking
+      if (contains_paren(str))
+        throw "Parse error: We thought this should be a variable, but it "
+              "contains parens";
+      if (contains_outside_parens('.', str))
+        throw "Parse error: This should be a variable, but it contains a '.', "
+              "which is not allowed";
+    }
     return ret;
   }
+
+  /*
+   */
 
   constexpr allocated_ref<as_values::AST_elem>
   parse_expression(const str_t &str) {
@@ -196,14 +235,27 @@ template <typename string> struct parse {
       return parse_binop(str, "||");
     } else if (contains_outside_parens("!=", str)) {
       return parse_binop(str, "!=");
-    } else if (contains_outside_parens(".isValid(", str)) {
-      return parse_builtin_op(str, ".isValid(");
-    } else if (contains_outside_parens(".endorse(", str)) {
-      return parse_builtin_op(str, ".endorse(");
-    } else if (contains_outside_parens(".ensure(", str)) {
-      return parse_builtin_op(str, ".ensure(");
     } else if (contains_outside_parens(".", str)) {
-      return parse_fieldref(str, ".");
+      str_nc pretrim_splits[2] = {{0}};
+      last_split(".", str, pretrim_splits);
+      str_nc splits[2] = {{0}};
+      trim(splits[0], pretrim_splits[0]);
+      trim(splits[1], pretrim_splits[1]);
+      assert(!contains_outside_parens(".", splits[1]));
+      if (contains_outside_parens("->", splits[1])) {
+        return parse_fieldptrref(str, "->");
+      } else if (contains_outside_parens(".isValid(", splits[1])) {
+        return parse_builtin_op(str, ".isValid(");
+      } else if (contains_outside_parens(".endorse(", splits[1])) {
+        return parse_builtin_op(str, ".endorse(");
+      } else if (contains_outside_parens(".ensure(", splits[1])) {
+        return parse_builtin_op(str, ".ensure(");
+      } else if (contains_paren(splits[1])) {
+        return parse_operation(str);
+      } else {
+        // it's just a normal string at this point.
+        return parse_fieldref(str);
+      }
     } else if (contains_outside_parens("->", str)) {
       return parse_fieldptrref(str, "->");
     } else if (contains_outside_parens("*", str)) {
@@ -422,6 +474,9 @@ template <typename string> struct parse {
     }
     // all parsing implemented in the constructor, so that
     // future things can just build this and expect it to work
+    using namespace mutils::cstring;
+    if (contains(';', local_copy))
+      throw "Parse Error: Semicolons have no place here.  Did you mean ','? ";
     allocator.top.e = parse_statement(local_copy);
   }
 };
