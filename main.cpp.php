@@ -34,7 +34,7 @@ auto test_input(){
   }
 using round_trip_send = DECT(test_input());
 struct prev_t{
-    as_values::AST_Allocator<50> allocator = as_types::as_value<50,round_trip_send>();
+    as_values::AST_Allocator<400> allocator = as_types::as_value<400,round_trip_send>();
     constexpr prev_t() {}
   };
 struct round_trip_test{
@@ -52,9 +52,9 @@ int main() {
   parse<wrapper> p;
   pretty_print(std::cout,p.allocator.top,p.allocator);
   std::cout << std::endl << "Original string: " << wrapper{}.str << std::endl;
-  /*
+  
   constexpr flatten<wrapper> f;
-  constexpr auto second_allocator = as_types::as_value<50,typename flatten<wrapper>::parse_t>();
+  constexpr auto second_allocator = as_types::as_value<400,typename flatten<wrapper>::parse_t>();
   pretty_print(std::cout, second_allocator.top, second_allocator); //*/
   std::cout << std::endl << std::endl;
   //print(std::cout, f.prev.allocator.top,f.prev.allocator);

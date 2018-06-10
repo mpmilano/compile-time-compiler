@@ -155,7 +155,7 @@ std::ostream& pretty_print(std::ostream& o, const Operation& e, const Allocator&
   o << "." << e.name << "(";
   pretty_print(o,e.expr_args,allocator);
   pretty_print(o,e.var_args,allocator);
-  return o;
+  return o << ")";
 }
 
 }

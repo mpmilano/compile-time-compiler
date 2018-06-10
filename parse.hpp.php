@@ -5,7 +5,7 @@
 <?php require_once 'common.php'; require_once 'util.php'; ?>
 */
 
-using Alloc = as_values::AST_Allocator<50>;
+using Alloc = as_values::AST_Allocator<150>;
 
 template <typename string> struct parse {
   const string _str;
@@ -47,18 +47,29 @@ template <typename string> struct parse {
     last_split('.',trimmed,split);
     str_nc op_args = {0};
     copy_within_parens(op_args,split[1]);
-    switch (specific_op[3]){
+    switch (specific_op[2]){
       case 'd': <?php echo instantiate_builtin_op("Endorse","label") ?> //endorse
       case 's': <?php echo instantiate_builtin_op("Ensure","label") ?> //ensure
       case 'V': <?php echo instantiate_builtin_op("IsValid") ?> //isValid
     }
-    throw "ran off the end";
+    throw "Internal Error: ran off the end";
   }
 
-  constexpr allocated_ref<as_values::AST_elem> parse_operation(const str_t &str){
+  constexpr allocated_ref<as_values::AST_elem> parse_expr_operation(const str_t &str){
     using namespace mutils;
     using namespace cstring;
-    <?php echo alloc("ret", "ref","Constant")?>
+    str_nc splits[2] = {{0}};
+    last_split('.',str,splits);
+    auto& Struct = splits[0];
+    auto& Call = splits[1];
+    <?php echo alloc("ret", "ref","Operation")?>
+    <?php echo alloc("eargs","reags","operation_args_exprs")?>
+    <?php echo alloc("vargs","rvags","operation_args_varrefs")?>
+    ref.is_statement = false;
+    ref.expr_args = std::move(eargs);
+    ref.var_args = std::move(vargs);
+    str_cpy(ref.name, "cannot_parse_yet");
+    ref.Hndl = parse_expression(Struct);
     return ret;
   }
 
@@ -164,9 +175,9 @@ template <typename string> struct parse {
       trim(splits[1],pretrim_splits[1]);
       assert(!contains_outside_parens(".",splits[1]));
       <?php echo parse_expr("fieldptrref","splits[1]","->")?>
-      <?php echo parse_expr("builtin_op","splits[1]",".isValid(",".endorse(",".ensure(") ?> 
+      <?php echo parse_expr("builtin_op","splits[1]","isValid(","endorse(","ensure(") ?> 
       if (contains_paren(splits[1])){
-        return parse_operation(str);
+        return parse_expr_operation(str);
       }
       else {
         //it's just a normal string at this point.

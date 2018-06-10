@@ -171,7 +171,7 @@ std::ostream &pretty_print(std::ostream &o, const Operation &e,
   o << "." << e.name << "(";
   pretty_print(o, e.expr_args, allocator);
   pretty_print(o, e.var_args, allocator);
-  return o;
+  return o << ")";
 }
 
 } // namespace as_values
