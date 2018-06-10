@@ -48,11 +48,11 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
   struct wrapper {constexpr wrapper(){} const char str[::mutils::cstring::str_len(#x)+1]{#x};};
 
 int main() {
-  CSTR(wrapper,var iterator = users, var b1 = 89.endorse(words), var b2 = 4894.ensure(otherwords), b2 = 2341, var b3 = *b2.field.more.field->field.isValid(), if (true || false) {return b1} else {return b2}, while (iterator.isValid()) {iterator = iterator->next}, return b1);
+  CSTR(wrapper,var iterator = users, var b1 = 89.endorse(words).otherOp(more,words), var b2 = 4894.ensure(otherwords), b2 = 2341, var b3 = *b2.field.more.field->field.isValid(), if (true || false) {return b1} else {return b2}, while (iterator.isValid()) {iterator = iterator->next}, return b1);
   parse<wrapper> p;
   pretty_print(std::cout,p.allocator.top,p.allocator);
   std::cout << std::endl << "Original string: " << wrapper{}.str << std::endl;
-  
+  /*
   constexpr flatten<wrapper> f;
   constexpr auto second_allocator = as_types::as_value<50,typename flatten<wrapper>::parse_t>();
   pretty_print(std::cout, second_allocator.top, second_allocator); //*/

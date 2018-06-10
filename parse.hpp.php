@@ -73,6 +73,7 @@ template <typename string> struct parse {
       //error checking
       if (contains_paren(operands[1])) throw "Parse error: We thought this was a fieldref, but it contains parens";
       if (contains_outside_parens('.',operands[1])) throw "Parse error: This should be a field, but it contains a '.', which is not allowed";
+      if (contains(' ',operands[1])) throw "Parse error: a space snuck in here somehow";
     }
     <?php echo alloc("ret", "ref","FieldReference")?>
     ref.Struct = parse_expression(operands[0]);
@@ -93,6 +94,7 @@ template <typename string> struct parse {
       //error checking
       if (contains_paren(operands[1])) throw "Parse error: We thought this should be a field, but it contains parens";
       if (contains_outside_parens('.',operands[1])) throw "Parse error: This should be a field, but it contains a '.', which is not allowed";
+      if (contains(' ',operands[1])) throw "Parse error: a space snuck in here somehow";
     }
     <?php echo alloc("ret", "ref","FieldPointerReference")?>
     ref.Struct = parse_expression(operands[0]);
@@ -127,11 +129,12 @@ template <typename string> struct parse {
     using namespace mutils;
     using namespace cstring;
     <?php echo alloc("ret", "ref","VarReference")?>
-    str_cpy(ref.Var,str);
+    trim(ref.Var,str);
 		{
 			//error checking
-			if (contains_paren(str)) throw "Parse error: We thought this should be a variable, but it contains parens";
-      if (contains_outside_parens('.',str)) throw "Parse error: This should be a variable, but it contains a '.', which is not allowed";
+			if (contains_paren(ref.Var)) throw "Parse error: We thought this should be a variable, but it contains parens";
+      if (contains_outside_parens('.',ref.Var)) throw "Parse error: This should be a variable, but it contains a '.', which is not allowed";
+      if (contains(' ',ref.Var)) throw "Parse error: a space snuck in here somehow";
 		}
     return ret;
   }
@@ -152,7 +155,7 @@ template <typename string> struct parse {
   constexpr allocated_ref<as_values::AST_elem> parse_expression(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php echo parse_expr("binop","str","+","- ","*","/","==","&&","||","!=") ?>
+    <?php echo parse_expr("binop","str","+","- ","* ","/","==","&&","||","!=") ?>
     if (contains_outside_parens(".",str)){
       str_nc pretrim_splits[2] = {{0}};
       last_split(".",str,pretrim_splits);

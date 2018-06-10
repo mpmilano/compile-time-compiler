@@ -112,6 +112,8 @@ template <typename string> struct parse {
       if (contains_outside_parens('.', operands[1]))
         throw "Parse error: This should be a field, but it contains a '.', "
               "which is not allowed";
+      if (contains(' ', operands[1]))
+        throw "Parse error: a space snuck in here somehow";
     }
 
     allocated_ref<as_values::AST_elem> ret =
@@ -142,6 +144,8 @@ template <typename string> struct parse {
       if (contains_outside_parens('.', operands[1]))
         throw "Parse error: This should be a field, but it contains a '.', "
               "which is not allowed";
+      if (contains(' ', operands[1]))
+        throw "Parse error: a space snuck in here somehow";
     }
 
     allocated_ref<as_values::AST_elem> ret =
@@ -199,15 +203,17 @@ template <typename string> struct parse {
     ret.get(allocator).template get_<as_values::VarReference>().is_this_elem =
         true;
     auto &ref = ret.get(allocator).template get_<as_values::VarReference>().t;
-    str_cpy(ref.Var, str);
+    trim(ref.Var, str);
     {
       // error checking
-      if (contains_paren(str))
+      if (contains_paren(ref.Var))
         throw "Parse error: We thought this should be a variable, but it "
               "contains parens";
-      if (contains_outside_parens('.', str))
+      if (contains_outside_parens('.', ref.Var))
         throw "Parse error: This should be a variable, but it contains a '.', "
               "which is not allowed";
+      if (contains(' ', ref.Var))
+        throw "Parse error: a space snuck in here somehow";
     }
     return ret;
   }
@@ -223,8 +229,8 @@ template <typename string> struct parse {
       return parse_binop(str, "+");
     } else if (contains_outside_parens("- ", str)) {
       return parse_binop(str, "- ");
-    } else if (contains_outside_parens("*", str)) {
-      return parse_binop(str, "*");
+    } else if (contains_outside_parens("* ", str)) {
+      return parse_binop(str, "* ");
     } else if (contains_outside_parens("/", str)) {
       return parse_binop(str, "/");
     } else if (contains_outside_parens("==", str)) {
