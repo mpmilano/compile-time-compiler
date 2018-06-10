@@ -20,11 +20,15 @@ public:
 
 	template<std::size_t size>
 	constexpr const T& get(const SingleAllocator<size,T>& new_parent) const {
+		assert(indx > 0);
 		return new_parent.data[indx-1];
 	}
 
 	constexpr allocated_ref(const allocated_ref&) = delete;
 	constexpr allocated_ref(allocated_ref&& o):indx(o.indx){}
+	struct really_set_index{constexpr really_set_index() = default;};
+	constexpr allocated_ref(const really_set_index&, std::size_t index):indx{index}{}
+	constexpr std::size_t get_index() const {return indx;}
 
 	constexpr allocated_ref():indx{0}{}
 
@@ -39,6 +43,6 @@ public:
 		return *this;
 	}
 
-	constexpr operator bool() const {return indx != 0;}
+	constexpr operator bool() const {return indx > 0;}
 	
 };

@@ -60,8 +60,8 @@ int main() {
   //print(std::cout, f.prev.allocator.top,f.prev.allocator);
   //std::cout << std::endl;
   // flatten<str>::parse_t::print();
-  //round_trip_return::print();
-  static_assert(std::is_same<round_trip_return, round_trip_send>::value);
+  round_trip_return::print();
+  //static_assert(std::is_same<round_trip_return, round_trip_send>::value);
   constexpr prev_t to_print;
   
   pretty_print(std::cout,to_print.allocator.top,to_print.allocator);

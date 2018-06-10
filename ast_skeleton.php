@@ -81,9 +81,20 @@ namespace as_types{
 }
 
 namespace as_values {
+
 template <typename prev_holder>
           struct as_type_f{
 static constexpr const DECT(prev_holder::prev.allocator) &allocator{prev_holder::prev.allocator};
+
+  template<std::size_t index>
+  struct arg_struct{
+    static_assert(index > 0);
+    constexpr arg_struct() = default;
+    constexpr const AST_elem &operator()() const {
+      return allocated_ref<AST_elem>{typename allocated_ref<AST_elem>::really_set_index{}, index}.get(allocator);
+    }
+  };
+
 template<long budget, typename F>
 constexpr static auto as_type(std::enable_if_t<(budget > 0) && (budget < 50)>* = nullptr) {
   static_assert(budget > 0);

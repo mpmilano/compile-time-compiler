@@ -228,17 +228,7 @@ class AST_node{
 	}
 	public function declare_arg($field, $i){
 		$type = $this;
-		return "struct arg$i {
-			#ifndef __clang__
-					  const AST_elem &e{F{}()};
-			#endif
-					  constexpr arg$i() {}
-					  constexpr const AST_elem &operator()() const {
-						return ".$this->get_field_from_e($field).".get(allocator);
-					  }
-					};
-					
-					";
+		return "using arg$i = arg_struct<".$this->get_field_from_e($field).".get_index()>;";
 	}
 	public function to_type_body() : string{
 		global $max_var_length;
@@ -506,9 +496,10 @@ class Argument_pack extends AST_node {
 			for ($i = 0; $i < $max_var_length; ++$i){
 				$proto_f = new proto_field("$this->field_name[$i]");
 				$ret = $ret.
-				"if (is_non_null(".$this->get_field_from_e($proto_f).")){".
-				$this->declare_arg($proto_f,$i).
-				"using _arg$i = DECT(as_type<budget - 1, arg$i>());\n";
+				"{ constexpr std::size_t __indx = ".$this->get_field_from_e($proto_f).".get_index();
+				if constexpr (__indx > 0){
+				using arg$i = arg_struct<__indx>;
+				using _arg$i = DECT(as_type<budget - 1, arg$i>());";
 				if ($i + 1 == $max_var_length) {
 					$ret = $ret.$this->assemble_to_type_return($max_var_length);
 				}
@@ -516,9 +507,9 @@ class Argument_pack extends AST_node {
 			for ($i = 0; $i < $max_var_length - 1; ++$i){
 			$ret = $ret."} else {".
 				$this->assemble_to_type_return($max_var_length - $i - 1).
-				"}";
+				"}}";
 			}
-		return $ret."}".$this->assemble_to_type_return(0);
+		return $ret."}}".$this->assemble_to_type_return(0);
 	}
 	
 	public function is_astnode_defn() : string {
