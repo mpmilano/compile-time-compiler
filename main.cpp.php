@@ -27,7 +27,7 @@ auto test_input(){
     using namespace mutils;
     return Statement<
     transaction<
-    Statement<Sequence<Statement<Operation<String<'t'>,Expression<Constant<5>>,operation_args_exprs<>,operation_args_varrefs<> > /*Skip*/ >,
+    Statement<Sequence<Statement<Operation<String<'t'>,Expression<Constant<5>>,operation_args_exprs<Expression<Constant<3>>, Expression<Constant<2>>>,operation_args_varrefs<Expression<Constant<23>>, Expression<Constant<52>>> > /*Skip*/ >,
     Statement<Sequence<Statement<LetRemote<Binding<mutils::String<'b','a','r'>, Expression<Constant<9>>>,Statement<Skip>>>,
     Statement<Sequence<Statement<Let<Binding<mutils::String<'f','o','o'>, Expression<Constant<7>>>, Statement<Skip> >>,Statement<Return<Expression<VarReference<mutils::String<'f','o','o'>>>>>
     >>>>>>,0>>{};
@@ -60,8 +60,8 @@ int main() {
   //print(std::cout, f.prev.allocator.top,f.prev.allocator);
   //std::cout << std::endl;
   // flatten<str>::parse_t::print();
-  round_trip_return::print();
-  //static_assert(std::is_same<round_trip_return, round_trip_send>::value);
+  //round_trip_return::print();
+  static_assert(std::is_same<round_trip_return, round_trip_send>::value);
   constexpr prev_t to_print;
   
   pretty_print(std::cout,to_print.allocator.top,to_print.allocator);

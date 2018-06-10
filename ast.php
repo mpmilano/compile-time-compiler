@@ -291,10 +291,11 @@ class AST_node{
 		}
 		  else $ret = $ret. "this_node.t.$field->name = $field->name;";
 		}
-		$ret = $ret. 'return std::move(elem);';
+		$ret = $ret. $this->to_value_hook().'return std::move(elem);';
 	  $ret = $ret. "}\n";
 	  return $ret;
 	}
+	function to_value_hook() : string {return '';}
 }
 
 function cpp_list($type) : string{
@@ -349,6 +350,11 @@ class Either extends AST_node {
 		return array('Statement','Expression');
 	}
 
+	private $to_value_hook_val = '';
+	public function to_value_hook() : string {
+		return $this->to_value_hook_val;
+	}
+
 	public function struct_fieldlist(){
 		$ret = parent::struct_fieldlist();
 		array_push($ret,new Field("is_statement","bool"));
@@ -369,6 +375,7 @@ class Either extends AST_node {
 		$ret = '';
 		foreach ($this->encapsulator_names() as $name){
 			$this->set_identity($name);
+			$this->to_value_hook_val = "this_node.t.is_statement = ".($name === "Statement" ? "true" : "false").";";
 			$ret = $ret.parent::to_value();
 		}
 		$this->reset_identity();
@@ -509,7 +516,7 @@ class Argument_pack extends AST_node {
 				$this->assemble_to_type_return($max_var_length - $i - 1).
 				"}}";
 			}
-		return $ret."}}".$this->assemble_to_type_return(0);
+		return $ret."} else {".$this->assemble_to_type_return(0)."}}";
 	}
 	
 	public function is_astnode_defn() : string {
@@ -527,7 +534,7 @@ class Argument_pack extends AST_node {
 		auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
 		this_node.is_this_elem = true;
 		elem.get(allocator).is_initialized = true;
-		sequence_assign<Args...>(this_node.t.$this->field_name);
+		sequence_assign<allocated_ref<AST_elem>,Args...>(this_node.t.$this->field_name);
 		return std::move(elem);
 	  }";
 	}

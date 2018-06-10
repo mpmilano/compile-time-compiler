@@ -1231,9 +1231,10 @@ template <typename prev_holder> struct as_type_f {
                 return as_types::operation_args_exprs<_arg0>{};
               }
             }
+          } else {
+            return as_types::operation_args_exprs<>{};
           }
         }
-        return as_types::operation_args_exprs<>{};
       } else if constexpr (e.template get_<operation_args_varrefs>()
                                .is_this_elem) {
         {
@@ -1743,9 +1744,10 @@ template <typename prev_holder> struct as_type_f {
                 return as_types::operation_args_varrefs<_arg0>{};
               }
             }
+          } else {
+            return as_types::operation_args_varrefs<>{};
           }
         }
-        return as_types::operation_args_varrefs<>{};
       } else if constexpr (e.template get_<Operation>().is_this_elem) {
         using is_statement =
             std::integral_constant<bool,
@@ -1886,8 +1888,9 @@ template <std::size_t... nums>
 struct sequence_assigner<std::integer_sequence<std::size_t, nums...>> {
   template <typename... T_args> struct helper {
     template <typename ref, typename F, typename... F_args>
-    constexpr static void assign(ref &r, const F &f, F_args &&... args) {
-      ((r[nums] = f(T_args{}, std::move<F_args>(args)...)), ...);
+    constexpr static void assign(plain_array<ref> &r, const F &f,
+                                 F_args &... args) {
+      ((r[nums] = f(T_args{}, args...)), ...);
     }
   };
 };
@@ -1901,7 +1904,7 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     static constexpr auto value() {return as_values_ns_fns::foo();}
   };*/
   template <typename ref, typename... type_args>
-  constexpr void sequence_assign(ref &r) {
+  constexpr void sequence_assign(plain_array<ref> &r) {
     constexpr auto function_arg = [](const auto &true_arg,
                                      auto &_this) constexpr {
       return _this.as_value(true_arg);
@@ -2055,7 +2058,7 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
         elem.get(allocator).template get_<as_values::operation_args_exprs>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    sequence_assign<Args...>(this_node.t.exprs);
+    sequence_assign<allocated_ref<AST_elem>, Args...>(this_node.t.exprs);
     return std::move(elem);
   }
 
@@ -2067,7 +2070,7 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
         elem.get(allocator).template get_<as_values::operation_args_varrefs>();
     this_node.is_this_elem = true;
     elem.get(allocator).is_initialized = true;
-    sequence_assign<Args...>(this_node.t.vars);
+    sequence_assign<allocated_ref<AST_elem>, Args...>(this_node.t.vars);
     return std::move(elem);
   }
   template <typename name, typename Hndl, typename expr_args, typename var_args>
@@ -2081,6 +2084,7 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     this_node.t.Hndl = as_value(Hndl{});
     this_node.t.expr_args = as_value(expr_args{});
     this_node.t.var_args = as_value(var_args{});
+    this_node.t.is_statement = true;
     return std::move(elem);
   }
   template <typename name, typename Hndl, typename expr_args, typename var_args>
@@ -2094,6 +2098,7 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     this_node.t.Hndl = as_value(Hndl{});
     this_node.t.expr_args = as_value(expr_args{});
     this_node.t.var_args = as_value(var_args{});
+    this_node.t.is_statement = false;
     return std::move(elem);
   }
   template <typename Var, typename Expr>

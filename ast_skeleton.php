@@ -152,8 +152,8 @@ template<std::size_t... nums> struct sequence_assigner<std::integer_sequence<std
 		template<typename... T_args>
     struct helper{
       template<typename ref, typename F, typename... F_args>
-      constexpr static void assign(ref& r, const F &f, F_args&&... args){
-        ((r[nums] = f(T_args{}, std::move<F_args>(args)...)),...);
+      constexpr static void assign(plain_array<ref>& r, const F &f, F_args&... args){
+        ((r[nums] = f(T_args{}, args...)),...);
       }
     };
 };
@@ -170,7 +170,7 @@ struct as_values_ns_fns{
     static constexpr auto value() {return as_values_ns_fns::foo();}
   };*/
   template<typename ref, typename... type_args>
-  constexpr void sequence_assign(ref& r){
+  constexpr void sequence_assign(plain_array<ref>& r){
     constexpr auto function_arg = [](const auto& true_arg, auto& _this) constexpr {return _this.as_value(true_arg);};
     return sequence_assigner<std::make_index_sequence<sizeof...(type_args)>>
     ::template helper<type_args...>::template assign<ref>(r, function_arg, *this);
