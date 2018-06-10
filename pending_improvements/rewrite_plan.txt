@@ -1,8 +1,8 @@
-Should have done this more generically!  Structs which have fields and parents.  
+Should have done this more generically!  Structs which have fields and parents.
 
 Built-in types of size_t, string, bool, char.
 
 top_adt = new Variant("AST_node", new UnaryVariantBranch("Statement"), ...); //these will be done via either inheritance or encapsulation, so nothing needs to happen here.
 something like new Struct("Name", new Fields(new Field($type, "name"),...), new Parents(top_adt["Statement"])); //will create an ad-hoc ADT for "Statement" of which these are fields, hopefully.
 
-Fields should know how to move themselves. 
+Fields should know how to move themselves.
