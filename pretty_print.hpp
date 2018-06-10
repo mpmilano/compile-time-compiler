@@ -140,4 +140,38 @@ std::ostream &pretty_print(std::ostream &o, const Ensure &e,
   return o << ".Ensure(" << e.label.label << ")";
 }
 
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const operation_args_exprs &e,
+                           const Allocator &allocator) {
+  for (const auto &ptr : e.exprs) {
+    if (ptr) {
+      pretty_print(o, ptr, allocator);
+      o << ", ";
+    }
+  }
+  return o;
+}
+
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const operation_args_varrefs &e,
+                           const Allocator &allocator) {
+  for (const auto &ptr : e.vars) {
+    if (ptr) {
+      pretty_print(o, ptr, allocator);
+      o << ", ";
+    }
+  }
+  return o;
+}
+
+template <typename Allocator>
+std::ostream &pretty_print(std::ostream &o, const Operation &e,
+                           const Allocator &allocator) {
+  pretty_print(o, e.Hndl, allocator);
+  o << "." << e.name << "(";
+  pretty_print(o, e.expr_args, allocator);
+  pretty_print(o, e.var_args, allocator);
+  return o;
+}
+
 } // namespace as_values

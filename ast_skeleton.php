@@ -135,6 +135,20 @@ template <typename prev_holder> constexpr auto as_type() {
 
 namespace as_types{
 
+template<typename> struct sequence_assigner;
+	  
+template<std::size_t... nums> struct sequence_assigner<std::integer_sequence<std::size_t, nums...>> {
+		template<typename... T_args>
+    struct helper{
+      template<typename ref, typename F, typename... F_args>
+      constexpr static void assign(ref& r, const F &f, F_args&&... args){
+        ((r[nums] = f(T_args{}, std::move<F_args>(args)...)),...);
+      }
+    };
+};
+
+
+
 template<typename AST_Allocator, std::size_t budget>
 struct as_values_ns_fns{
   using AST_elem = as_values::AST_elem;
@@ -144,6 +158,13 @@ struct as_values_ns_fns{
   template<typename T> struct converter {
     static constexpr auto value() {return as_values_ns_fns::foo();}
   };*/
+  template<typename ref, typename... type_args>
+  constexpr void sequence_assign(ref& r){
+    constexpr auto function_arg = [](const auto& true_arg, auto& _this) constexpr {return _this.as_value(true_arg);};
+    return sequence_assigner<std::make_index_sequence<sizeof...(type_args)>>
+    ::template helper<type_args...>::template assign<ref>(r, function_arg, *this);
+  }
+
   <?php 
   foreach ($types as $type){
     echo $type->to_value();

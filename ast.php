@@ -171,7 +171,7 @@ class AST_node{
 		$out = substr($out,0,-1);
 		$extra = '';
 		if ($has_string_field){
-			$extra = "mutils::cstring::str_cpy($field->name, p.$field->name);";
+			$extra = "mutils::cstring::str_cpy($string_field->name, p.$string_field->name);";
 		}
 		return $out.'{'.$extra.'}';
 	}
@@ -355,6 +355,55 @@ class Either extends AST_node {
 	public function encapsulator_names(){
 		return array('Statement','Expression');
 	}
+
+	public function is_astnode_defn(){
+		$type = $this;
+		$ret = "template<typename> struct is_astnode_$type->name : public std::false_type{};";
+		foreach ($this->encapsulator_names() as $name){
+			$this->set_identity($name);
+			$ret = $ret.$type->full_template_defn()." struct is_astnode_$type->name<".$type->encapsulated_type_name()."> : public std::true_type{};";
+		}
+		$this->reset_identity();
+		return $ret;
+	}
+	public function to_value() : string {
+		$ret = '';
+		foreach ($this->encapsulator_names as $name){
+			$this->set_identity($name);
+			$ret = $ret.parent::to_value();
+		}
+		$this->reset_identity();
+		return $ret;
+	}
+/*
+	public function to_value() :string {
+		global $String_t; global $Label_t;
+		$type = $this;
+		$ret = ''.
+		$type->full_template_defn_for_method();
+		$decl = $type->encapsulated_type_name();
+	  $ret = $ret. "constexpr allocated_ref<AST_elem> as_value(const $decl &){
+		auto elem = allocator.template allocate<AST_elem>();
+		auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
+		this_node.is_this_elem = true;
+		elem.get(allocator).is_initialized = true;";
+		foreach ($type->fields as $field){
+		  if (is_ast_node($field->type))
+			$ret = $ret. "this_node.t.$field->name = as_value($field->name{});";
+		elseif($field->type === $String_t){
+			$ret = $ret. "mutils::cstring::str_cpy(this_node.t.$field->name, $field->name{}.string);";
+		}
+		elseif($field->type === $Label_t){
+			$ret = $ret. "
+			using ____label = typename $field->name::label;
+			mutils::cstring::str_cpy(this_node.t.$field->name.label, ____label{}.string);";
+		}
+		  else $ret = $ret. "this_node.t.$field->name = $field->name;";
+		}
+		$ret = $ret. 'return std::move(elem);';
+	  $ret = $ret. "}\n";
+	  return $ret;
+	}*/
                   
 	public function encapsulate_type() : string{
 		$out = '';
@@ -494,6 +543,22 @@ class Argument_pack extends AST_node {
 	
 	public function is_astnode_defn() : string {
 		return '';
+	}
+
+	public function to_value() :string {
+		global $String_t; global $Label_t;
+		$type = $this;
+		return "
+
+	  template<typename... Args>
+	  constexpr allocated_ref<AST_elem> as_value(const $this->name<Args...> &){
+		auto elem = allocator.template allocate<AST_elem>();
+		auto &this_node = elem.get(allocator).template get_<as_values::$type->name>();
+		this_node.is_this_elem = true;
+		elem.get(allocator).is_initialized = true;
+		sequence_assign<Args...>(this_node.t.$this->field_name);
+		return std::move(elem);
+	  }";
 	}
 }
                 

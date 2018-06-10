@@ -64,7 +64,8 @@
         "streambuf": "cpp",
         "system_error": "cpp",
         "thread": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "unordered_map": "cpp"
     },
     "clang.cxxflags": [
         "--std=c++1z",

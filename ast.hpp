@@ -33,6 +33,9 @@ struct Constant;
 struct BinOp;
 struct Let;
 struct LetRemote;
+struct operation_args_exprs;
+struct operation_args_varrefs;
+struct Operation;
 struct Assignment;
 struct Return;
 struct If;
@@ -43,7 +46,8 @@ struct Binding;
 using AST_elem =
     Union<transaction, FieldReference, FieldPointerReference, Dereference,
           Endorse, Ensure, IsValid, VarReference, Constant, BinOp, Let,
-          LetRemote, Assignment, Return, If, While, Sequence, Skip, Binding>;
+          LetRemote, operation_args_exprs, operation_args_varrefs, Operation,
+          Assignment, Return, If, While, Sequence, Skip, Binding>;
 template <std::size_t budget>
 using AST_Allocator = Allocator<budget, transaction, AST_elem>;
 
@@ -224,6 +228,70 @@ struct LetRemote : public Statement {
     return *this;
   }
 };
+struct operation_args_exprs {
+  plain_array<allocated_ref<AST_elem>> exprs;
+  // default constructor
+  constexpr operation_args_exprs(){};
+  // move constructor
+  constexpr operation_args_exprs(operation_args_exprs &&p)
+      : exprs{{allocated_ref<AST_elem>{}}} {
+    for (auto i = 0u; i < 20; ++i) {
+      exprs[i] = std::move(p.exprs[i]);
+    }
+  }
+
+  // move-assignment
+  constexpr operation_args_exprs &operator=(operation_args_exprs &&p) {
+    for (auto i = 0u; i < 20; ++i) {
+      exprs[i] = std::move(p.exprs[i]);
+    }
+    return *this;
+  }
+};
+struct operation_args_varrefs {
+  plain_array<allocated_ref<AST_elem>> vars;
+  // default constructor
+  constexpr operation_args_varrefs(){};
+  // move constructor
+  constexpr operation_args_varrefs(operation_args_varrefs &&p)
+      : vars{{allocated_ref<AST_elem>{}}} {
+    for (auto i = 0u; i < 20; ++i) {
+      vars[i] = std::move(p.vars[i]);
+    }
+  }
+
+  // move-assignment
+  constexpr operation_args_varrefs &operator=(operation_args_varrefs &&p) {
+    for (auto i = 0u; i < 20; ++i) {
+      vars[i] = std::move(p.vars[i]);
+    }
+    return *this;
+  }
+};
+struct Operation : public Statement, public Expression {
+  plain_array<char> name{};
+  allocated_ref<AST_elem> Hndl{};
+  allocated_ref<AST_elem> expr_args{};
+  allocated_ref<AST_elem> var_args{};
+  bool is_statement{};
+  // default constructor
+  constexpr Operation(){};
+  constexpr Operation(Operation &&p)
+      : Hndl{std::move(p.Hndl)}, expr_args{std::move(p.expr_args)},
+        var_args{std::move(p.var_args)}, is_statement{
+                                             std::move(p.is_statement)} {
+    mutils::cstring::str_cpy(name, p.name);
+  }
+  // move-assignment
+  constexpr Operation &operator=(Operation &&p) {
+    mutils::cstring::str_cpy(name, p.name);
+    Hndl = std::move(p.Hndl);
+    expr_args = std::move(p.expr_args);
+    var_args = std::move(p.var_args);
+    is_statement = std::move(p.is_statement);
+    return *this;
+  }
+};
 struct Assignment : public Statement {
   allocated_ref<AST_elem> Var{};
   allocated_ref<AST_elem> Expr{};
@@ -381,6 +449,33 @@ struct Statement<LetRemote<_Binding, _Body>> {
   using Binding = _Binding;
   using Body = _Body;
 };
+template <typename...> struct operation_args_exprs;
+template <typename...> struct operation_args_exprs {};
+template <typename...> struct operation_args_varrefs;
+template <typename...> struct operation_args_varrefs {};
+template <typename name, typename Hndl, typename expr_args, typename var_args,
+          bool is_statement>
+struct Operation {};
+template <typename _name, typename _Hndl, typename _expr_args,
+          typename _var_args, bool _is_statement>
+struct Statement<
+    Operation<_name, _Hndl, _expr_args, _var_args, _is_statement>> {
+  using name = _name;
+  using Hndl = _Hndl;
+  using expr_args = _expr_args;
+  using var_args = _var_args;
+  bool is_statement{_is_statement};
+};
+template <typename _name, typename _Hndl, typename _expr_args,
+          typename _var_args, bool _is_statement>
+struct Expression<
+    Operation<_name, _Hndl, _expr_args, _var_args, _is_statement>> {
+  using name = _name;
+  using Hndl = _Hndl;
+  using expr_args = _expr_args;
+  using var_args = _var_args;
+  bool is_statement{_is_statement};
+};
 template <typename Var, typename Expr> struct Assignment {};
 template <typename _Var, typename _Expr>
 struct Statement<Assignment<_Var, _Expr>> {
@@ -461,6 +556,17 @@ struct is_astnode_Let<Statement<Let<Binding, Body>>> : public std::true_type {};
 template <typename> struct is_astnode_LetRemote : public std::false_type {};
 template <typename Binding, typename Body>
 struct is_astnode_LetRemote<Statement<LetRemote<Binding, Body>>>
+    : public std::true_type {};
+template <typename> struct is_astnode_Operation : public std::false_type {};
+template <typename name, typename Hndl, typename expr_args, typename var_args,
+          bool is_statement>
+struct is_astnode_Operation<
+    Statement<Operation<name, Hndl, expr_args, var_args, is_statement>>>
+    : public std::true_type {};
+template <typename name, typename Hndl, typename expr_args, typename var_args,
+          bool is_statement>
+struct is_astnode_Operation<
+    Expression<Operation<name, Hndl, expr_args, var_args, is_statement>>>
     : public std::true_type {};
 template <typename> struct is_astnode_Assignment : public std::false_type {};
 template <typename Var, typename Expr>
@@ -718,6 +824,1039 @@ template <typename prev_holder> struct as_type_f {
 
         using _arg1 = DECT(as_type<budget - 1, arg1>());
         return as_types::Statement<as_types::LetRemote<_arg0, _arg1>>{};
+      } else if constexpr (e.template get_<operation_args_exprs>()
+                               .is_this_elem) {
+        if (is_non_null(e.template get_<operation_args_exprs>().t.exprs[0])) {
+          struct arg0 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg0() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<operation_args_exprs>().t.exprs[0].get(
+                  allocator);
+            }
+          };
+
+          using _arg0 = DECT(as_type<budget - 1, arg0>());
+          if (is_non_null(e.template get_<operation_args_exprs>().t.exprs[1])) {
+            struct arg1 {
+#ifndef __clang__
+              const AST_elem &e{F{}()};
+#endif
+              constexpr arg1() {}
+              constexpr const AST_elem &operator()() const {
+                return e.template get_<operation_args_exprs>().t.exprs[1].get(
+                    allocator);
+              }
+            };
+
+            using _arg1 = DECT(as_type<budget - 1, arg1>());
+            if (is_non_null(
+                    e.template get_<operation_args_exprs>().t.exprs[2])) {
+              struct arg2 {
+#ifndef __clang__
+                const AST_elem &e{F{}()};
+#endif
+                constexpr arg2() {}
+                constexpr const AST_elem &operator()() const {
+                  return e.template get_<operation_args_exprs>().t.exprs[2].get(
+                      allocator);
+                }
+              };
+
+              using _arg2 = DECT(as_type<budget - 1, arg2>());
+              if (is_non_null(
+                      e.template get_<operation_args_exprs>().t.exprs[3])) {
+                struct arg3 {
+#ifndef __clang__
+                  const AST_elem &e{F{}()};
+#endif
+                  constexpr arg3() {}
+                  constexpr const AST_elem &operator()() const {
+                    return e.template get_<operation_args_exprs>()
+                        .t.exprs[3]
+                        .get(allocator);
+                  }
+                };
+
+                using _arg3 = DECT(as_type<budget - 1, arg3>());
+                if (is_non_null(
+                        e.template get_<operation_args_exprs>().t.exprs[4])) {
+                  struct arg4 {
+#ifndef __clang__
+                    const AST_elem &e{F{}()};
+#endif
+                    constexpr arg4() {}
+                    constexpr const AST_elem &operator()() const {
+                      return e.template get_<operation_args_exprs>()
+                          .t.exprs[4]
+                          .get(allocator);
+                    }
+                  };
+
+                  using _arg4 = DECT(as_type<budget - 1, arg4>());
+                  if (is_non_null(
+                          e.template get_<operation_args_exprs>().t.exprs[5])) {
+                    struct arg5 {
+#ifndef __clang__
+                      const AST_elem &e{F{}()};
+#endif
+                      constexpr arg5() {}
+                      constexpr const AST_elem &operator()() const {
+                        return e.template get_<operation_args_exprs>()
+                            .t.exprs[5]
+                            .get(allocator);
+                      }
+                    };
+
+                    using _arg5 = DECT(as_type<budget - 1, arg5>());
+                    if (is_non_null(e.template get_<operation_args_exprs>()
+                                        .t.exprs[6])) {
+                      struct arg6 {
+#ifndef __clang__
+                        const AST_elem &e{F{}()};
+#endif
+                        constexpr arg6() {}
+                        constexpr const AST_elem &operator()() const {
+                          return e.template get_<operation_args_exprs>()
+                              .t.exprs[6]
+                              .get(allocator);
+                        }
+                      };
+
+                      using _arg6 = DECT(as_type<budget - 1, arg6>());
+                      if (is_non_null(e.template get_<operation_args_exprs>()
+                                          .t.exprs[7])) {
+                        struct arg7 {
+#ifndef __clang__
+                          const AST_elem &e{F{}()};
+#endif
+                          constexpr arg7() {}
+                          constexpr const AST_elem &operator()() const {
+                            return e.template get_<operation_args_exprs>()
+                                .t.exprs[7]
+                                .get(allocator);
+                          }
+                        };
+
+                        using _arg7 = DECT(as_type<budget - 1, arg7>());
+                        if (is_non_null(e.template get_<operation_args_exprs>()
+                                            .t.exprs[8])) {
+                          struct arg8 {
+#ifndef __clang__
+                            const AST_elem &e{F{}()};
+#endif
+                            constexpr arg8() {}
+                            constexpr const AST_elem &operator()() const {
+                              return e.template get_<operation_args_exprs>()
+                                  .t.exprs[8]
+                                  .get(allocator);
+                            }
+                          };
+
+                          using _arg8 = DECT(as_type<budget - 1, arg8>());
+                          if (is_non_null(
+                                  e.template get_<operation_args_exprs>()
+                                      .t.exprs[9])) {
+                            struct arg9 {
+#ifndef __clang__
+                              const AST_elem &e{F{}()};
+#endif
+                              constexpr arg9() {}
+                              constexpr const AST_elem &operator()() const {
+                                return e.template get_<operation_args_exprs>()
+                                    .t.exprs[9]
+                                    .get(allocator);
+                              }
+                            };
+
+                            using _arg9 = DECT(as_type<budget - 1, arg9>());
+                            if (is_non_null(
+                                    e.template get_<operation_args_exprs>()
+                                        .t.exprs[10])) {
+                              struct arg10 {
+#ifndef __clang__
+                                const AST_elem &e{F{}()};
+#endif
+                                constexpr arg10() {}
+                                constexpr const AST_elem &operator()() const {
+                                  return e.template get_<operation_args_exprs>()
+                                      .t.exprs[10]
+                                      .get(allocator);
+                                }
+                              };
+
+                              using _arg10 = DECT(as_type<budget - 1, arg10>());
+                              if (is_non_null(
+                                      e.template get_<operation_args_exprs>()
+                                          .t.exprs[11])) {
+                                struct arg11 {
+#ifndef __clang__
+                                  const AST_elem &e{F{}()};
+#endif
+                                  constexpr arg11() {}
+                                  constexpr const AST_elem &operator()() const {
+                                    return e
+                                        .template get_<operation_args_exprs>()
+                                        .t.exprs[11]
+                                        .get(allocator);
+                                  }
+                                };
+
+                                using _arg11 =
+                                    DECT(as_type<budget - 1, arg11>());
+                                if (is_non_null(
+                                        e.template get_<operation_args_exprs>()
+                                            .t.exprs[12])) {
+                                  struct arg12 {
+#ifndef __clang__
+                                    const AST_elem &e{F{}()};
+#endif
+                                    constexpr arg12() {}
+                                    constexpr const AST_elem &
+                                    operator()() const {
+                                      return e
+                                          .template get_<operation_args_exprs>()
+                                          .t.exprs[12]
+                                          .get(allocator);
+                                    }
+                                  };
+
+                                  using _arg12 =
+                                      DECT(as_type<budget - 1, arg12>());
+                                  if (is_non_null(e.template get_<
+                                                       operation_args_exprs>()
+                                                      .t.exprs[13])) {
+                                    struct arg13 {
+#ifndef __clang__
+                                      const AST_elem &e{F{}()};
+#endif
+                                      constexpr arg13() {}
+                                      constexpr const AST_elem &
+                                      operator()() const {
+                                        return e
+                                            .template get_<
+                                                operation_args_exprs>()
+                                            .t.exprs[13]
+                                            .get(allocator);
+                                      }
+                                    };
+
+                                    using _arg13 =
+                                        DECT(as_type<budget - 1, arg13>());
+                                    if (is_non_null(e.template get_<
+                                                         operation_args_exprs>()
+                                                        .t.exprs[14])) {
+                                      struct arg14 {
+#ifndef __clang__
+                                        const AST_elem &e{F{}()};
+#endif
+                                        constexpr arg14() {}
+                                        constexpr const AST_elem &
+                                        operator()() const {
+                                          return e
+                                              .template get_<
+                                                  operation_args_exprs>()
+                                              .t.exprs[14]
+                                              .get(allocator);
+                                        }
+                                      };
+
+                                      using _arg14 =
+                                          DECT(as_type<budget - 1, arg14>());
+                                      if (is_non_null(
+                                              e.template get_<
+                                                   operation_args_exprs>()
+                                                  .t.exprs[15])) {
+                                        struct arg15 {
+#ifndef __clang__
+                                          const AST_elem &e{F{}()};
+#endif
+                                          constexpr arg15() {}
+                                          constexpr const AST_elem &
+                                          operator()() const {
+                                            return e
+                                                .template get_<
+                                                    operation_args_exprs>()
+                                                .t.exprs[15]
+                                                .get(allocator);
+                                          }
+                                        };
+
+                                        using _arg15 =
+                                            DECT(as_type<budget - 1, arg15>());
+                                        if (is_non_null(
+                                                e.template get_<
+                                                     operation_args_exprs>()
+                                                    .t.exprs[16])) {
+                                          struct arg16 {
+#ifndef __clang__
+                                            const AST_elem &e{F{}()};
+#endif
+                                            constexpr arg16() {}
+                                            constexpr const AST_elem &
+                                            operator()() const {
+                                              return e
+                                                  .template get_<
+                                                      operation_args_exprs>()
+                                                  .t.exprs[16]
+                                                  .get(allocator);
+                                            }
+                                          };
+
+                                          using _arg16 = DECT(
+                                              as_type<budget - 1, arg16>());
+                                          if (is_non_null(
+                                                  e.template get_<
+                                                       operation_args_exprs>()
+                                                      .t.exprs[17])) {
+                                            struct arg17 {
+#ifndef __clang__
+                                              const AST_elem &e{F{}()};
+#endif
+                                              constexpr arg17() {}
+                                              constexpr const AST_elem &
+                                              operator()() const {
+                                                return e
+                                                    .template get_<
+                                                        operation_args_exprs>()
+                                                    .t.exprs[17]
+                                                    .get(allocator);
+                                              }
+                                            };
+
+                                            using _arg17 = DECT(
+                                                as_type<budget - 1, arg17>());
+                                            if (is_non_null(
+                                                    e.template get_<
+                                                         operation_args_exprs>()
+                                                        .t.exprs[18])) {
+                                              struct arg18 {
+#ifndef __clang__
+                                                const AST_elem &e{F{}()};
+#endif
+                                                constexpr arg18() {}
+                                                constexpr const AST_elem &
+                                                operator()() const {
+                                                  return e
+                                                      .template get_<
+                                                          operation_args_exprs>()
+                                                      .t.exprs[18]
+                                                      .get(allocator);
+                                                }
+                                              };
+
+                                              using _arg18 = DECT(
+                                                  as_type<budget - 1, arg18>());
+                                              if (is_non_null(
+                                                      e.template get_<
+                                                           operation_args_exprs>()
+                                                          .t.exprs[19])) {
+                                                struct arg19 {
+#ifndef __clang__
+                                                  const AST_elem &e{F{}()};
+#endif
+                                                  constexpr arg19() {}
+                                                  constexpr const AST_elem &
+                                                  operator()() const {
+                                                    return e
+                                                        .template get_<
+                                                            operation_args_exprs>()
+                                                        .t.exprs[19]
+                                                        .get(allocator);
+                                                  }
+                                                };
+
+                                                using _arg19 =
+                                                    DECT(as_type<budget - 1,
+                                                                 arg19>());
+                                                return as_types::
+                                                    operation_args_exprs<
+                                                        _arg0, _arg1, _arg2,
+                                                        _arg3, _arg4, _arg5,
+                                                        _arg6, _arg7, _arg8,
+                                                        _arg9, _arg10, _arg11,
+                                                        _arg12, _arg13, _arg14,
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18, _arg19>{};
+                                              } else {
+                                                return as_types::
+                                                    operation_args_exprs<
+                                                        _arg0, _arg1, _arg2,
+                                                        _arg3, _arg4, _arg5,
+                                                        _arg6, _arg7, _arg8,
+                                                        _arg9, _arg10, _arg11,
+                                                        _arg12, _arg13, _arg14,
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18>{};
+                                              }
+                                            } else {
+                                              return as_types::
+                                                  operation_args_exprs<
+                                                      _arg0, _arg1, _arg2,
+                                                      _arg3, _arg4, _arg5,
+                                                      _arg6, _arg7, _arg8,
+                                                      _arg9, _arg10, _arg11,
+                                                      _arg12, _arg13, _arg14,
+                                                      _arg15, _arg16, _arg17>{};
+                                            }
+                                          } else {
+                                            return as_types::
+                                                operation_args_exprs<
+                                                    _arg0, _arg1, _arg2, _arg3,
+                                                    _arg4, _arg5, _arg6, _arg7,
+                                                    _arg8, _arg9, _arg10,
+                                                    _arg11, _arg12, _arg13,
+                                                    _arg14, _arg15, _arg16>{};
+                                          }
+                                        } else {
+                                          return as_types::operation_args_exprs<
+                                              _arg0, _arg1, _arg2, _arg3, _arg4,
+                                              _arg5, _arg6, _arg7, _arg8, _arg9,
+                                              _arg10, _arg11, _arg12, _arg13,
+                                              _arg14, _arg15>{};
+                                        }
+                                      } else {
+                                        return as_types::operation_args_exprs<
+                                            _arg0, _arg1, _arg2, _arg3, _arg4,
+                                            _arg5, _arg6, _arg7, _arg8, _arg9,
+                                            _arg10, _arg11, _arg12, _arg13,
+                                            _arg14>{};
+                                      }
+                                    } else {
+                                      return as_types::operation_args_exprs<
+                                          _arg0, _arg1, _arg2, _arg3, _arg4,
+                                          _arg5, _arg6, _arg7, _arg8, _arg9,
+                                          _arg10, _arg11, _arg12, _arg13>{};
+                                    }
+                                  } else {
+                                    return as_types::operation_args_exprs<
+                                        _arg0, _arg1, _arg2, _arg3, _arg4,
+                                        _arg5, _arg6, _arg7, _arg8, _arg9,
+                                        _arg10, _arg11, _arg12>{};
+                                  }
+                                } else {
+                                  return as_types::operation_args_exprs<
+                                      _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                      _arg6, _arg7, _arg8, _arg9, _arg10,
+                                      _arg11>{};
+                                }
+                              } else {
+                                return as_types::operation_args_exprs<
+                                    _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                    _arg6, _arg7, _arg8, _arg9, _arg10>{};
+                              }
+                            } else {
+                              return as_types::operation_args_exprs<
+                                  _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                  _arg6, _arg7, _arg8, _arg9>{};
+                            }
+                          } else {
+                            return as_types::operation_args_exprs<
+                                _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
+                                _arg7, _arg8>{};
+                          }
+                        } else {
+                          return as_types::operation_args_exprs<
+                              _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
+                              _arg7>{};
+                        }
+                      } else {
+                        return as_types::operation_args_exprs<
+                            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6>{};
+                      }
+                    } else {
+                      return as_types::operation_args_exprs<
+                          _arg0, _arg1, _arg2, _arg3, _arg4, _arg5>{};
+                    }
+                  } else {
+                    return as_types::operation_args_exprs<_arg0, _arg1, _arg2,
+                                                          _arg3, _arg4>{};
+                  }
+                } else {
+                  return as_types::operation_args_exprs<_arg0, _arg1, _arg2,
+                                                        _arg3>{};
+                }
+              } else {
+                return as_types::operation_args_exprs<_arg0, _arg1, _arg2>{};
+              }
+            } else {
+              return as_types::operation_args_exprs<_arg0, _arg1>{};
+            }
+          } else {
+            return as_types::operation_args_exprs<_arg0>{};
+          }
+        }
+        return as_types::operation_args_exprs<>{};
+      } else if constexpr (e.template get_<operation_args_varrefs>()
+                               .is_this_elem) {
+        if (is_non_null(e.template get_<operation_args_varrefs>().t.vars[0])) {
+          struct arg0 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg0() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<operation_args_varrefs>().t.vars[0].get(
+                  allocator);
+            }
+          };
+
+          using _arg0 = DECT(as_type<budget - 1, arg0>());
+          if (is_non_null(
+                  e.template get_<operation_args_varrefs>().t.vars[1])) {
+            struct arg1 {
+#ifndef __clang__
+              const AST_elem &e{F{}()};
+#endif
+              constexpr arg1() {}
+              constexpr const AST_elem &operator()() const {
+                return e.template get_<operation_args_varrefs>().t.vars[1].get(
+                    allocator);
+              }
+            };
+
+            using _arg1 = DECT(as_type<budget - 1, arg1>());
+            if (is_non_null(
+                    e.template get_<operation_args_varrefs>().t.vars[2])) {
+              struct arg2 {
+#ifndef __clang__
+                const AST_elem &e{F{}()};
+#endif
+                constexpr arg2() {}
+                constexpr const AST_elem &operator()() const {
+                  return e.template get_<operation_args_varrefs>()
+                      .t.vars[2]
+                      .get(allocator);
+                }
+              };
+
+              using _arg2 = DECT(as_type<budget - 1, arg2>());
+              if (is_non_null(
+                      e.template get_<operation_args_varrefs>().t.vars[3])) {
+                struct arg3 {
+#ifndef __clang__
+                  const AST_elem &e{F{}()};
+#endif
+                  constexpr arg3() {}
+                  constexpr const AST_elem &operator()() const {
+                    return e.template get_<operation_args_varrefs>()
+                        .t.vars[3]
+                        .get(allocator);
+                  }
+                };
+
+                using _arg3 = DECT(as_type<budget - 1, arg3>());
+                if (is_non_null(
+                        e.template get_<operation_args_varrefs>().t.vars[4])) {
+                  struct arg4 {
+#ifndef __clang__
+                    const AST_elem &e{F{}()};
+#endif
+                    constexpr arg4() {}
+                    constexpr const AST_elem &operator()() const {
+                      return e.template get_<operation_args_varrefs>()
+                          .t.vars[4]
+                          .get(allocator);
+                    }
+                  };
+
+                  using _arg4 = DECT(as_type<budget - 1, arg4>());
+                  if (is_non_null(e.template get_<operation_args_varrefs>()
+                                      .t.vars[5])) {
+                    struct arg5 {
+#ifndef __clang__
+                      const AST_elem &e{F{}()};
+#endif
+                      constexpr arg5() {}
+                      constexpr const AST_elem &operator()() const {
+                        return e.template get_<operation_args_varrefs>()
+                            .t.vars[5]
+                            .get(allocator);
+                      }
+                    };
+
+                    using _arg5 = DECT(as_type<budget - 1, arg5>());
+                    if (is_non_null(e.template get_<operation_args_varrefs>()
+                                        .t.vars[6])) {
+                      struct arg6 {
+#ifndef __clang__
+                        const AST_elem &e{F{}()};
+#endif
+                        constexpr arg6() {}
+                        constexpr const AST_elem &operator()() const {
+                          return e.template get_<operation_args_varrefs>()
+                              .t.vars[6]
+                              .get(allocator);
+                        }
+                      };
+
+                      using _arg6 = DECT(as_type<budget - 1, arg6>());
+                      if (is_non_null(e.template get_<operation_args_varrefs>()
+                                          .t.vars[7])) {
+                        struct arg7 {
+#ifndef __clang__
+                          const AST_elem &e{F{}()};
+#endif
+                          constexpr arg7() {}
+                          constexpr const AST_elem &operator()() const {
+                            return e.template get_<operation_args_varrefs>()
+                                .t.vars[7]
+                                .get(allocator);
+                          }
+                        };
+
+                        using _arg7 = DECT(as_type<budget - 1, arg7>());
+                        if (is_non_null(
+                                e.template get_<operation_args_varrefs>()
+                                    .t.vars[8])) {
+                          struct arg8 {
+#ifndef __clang__
+                            const AST_elem &e{F{}()};
+#endif
+                            constexpr arg8() {}
+                            constexpr const AST_elem &operator()() const {
+                              return e.template get_<operation_args_varrefs>()
+                                  .t.vars[8]
+                                  .get(allocator);
+                            }
+                          };
+
+                          using _arg8 = DECT(as_type<budget - 1, arg8>());
+                          if (is_non_null(
+                                  e.template get_<operation_args_varrefs>()
+                                      .t.vars[9])) {
+                            struct arg9 {
+#ifndef __clang__
+                              const AST_elem &e{F{}()};
+#endif
+                              constexpr arg9() {}
+                              constexpr const AST_elem &operator()() const {
+                                return e.template get_<operation_args_varrefs>()
+                                    .t.vars[9]
+                                    .get(allocator);
+                              }
+                            };
+
+                            using _arg9 = DECT(as_type<budget - 1, arg9>());
+                            if (is_non_null(
+                                    e.template get_<operation_args_varrefs>()
+                                        .t.vars[10])) {
+                              struct arg10 {
+#ifndef __clang__
+                                const AST_elem &e{F{}()};
+#endif
+                                constexpr arg10() {}
+                                constexpr const AST_elem &operator()() const {
+                                  return e
+                                      .template get_<operation_args_varrefs>()
+                                      .t.vars[10]
+                                      .get(allocator);
+                                }
+                              };
+
+                              using _arg10 = DECT(as_type<budget - 1, arg10>());
+                              if (is_non_null(
+                                      e.template get_<operation_args_varrefs>()
+                                          .t.vars[11])) {
+                                struct arg11 {
+#ifndef __clang__
+                                  const AST_elem &e{F{}()};
+#endif
+                                  constexpr arg11() {}
+                                  constexpr const AST_elem &operator()() const {
+                                    return e
+                                        .template get_<operation_args_varrefs>()
+                                        .t.vars[11]
+                                        .get(allocator);
+                                  }
+                                };
+
+                                using _arg11 =
+                                    DECT(as_type<budget - 1, arg11>());
+                                if (is_non_null(e.template get_<
+                                                     operation_args_varrefs>()
+                                                    .t.vars[12])) {
+                                  struct arg12 {
+#ifndef __clang__
+                                    const AST_elem &e{F{}()};
+#endif
+                                    constexpr arg12() {}
+                                    constexpr const AST_elem &
+                                    operator()() const {
+                                      return e
+                                          .template get_<
+                                              operation_args_varrefs>()
+                                          .t.vars[12]
+                                          .get(allocator);
+                                    }
+                                  };
+
+                                  using _arg12 =
+                                      DECT(as_type<budget - 1, arg12>());
+                                  if (is_non_null(e.template get_<
+                                                       operation_args_varrefs>()
+                                                      .t.vars[13])) {
+                                    struct arg13 {
+#ifndef __clang__
+                                      const AST_elem &e{F{}()};
+#endif
+                                      constexpr arg13() {}
+                                      constexpr const AST_elem &
+                                      operator()() const {
+                                        return e
+                                            .template get_<
+                                                operation_args_varrefs>()
+                                            .t.vars[13]
+                                            .get(allocator);
+                                      }
+                                    };
+
+                                    using _arg13 =
+                                        DECT(as_type<budget - 1, arg13>());
+                                    if (is_non_null(
+                                            e.template get_<
+                                                 operation_args_varrefs>()
+                                                .t.vars[14])) {
+                                      struct arg14 {
+#ifndef __clang__
+                                        const AST_elem &e{F{}()};
+#endif
+                                        constexpr arg14() {}
+                                        constexpr const AST_elem &
+                                        operator()() const {
+                                          return e
+                                              .template get_<
+                                                  operation_args_varrefs>()
+                                              .t.vars[14]
+                                              .get(allocator);
+                                        }
+                                      };
+
+                                      using _arg14 =
+                                          DECT(as_type<budget - 1, arg14>());
+                                      if (is_non_null(
+                                              e.template get_<
+                                                   operation_args_varrefs>()
+                                                  .t.vars[15])) {
+                                        struct arg15 {
+#ifndef __clang__
+                                          const AST_elem &e{F{}()};
+#endif
+                                          constexpr arg15() {}
+                                          constexpr const AST_elem &
+                                          operator()() const {
+                                            return e
+                                                .template get_<
+                                                    operation_args_varrefs>()
+                                                .t.vars[15]
+                                                .get(allocator);
+                                          }
+                                        };
+
+                                        using _arg15 =
+                                            DECT(as_type<budget - 1, arg15>());
+                                        if (is_non_null(
+                                                e.template get_<
+                                                     operation_args_varrefs>()
+                                                    .t.vars[16])) {
+                                          struct arg16 {
+#ifndef __clang__
+                                            const AST_elem &e{F{}()};
+#endif
+                                            constexpr arg16() {}
+                                            constexpr const AST_elem &
+                                            operator()() const {
+                                              return e
+                                                  .template get_<
+                                                      operation_args_varrefs>()
+                                                  .t.vars[16]
+                                                  .get(allocator);
+                                            }
+                                          };
+
+                                          using _arg16 = DECT(
+                                              as_type<budget - 1, arg16>());
+                                          if (is_non_null(
+                                                  e.template get_<
+                                                       operation_args_varrefs>()
+                                                      .t.vars[17])) {
+                                            struct arg17 {
+#ifndef __clang__
+                                              const AST_elem &e{F{}()};
+#endif
+                                              constexpr arg17() {}
+                                              constexpr const AST_elem &
+                                              operator()() const {
+                                                return e
+                                                    .template get_<
+                                                        operation_args_varrefs>()
+                                                    .t.vars[17]
+                                                    .get(allocator);
+                                              }
+                                            };
+
+                                            using _arg17 = DECT(
+                                                as_type<budget - 1, arg17>());
+                                            if (is_non_null(
+                                                    e.template get_<
+                                                         operation_args_varrefs>()
+                                                        .t.vars[18])) {
+                                              struct arg18 {
+#ifndef __clang__
+                                                const AST_elem &e{F{}()};
+#endif
+                                                constexpr arg18() {}
+                                                constexpr const AST_elem &
+                                                operator()() const {
+                                                  return e
+                                                      .template get_<
+                                                          operation_args_varrefs>()
+                                                      .t.vars[18]
+                                                      .get(allocator);
+                                                }
+                                              };
+
+                                              using _arg18 = DECT(
+                                                  as_type<budget - 1, arg18>());
+                                              if (is_non_null(
+                                                      e.template get_<
+                                                           operation_args_varrefs>()
+                                                          .t.vars[19])) {
+                                                struct arg19 {
+#ifndef __clang__
+                                                  const AST_elem &e{F{}()};
+#endif
+                                                  constexpr arg19() {}
+                                                  constexpr const AST_elem &
+                                                  operator()() const {
+                                                    return e
+                                                        .template get_<
+                                                            operation_args_varrefs>()
+                                                        .t.vars[19]
+                                                        .get(allocator);
+                                                  }
+                                                };
+
+                                                using _arg19 =
+                                                    DECT(as_type<budget - 1,
+                                                                 arg19>());
+                                                return as_types::
+                                                    operation_args_varrefs<
+                                                        _arg0, _arg1, _arg2,
+                                                        _arg3, _arg4, _arg5,
+                                                        _arg6, _arg7, _arg8,
+                                                        _arg9, _arg10, _arg11,
+                                                        _arg12, _arg13, _arg14,
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18, _arg19>{};
+                                              } else {
+                                                return as_types::
+                                                    operation_args_varrefs<
+                                                        _arg0, _arg1, _arg2,
+                                                        _arg3, _arg4, _arg5,
+                                                        _arg6, _arg7, _arg8,
+                                                        _arg9, _arg10, _arg11,
+                                                        _arg12, _arg13, _arg14,
+                                                        _arg15, _arg16, _arg17,
+                                                        _arg18>{};
+                                              }
+                                            } else {
+                                              return as_types::
+                                                  operation_args_varrefs<
+                                                      _arg0, _arg1, _arg2,
+                                                      _arg3, _arg4, _arg5,
+                                                      _arg6, _arg7, _arg8,
+                                                      _arg9, _arg10, _arg11,
+                                                      _arg12, _arg13, _arg14,
+                                                      _arg15, _arg16, _arg17>{};
+                                            }
+                                          } else {
+                                            return as_types::
+                                                operation_args_varrefs<
+                                                    _arg0, _arg1, _arg2, _arg3,
+                                                    _arg4, _arg5, _arg6, _arg7,
+                                                    _arg8, _arg9, _arg10,
+                                                    _arg11, _arg12, _arg13,
+                                                    _arg14, _arg15, _arg16>{};
+                                          }
+                                        } else {
+                                          return as_types::
+                                              operation_args_varrefs<
+                                                  _arg0, _arg1, _arg2, _arg3,
+                                                  _arg4, _arg5, _arg6, _arg7,
+                                                  _arg8, _arg9, _arg10, _arg11,
+                                                  _arg12, _arg13, _arg14,
+                                                  _arg15>{};
+                                        }
+                                      } else {
+                                        return as_types::operation_args_varrefs<
+                                            _arg0, _arg1, _arg2, _arg3, _arg4,
+                                            _arg5, _arg6, _arg7, _arg8, _arg9,
+                                            _arg10, _arg11, _arg12, _arg13,
+                                            _arg14>{};
+                                      }
+                                    } else {
+                                      return as_types::operation_args_varrefs<
+                                          _arg0, _arg1, _arg2, _arg3, _arg4,
+                                          _arg5, _arg6, _arg7, _arg8, _arg9,
+                                          _arg10, _arg11, _arg12, _arg13>{};
+                                    }
+                                  } else {
+                                    return as_types::operation_args_varrefs<
+                                        _arg0, _arg1, _arg2, _arg3, _arg4,
+                                        _arg5, _arg6, _arg7, _arg8, _arg9,
+                                        _arg10, _arg11, _arg12>{};
+                                  }
+                                } else {
+                                  return as_types::operation_args_varrefs<
+                                      _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                      _arg6, _arg7, _arg8, _arg9, _arg10,
+                                      _arg11>{};
+                                }
+                              } else {
+                                return as_types::operation_args_varrefs<
+                                    _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                    _arg6, _arg7, _arg8, _arg9, _arg10>{};
+                              }
+                            } else {
+                              return as_types::operation_args_varrefs<
+                                  _arg0, _arg1, _arg2, _arg3, _arg4, _arg5,
+                                  _arg6, _arg7, _arg8, _arg9>{};
+                            }
+                          } else {
+                            return as_types::operation_args_varrefs<
+                                _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
+                                _arg7, _arg8>{};
+                          }
+                        } else {
+                          return as_types::operation_args_varrefs<
+                              _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6,
+                              _arg7>{};
+                        }
+                      } else {
+                        return as_types::operation_args_varrefs<
+                            _arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6>{};
+                      }
+                    } else {
+                      return as_types::operation_args_varrefs<
+                          _arg0, _arg1, _arg2, _arg3, _arg4, _arg5>{};
+                    }
+                  } else {
+                    return as_types::operation_args_varrefs<_arg0, _arg1, _arg2,
+                                                            _arg3, _arg4>{};
+                  }
+                } else {
+                  return as_types::operation_args_varrefs<_arg0, _arg1, _arg2,
+                                                          _arg3>{};
+                }
+              } else {
+                return as_types::operation_args_varrefs<_arg0, _arg1, _arg2>{};
+              }
+            } else {
+              return as_types::operation_args_varrefs<_arg0, _arg1>{};
+            }
+          } else {
+            return as_types::operation_args_varrefs<_arg0>{};
+          }
+        }
+        return as_types::operation_args_varrefs<>{};
+      } else if constexpr (e.template get_<Operation>().is_this_elem) {
+        using is_statement =
+            std::integral_constant<bool,
+                                   e.template get_<Operation>().t.is_statement>;
+        if constexpr (is_statement::value) {
+          constexpr auto &__str0 = e.template get_<Operation>().t.name;
+          using _arg0 = DECT(
+              mutils::String<__str0[0], __str0[1], __str0[2], __str0[3],
+                             __str0[4], __str0[5], __str0[6], __str0[7],
+                             __str0[8], __str0[9], __str0[10], __str0[11],
+                             __str0[12], __str0[13], __str0[14], __str0[15],
+                             __str0[16], __str0[17], __str0[18],
+                             __str0[19]>::trim_ends()); /*Declaring arg!*/
+          struct arg1 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg1() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.Hndl.get(allocator);
+            }
+          };
+
+          using _arg1 = DECT(as_type<budget - 1, arg1>());
+          /*Declaring arg!*/ struct arg2 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg2() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.expr_args.get(allocator);
+            }
+          };
+
+          using _arg2 = DECT(as_type<budget - 1, arg2>());
+          /*Declaring arg!*/ struct arg3 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg3() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.var_args.get(allocator);
+            }
+          };
+
+          using _arg3 = DECT(as_type<budget - 1, arg3>());
+          constexpr auto _arg4 = e.template get_<Operation>().t.is_statement;
+          return as_types::Statement<
+              as_types::Operation<_arg0, _arg1, _arg2, _arg3, _arg4>>{};
+        } else {
+          constexpr auto &__str0 = e.template get_<Operation>().t.name;
+          using _arg0 = DECT(
+              mutils::String<__str0[0], __str0[1], __str0[2], __str0[3],
+                             __str0[4], __str0[5], __str0[6], __str0[7],
+                             __str0[8], __str0[9], __str0[10], __str0[11],
+                             __str0[12], __str0[13], __str0[14], __str0[15],
+                             __str0[16], __str0[17], __str0[18],
+                             __str0[19]>::trim_ends()); /*Declaring arg!*/
+          struct arg1 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg1() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.Hndl.get(allocator);
+            }
+          };
+
+          using _arg1 = DECT(as_type<budget - 1, arg1>());
+          /*Declaring arg!*/ struct arg2 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg2() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.expr_args.get(allocator);
+            }
+          };
+
+          using _arg2 = DECT(as_type<budget - 1, arg2>());
+          /*Declaring arg!*/ struct arg3 {
+#ifndef __clang__
+            const AST_elem &e{F{}()};
+#endif
+            constexpr arg3() {}
+            constexpr const AST_elem &operator()() const {
+              return e.template get_<Operation>().t.var_args.get(allocator);
+            }
+          };
+
+          using _arg3 = DECT(as_type<budget - 1, arg3>());
+          constexpr auto _arg4 = e.template get_<Operation>().t.is_statement;
+          return as_types::Expression<
+              as_types::Operation<_arg0, _arg1, _arg2, _arg3, _arg4>>{};
+        }
       } else if constexpr (e.template get_<Assignment>().is_this_elem) {
         /*Declaring arg!*/ struct arg0 {
 #ifndef __clang__
@@ -887,6 +2026,18 @@ template <typename prev_holder> constexpr auto as_type() {
 
 namespace as_types {
 
+template <typename> struct sequence_assigner;
+
+template <std::size_t... nums>
+struct sequence_assigner<std::integer_sequence<std::size_t, nums...>> {
+  template <typename... T_args> struct helper {
+    template <typename ref, typename F, typename... F_args>
+    constexpr static void assign(ref &r, const F &f, F_args &&... args) {
+      ((r[nums] = f(T_args{}, std::move<F_args>(args)...)), ...);
+    }
+  };
+};
+
 template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
   using AST_elem = as_values::AST_elem;
   constexpr as_values_ns_fns() = default;
@@ -895,6 +2046,17 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
   template<typename T> struct converter {
     static constexpr auto value() {return as_values_ns_fns::foo();}
   };*/
+  template <typename ref, typename... type_args>
+  constexpr void sequence_assign(ref &r) {
+    constexpr auto function_arg = [](const auto &true_arg,
+                                     auto &_this) constexpr {
+      return _this.as_value(true_arg);
+    };
+    return sequence_assigner<std::make_index_sequence<sizeof...(type_args)>>::
+        template helper<type_args...>::template assign<ref>(r, function_arg,
+                                                            *this);
+  }
+
   template <typename e, std::size_t payload>
   constexpr allocated_ref<AST_elem>
   as_value(const Statement<transaction<e, payload>> &) {
@@ -1028,6 +2190,30 @@ template <typename AST_Allocator, std::size_t budget> struct as_values_ns_fns {
     elem.get(allocator).is_initialized = true;
     this_node.t.Binding = as_value(Binding{});
     this_node.t.Body = as_value(Body{});
+    return std::move(elem);
+  }
+
+  template <typename... Args>
+  constexpr allocated_ref<AST_elem>
+  as_value(const operation_args_exprs<Args...> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node =
+        elem.get(allocator).template get_<as_values::operation_args_exprs>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    sequence_assign<Args...>(this_node.t.exprs);
+    return std::move(elem);
+  }
+
+  template <typename... Args>
+  constexpr allocated_ref<AST_elem>
+  as_value(const operation_args_varrefs<Args...> &) {
+    auto elem = allocator.template allocate<AST_elem>();
+    auto &this_node =
+        elem.get(allocator).template get_<as_values::operation_args_varrefs>();
+    this_node.is_this_elem = true;
+    elem.get(allocator).is_initialized = true;
+    sequence_assign<Args...>(this_node.t.vars);
     return std::move(elem);
   }
   template <typename Var, typename Expr>
@@ -1240,6 +2426,38 @@ std::ostream &print(std::ostream &o, const LetRemote &e,
   return o << "}";
 }
 template <typename Allocator>
+std::ostream &print(std::ostream &o, const operation_args_exprs &e,
+                    const Allocator &allocator) {
+  o << "operation_args_exprs{";
+  print(o, e.exprs, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const operation_args_varrefs &e,
+                    const Allocator &allocator) {
+  o << "operation_args_varrefs{";
+  print(o, e.vars, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
+std::ostream &print(std::ostream &o, const Operation &e,
+                    const Allocator &allocator) {
+  o << "Operation{";
+  print(o, e.name, allocator);
+  o << ",";
+  print(o, e.Hndl, allocator);
+  o << ",";
+  print(o, e.expr_args, allocator);
+  o << ",";
+  print(o, e.var_args, allocator);
+  o << ",";
+  print(o, e.is_statement, allocator);
+  o << ",";
+  return o << "}";
+}
+template <typename Allocator>
 std::ostream &print(std::ostream &o, const Assignment &e,
                     const Allocator &allocator) {
   o << "Assignment{";
@@ -1353,6 +2571,15 @@ std::ostream &print(std::ostream &o, const AST_elem &e,
   if (e.template get_<LetRemote>().is_this_elem) {
     return print(o, e.template get<LetRemote>(), allocator);
   }
+  if (e.template get_<operation_args_exprs>().is_this_elem) {
+    return print(o, e.template get<operation_args_exprs>(), allocator);
+  }
+  if (e.template get_<operation_args_varrefs>().is_this_elem) {
+    return print(o, e.template get<operation_args_varrefs>(), allocator);
+  }
+  if (e.template get_<Operation>().is_this_elem) {
+    return print(o, e.template get<Operation>(), allocator);
+  }
   if (e.template get_<Assignment>().is_this_elem) {
     return print(o, e.template get<Assignment>(), allocator);
   }
@@ -1454,6 +2681,15 @@ std::ostream &pretty_print(std::ostream &o, const AST_elem &e,
   }
   if (e.template get_<LetRemote>().is_this_elem) {
     return pretty_print(o, e.template get<LetRemote>(), allocator);
+  }
+  if (e.template get_<operation_args_exprs>().is_this_elem) {
+    return pretty_print(o, e.template get<operation_args_exprs>(), allocator);
+  }
+  if (e.template get_<operation_args_varrefs>().is_this_elem) {
+    return pretty_print(o, e.template get<operation_args_varrefs>(), allocator);
+  }
+  if (e.template get_<Operation>().is_this_elem) {
+    return pretty_print(o, e.template get<Operation>(), allocator);
   }
   if (e.template get_<Assignment>().is_this_elem) {
     return pretty_print(o, e.template get<Assignment>(), allocator);
