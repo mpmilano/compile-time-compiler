@@ -1,5 +1,7 @@
 #include "ast.hpp"
-
+namespace myria {
+namespace mtl {
+namespace new_parse_phase {
 namespace as_values {
 /*
  */
@@ -175,3 +177,6 @@ std::ostream &pretty_print(std::ostream &o, const Operation &e,
 }
 
 } // namespace as_values
+} // namespace new_parse_phase
+} // namespace mtl
+} // namespace myria

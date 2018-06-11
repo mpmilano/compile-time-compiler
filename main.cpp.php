@@ -10,6 +10,7 @@
   require_once 'common.php';
 ?>
 */
+using namespace myria::mtl::new_parse_phase;
 
 template <typename string> struct flatten {
   // parsing happens during construction
@@ -27,7 +28,7 @@ auto test_input(){
     using namespace mutils;
     return Statement<
     transaction<
-    Statement<Sequence<Statement<Operation<String<'t'>,Expression<Constant<5>>,operation_args_exprs<Expression<Constant<3>>, Expression<Constant<2>>>,operation_args_varrefs<Expression<Constant<23>>, Expression<Constant<52>>> > /*Skip*/ >,
+    Statement<Sequence<Statement<Operation<String<'t'>,Expression<Constant<5>>,operation_args_exprs<Expression<Operation<String<'u'>,Expression<Constant<5>>, operation_args_exprs<>,operation_args_varrefs<>>>, Expression<Constant<2>>>,operation_args_varrefs<Expression<Constant<23>>, Expression<Constant<52>>> > /*Skip*/ >,
     Statement<Sequence<Statement<LetRemote<Binding<mutils::String<'b','a','r'>, Expression<Constant<9>>>,Statement<Skip>>>,
     Statement<Sequence<Statement<Let<Binding<mutils::String<'f','o','o'>, Expression<Constant<7>>>, Statement<Skip> >>,Statement<Return<Expression<VarReference<mutils::String<'f','o','o'>>>>>
     >>>>>>,0>>{};
@@ -48,7 +49,7 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
   struct wrapper {constexpr wrapper(){} const char str[::mutils::cstring::str_len(#x)+1]{#x};};
 
 int main() {
-  CSTR(wrapper,var iterator = users, var b1 = 89.endorse(words).otherOp(more,words), var b2 = 4894.ensure(otherwords), b2 = 2341, var b3 = *b2.field.more.field->field.isValid(), if (true || false) {return b1} else {return b2}, while (iterator.isValid()) {iterator = iterator->next}, return b1);
+  CSTR(wrapper,var iterator = users, interator.advance(), var b1 = 89.endorse(words).otherOp(more,words), var b2 = 4894.ensure(otherwords), b2 = 2341, var b3 = *b2.field.more.field->field.isValid(), if (true || false) {return b1} else {return b2}, while (iterator.isValid()) {iterator = iterator->next}, return b1);
   parse<wrapper> p;
   pretty_print(std::cout,p.allocator.top,p.allocator);
   std::cout << std::endl << "Original string: " << wrapper{}.str << std::endl;

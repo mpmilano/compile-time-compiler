@@ -4,7 +4,9 @@
 /*
 
 */
-
+namespace myria {
+namespace mtl {
+namespace new_parse_phase {
 using Alloc = as_values::AST_Allocator<150>;
 
 template <typename string> struct parse {
@@ -105,7 +107,7 @@ template <typename string> struct parse {
   }
 
   constexpr allocated_ref<as_values::AST_elem>
-  parse_expr_operation(const str_t &str) {
+  parse_operation(const str_t &str, bool is_statement) {
     using namespace mutils;
     using namespace cstring;
     str_nc splits[2] = {{0}};
@@ -127,7 +129,7 @@ template <typename string> struct parse {
                       .template get_<as_values::operation_args_varrefs>()
                       .t;
     (void)rvags;
-    ref.is_statement = false;
+    ref.is_statement = is_statement;
     ref.var_args = std::move(vargs);
     str_nc method_name = {0};
     pre_paren(method_name, Call);
@@ -137,6 +139,11 @@ template <typename string> struct parse {
     ref.expr_args = parse_args(argseq);
     ref.Hndl = parse_expression(Struct);
     return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem>
+  parse_expr_operation(const str_t &str) {
+    return parse_operation(str, false);
   }
 
   constexpr allocated_ref<as_values::AST_elem>
@@ -459,6 +466,8 @@ template <typename string> struct parse {
       str_nc new_string = {0};
       copy_within_parens(new_string, str);
       return parse_statement(new_string);
+    } else if (contains_paren(str)) {
+      return parse_operation(str, true);
     } else if (str[0] == 0) {
 
       allocated_ref<as_values::AST_elem> ret =
@@ -529,3 +538,6 @@ template <typename string> struct parse {
     allocator.top.e = parse_statement(local_copy);
   }
 };
+} // namespace new_parse_phase
+} // namespace mtl
+} // namespace myria

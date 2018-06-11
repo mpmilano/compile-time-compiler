@@ -26,6 +26,8 @@
     new Statement('Sequence',new Field('e',$Statement_t),new Field('next',$Statement_t)),
     new Skip('Skip')
    );
-
-   require "ast_skeleton.php";
 ?>
+
+<?php require "ast_skeleton.php"; ?>
+
+

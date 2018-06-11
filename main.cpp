@@ -8,6 +8,7 @@
 /*
 
 */
+using namespace myria::mtl::new_parse_phase;
 
 template <typename string> struct flatten {
   // parsing happens during construction
@@ -27,8 +28,11 @@ auto test_input() {
       Statement<Sequence<
           Statement<Operation<
               String<'t'>, Expression<Constant<5>>,
-              operation_args_exprs<Expression<Constant<3>>,
-                                   Expression<Constant<2>>>,
+              operation_args_exprs<
+                  Expression<Operation<String<'u'>, Expression<Constant<5>>,
+                                       operation_args_exprs<>,
+                                       operation_args_varrefs<>>>,
+                  Expression<Constant<2>>>,
               operation_args_varrefs<Expression<Constant<23>>,
                                      Expression<Constant<52>>>> /*Skip*/>,
           Statement<Sequence<
@@ -63,7 +67,7 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
   };
 
 int main() {
-  CSTR(wrapper, var iterator = users,
+  CSTR(wrapper, var iterator = users, interator.advance(),
        var b1 = 89.endorse(words).otherOp(more, words),
        var b2 = 4894.ensure(otherwords), b2 = 2341,
        var b3 = *b2.field.more.field->field.isValid(),

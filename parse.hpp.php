@@ -4,7 +4,9 @@
 /*
 <?php require_once 'common.php'; require_once 'util.php'; ?>
 */
-
+namespace myria{
+namespace mtl{
+namespace new_parse_phase{
 using Alloc = as_values::AST_Allocator<150>;
 
 template <typename string> struct parse {
@@ -67,7 +69,7 @@ template <typename string> struct parse {
     return eargs;
   }
 
-  constexpr allocated_ref<as_values::AST_elem> parse_expr_operation(const str_t &str){
+  constexpr allocated_ref<as_values::AST_elem> parse_operation(const str_t &str, bool is_statement){
     using namespace mutils;
     using namespace cstring;
     str_nc splits[2] = {{0}};
@@ -77,7 +79,7 @@ template <typename string> struct parse {
     <?php echo alloc("ret", "ref","Operation")?>
     <?php echo alloc("vargs","rvags","operation_args_varrefs")?>
     (void) rvags;
-    ref.is_statement = false;
+    ref.is_statement = is_statement;
     ref.var_args = std::move(vargs);
     str_nc method_name = {0};
     pre_paren(method_name,Call);
@@ -87,6 +89,10 @@ template <typename string> struct parse {
     ref.expr_args = parse_args(argseq);
     ref.Hndl = parse_expression(Struct);
     return ret;
+  }
+
+  constexpr allocated_ref<as_values::AST_elem> parse_expr_operation(const str_t &str){
+    return parse_operation(str,false);
   }
 
   constexpr allocated_ref<as_values::AST_elem> parse_fieldref(const str_t& str){
@@ -323,6 +329,9 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
         copy_within_parens(new_string, str);
         return parse_statement(new_string);
     }
+    else if (contains_paren(str)){
+      return parse_operation(str,true);
+    }
     else if (str[0] == 0) {
       <?php echo alloc("ret","sr","Skip") ?>;
       (void) sr;
@@ -370,3 +379,4 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
     allocator.top.e = parse_statement(local_copy);
   }
 };
+}}}

@@ -1,4 +1,5 @@
 
+
 #pragma once
 #include "allocator.hpp"
 #include "mutils/CTString.hpp"
@@ -6,6 +7,10 @@
 #include "mutils/type_utils.hpp"
 #include "union.hpp"
 #include <ostream>
+
+namespace myria {
+namespace mtl {
+namespace new_parse_phase {
 
 template <typename T> using plain_array = T[20];
 
@@ -2599,3 +2604,7 @@ std::ostream &pretty_print(std::ostream &o, const AST_elem &e,
   return o;
 }
 } // namespace as_values
+
+} // namespace new_parse_phase
+} // namespace mtl
+} // namespace myria

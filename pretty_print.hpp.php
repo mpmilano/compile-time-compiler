@@ -1,5 +1,7 @@
 #include "ast.hpp"
-
+namespace myria{
+namespace mtl{
+namespace new_parse_phase{
 namespace as_values{
 /*
 <?php function pretty_print_decl($typename){
@@ -158,4 +160,4 @@ std::ostream& pretty_print(std::ostream& o, const Operation& e, const Allocator&
   return o << ")";
 }
 
-}
+}}}}

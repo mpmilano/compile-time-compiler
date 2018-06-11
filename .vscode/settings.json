@@ -65,7 +65,10 @@
         "system_error": "cpp",
         "thread": "cpp",
         "tuple": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "*.ipp": "cpp",
+        "__locale": "cpp",
+        "ios": "cpp"
     },
     "clang.cxxflags": [
         "--std=c++1z",

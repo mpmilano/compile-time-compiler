@@ -6,6 +6,10 @@
 #include "union.hpp"
 #include <ostream>
 
+namespace myria{
+namespace mtl{
+namespace new_parse_phase{
+
 template<typename T>
 using plain_array = T[<?php echo $max_var_length?>];
 
@@ -308,3 +312,4 @@ namespace as_values {
   }
 }
 
+}}}
