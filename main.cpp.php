@@ -50,7 +50,15 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
 
 int main() {
 	//	var sample_user_hndl = (g->value).users->value.ensure(causal)
-  CSTR(wrapper,var sample_user_hndl = (g->value).users->value.ensure(causal),
+  CSTR(wrapper,
+  var lst = default list,
+				var curr_msg_ptr = user_hndl->i,
+				while (curr_msg_ptr.isValid()){
+					lst.push_back(*curr_msg_ptr->value),
+					remote mutable = curr_msg_ptr,
+					curr_msg_ptr = curr_msg_ptr->next,
+					mutable.next = mutable.next.nulled(),
+  var sample_user_hndl = (g->value).users->value.ensure(causal),
   var x = 3,
 			  var y = 5,
 			  x = 7,
@@ -79,7 +87,7 @@ int main() {
   parse<wrapper> p;
   pretty_print(std::cout,p.allocator.top,p.allocator);
   std::cout << std::endl << "Original string: " << wrapper{}.str << std::endl;
-  
+  /*
   constexpr flatten<wrapper> f;
   constexpr auto second_allocator = as_types::as_value<1000,typename flatten<wrapper>::parse_t>();
   pretty_print(std::cout, second_allocator.top, second_allocator); 
