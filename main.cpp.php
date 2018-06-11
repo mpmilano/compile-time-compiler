@@ -49,7 +49,7 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
   struct wrapper {constexpr wrapper(){} const char str[::mutils::cstring::str_len(#x)+1]{#x};};
 
 int main() {
-	
+	//	var sample_user_hndl = (g->value).users->value.ensure(causal)
   CSTR(wrapper,var sample_user_hndl = (g->value).users->value.ensure(causal),
   var x = 3,
 			  var y = 5,

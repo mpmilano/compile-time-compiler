@@ -67,7 +67,7 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
   };
 
 int main() {
-
+  //	var sample_user_hndl = (g->value).users->value.ensure(causal)
   CSTR(wrapper, var sample_user_hndl = (g->value).users->value.ensure(causal),
        var x = 3, var y = 5, x = 7, y = y + x, var condition = 0,
        while (condition <
