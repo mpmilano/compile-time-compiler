@@ -13,7 +13,7 @@ struct parse_error : public std::logic_error {
   parse_error(T&&... t):std::logic_error(std::forward<T>(t)...){}
 };
 
-using Alloc = as_values::AST_Allocator<150>;
+using Alloc = as_values::AST_Allocator<400>;
 
 template <typename string> struct parse {
   const string _str;
@@ -195,7 +195,7 @@ template <typename string> struct parse {
   constexpr allocated_ref<as_values::AST_elem> parse_expression(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php echo parse_expr("binop","str","+","- ","* ","/","==","&&","||","!=") ?>
+    <?php echo parse_expr("binop","str","+","- ","* ","/","==","&&","||","!=",'>','<','>=','<=') ?>
     if (contains_outside_parens(".",str)){
       str_nc pretrim_splits[2] = {{0}};
       last_split(".",str,pretrim_splits);
@@ -339,10 +339,14 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
     else if (contains_paren(str)){
       return parse_operation(str,true);
     }
-    else if (str[0] == 0) {
-      <?php echo alloc("ret","sr","Skip") ?>;
-      (void) sr;
-      return ret;
+    else {
+      str_nc trimit = {0};
+      trim(trimit,str);
+      if (str[0] == ' '){
+        <?php echo alloc("ret","sr","Skip") ?>;
+        (void) sr;
+        return ret;
+      }
     }
     throw parse_error{std::string{"Parse Error:  Could not find Statement to match input of "} + str};
   }
