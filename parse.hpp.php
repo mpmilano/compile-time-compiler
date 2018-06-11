@@ -102,6 +102,7 @@ template <typename string> struct parse {
 /*
 <?php function error_check($name, $where, ...$look_for){
   $ret = "if (contains_paren($where)) throw parse_error{\"Parse error: We thought this was a $name, but it contains parens\"};";
+  $ret = "if (contains_space($where)) throw parse_error{\"Parse error: We thought this was a $name, but it contains whitespace\"};";
   foreach ($look_for as $target){
     $ret = $ret."if (contains_outside_parens(\"$target\",$where)) throw parse_error{\"Parse error: This should be a $name, but it contains a '$target', which is not allowed\"};";
   }
