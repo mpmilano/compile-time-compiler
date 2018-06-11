@@ -36,7 +36,7 @@ template <typename string> struct parse {
       str_nc final_str = {0};
       ref.Hndl = parse_expression(split[0]); ".
       ($arg !== "" ? 
-        "str_cpy(ref.$arg.label, op_args);" : "")."
+        "trim(ref.$arg.label, op_args);" : "")."
       return ret;}
       ";
     }?>

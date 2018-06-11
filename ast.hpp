@@ -588,6 +588,9 @@ struct is_astnode_Sequence<Statement<Sequence<e, next>>>
     : public std::true_type {};
 template <typename> struct is_astnode_Skip : public std::false_type {};
 template <> struct is_astnode_Skip<Statement<Skip>> : public std::true_type {};
+template <typename T> struct is_astnode_Statement : public std::false_type {};
+template <typename T>
+struct is_astnode_Statement<Statement<T>> : public std::true_type {};
 } // namespace as_types
 
 namespace as_values {
