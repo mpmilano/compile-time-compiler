@@ -68,7 +68,8 @@ using round_trip_return = DECT(as_values::as_type<round_trip_test>());
 
 int main() {
 
-  CSTR(wrapper, var x = 3, var y = 5, x = 7, y = y + x, var condition = 0,
+  CSTR(wrapper, var sample_user_hndl = (g->value).users->value.ensure(causal),
+       var x = 3, var y = 5, x = 7, y = y + x, var condition = 0,
        while (condition <
               x){y = y + 3, condition = tstruct2.a + 1, tstruct2.a = condition,
                  remote z = hndl, z = condition, var unused = *hndl,
@@ -97,7 +98,9 @@ int main() {
   constexpr flatten<wrapper> f;
   constexpr auto second_allocator =
       as_types::as_value<1000, typename flatten<wrapper>::parse_t>();
-  pretty_print(std::cout, second_allocator.top, second_allocator); //*/
+  pretty_print(std::cout, second_allocator.top, second_allocator);
+  std::cout << std::endl << std::endl;
+  print(std::cout, second_allocator.top, second_allocator); //*/
   std::cout << std::endl << std::endl;
   // print(std::cout, f.prev.allocator.top,f.prev.allocator);
   // std::cout << std::endl;

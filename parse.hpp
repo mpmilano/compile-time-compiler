@@ -161,6 +161,9 @@ template <typename string> struct parse {
     last_split('.', trimmed, operands);
     {
       // error checking
+      if (contains_paren(operands[1]))
+        throw parse_error{"Parse error: We thought this was a fieldref, but it "
+                          "contains parens"};
       if (contains_space(operands[1]))
         throw parse_error{"Parse error: We thought this was a fieldref, but it "
                           "contains whitespace"};
@@ -200,6 +203,9 @@ template <typename string> struct parse {
     last_split("->", trimmed, operands);
     {
       // error checking
+      if (contains_paren(operands[1]))
+        throw parse_error{"Parse error: We thought this was a fieldptrref, but "
+                          "it contains parens"};
       if (contains_space(operands[1]))
         throw parse_error{"Parse error: We thought this was a fieldptrref, but "
                           "it contains whitespace"};
@@ -275,6 +281,9 @@ template <typename string> struct parse {
     trim(ref.Var, str);
     {
       // error checking
+      if (contains_paren(ref.Var))
+        throw parse_error{"Parse error: We thought this was a variable access, "
+                          "but it contains parens"};
       if (contains_space(ref.Var))
         throw parse_error{"Parse error: We thought this was a variable access, "
                           "but it contains whitespace"};
@@ -298,9 +307,16 @@ template <typename string> struct parse {
    */
 
   constexpr allocated_ref<as_values::AST_elem>
-  parse_expression(const str_t &str) {
+  parse_expression(const str_t &_str) {
     using namespace mutils;
     using namespace cstring;
+    str_nc str = {0};
+    trim(str, _str);
+    if (str[0] == '(' && str[str_len(str) - 1] == ')') {
+      str_nc next = {0};
+      next_paren_group(next, str);
+      return parse_expression(next);
+    }
     if (contains_outside_parens("+", str)) {
       return parse_binop(str, "+");
     } else if (contains_outside_parens("- ", str)) {
