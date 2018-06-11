@@ -196,7 +196,7 @@ template <typename string> struct parse {
   constexpr allocated_ref<as_values::AST_elem> parse_expression(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
-    <?php echo parse_expr("binop","str","+","- ","* ","/","==","&&","||","!=",'>','<','>=','<=') ?>
+    <?php echo parse_expr("binop","str","+","- ","* ","/","==","&&","||","!=",'> ','<','>=','<=') ?>
     if (contains_outside_parens(".",str)){
       str_nc pretrim_splits[2] = {{0}};
       last_split(".",str,pretrim_splits);
@@ -250,6 +250,20 @@ constexpr allocated_ref<as_values::AST_elem> parse_var(const str_t &str) {
     var.Body = parse_statement(let_components[1]);
     return ret;
 }
+
+constexpr allocated_ref<as_values::AST_elem> parse_remote(const str_t &str) {
+    using namespace mutils;
+    using namespace cstring;
+    <?php echo alloc("ret","remote","LetRemote")?>
+    str_nc let_expr = {0};
+    remove_first_word(let_expr,str);
+    str_nc let_components[2] = {{0}};
+    first_split(',',let_expr,let_components);
+    remote.Binding = parse_binding(let_components[0]);
+    remote.Body = parse_statement(let_components[1]);
+    return ret;
+}
+	
 constexpr allocated_ref<as_values::AST_elem> parse_return(const str_t &str) {
     using namespace mutils;
     using namespace cstring;
@@ -323,6 +337,9 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
     if (first_word_is("var",str)){
       return parse_var(str);
     }
+		else if (first_word_is("remote",str)){
+      return parse_remote(str);
+    }
     else if (contains_outside_parens(',',str)){
         return parse_sequence(str);
     }
@@ -343,7 +360,7 @@ constexpr allocated_ref<as_values::AST_elem> parse_assignment(const str_t &str) 
     else {
       str_nc trimit = {0};
       trim(trimit,str);
-      if (str[0] == ' '){
+      if (str[0] == 0){
         <?php echo alloc("ret","sr","Skip") ?>;
         (void) sr;
         return ret;
