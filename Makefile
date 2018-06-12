@@ -1,11 +1,11 @@
 
 .PHONY : clean
 
-CPPFLAGS=-g --std=c++1z
+CPPFLAGS=-g --std=c++1z -fconstexpr-depth=5000 -ftemplate-depth=5000
 LDFLAGS= -pthread
 
 SOURCES = main.cpp
-CXX = clang++ -ferror-limit=1 -fconstexpr-steps=160048576 -fconstexpr-depth=5000
+#CXX = clang++ -ferror-limit=1 -fconstexpr-steps=160048576 
 HEADERS = allocated_ref.hpp  pretty_print.hpp allocator.hpp  array.hpp  ast.hpp  mutils/cstring.hpp ctutils.hpp  ctutils-old.hpp  union.hpp parse.hpp Makefile mutils/cstring_tests.hpp
 PHP_HEADERS = ast.php common.php util.php ast_skeleton.php
 OBJECTS=$(SOURCES:.cpp=.oo)

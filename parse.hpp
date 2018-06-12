@@ -53,41 +53,48 @@ template <typename string> struct parse {
     last_split('.', trimmed, split);
     str_nc op_args = {0};
     copy_within_parens(op_args, split[1]);
-    switch (specific_op[2]) {
-    case 'd': {
-      allocated_ref<as_values::AST_elem> ret =
-          allocator.template allocate<as_values::AST_elem>();
-      ret.get(allocator).template get_<as_values::Endorse>().is_this_elem =
-          true;
-      auto &ref = ret.get(allocator).template get_<as_values::Endorse>().t;
-      ref.Hndl = parse_expression(split[0]);
-      trim(ref.label.label, op_args);
-      return ret;
-    }
+    if (prefix_equal("endorse", specific_op)) {
+
+      {
+        allocated_ref<as_values::AST_elem> ret =
+            allocator.template allocate<as_values::AST_elem>();
+        ret.get(allocator).template get_<as_values::Endorse>().is_this_elem =
+            true;
+        auto &ref = ret.get(allocator).template get_<as_values::Endorse>().t;
+        ref.Hndl = parse_expression(split[0]);
+        trim(ref.label.label, op_args);
+        return ret;
+      }
       // endorse
-    case 's': {
-      allocated_ref<as_values::AST_elem> ret =
-          allocator.template allocate<as_values::AST_elem>();
-      ret.get(allocator).template get_<as_values::Ensure>().is_this_elem = true;
-      auto &ref = ret.get(allocator).template get_<as_values::Ensure>().t;
-      ref.Hndl = parse_expression(split[0]);
-      trim(ref.label.label, op_args);
-      return ret;
-    }
+    } else if (prefix_equal("ensure", specific_op)) {
+
+      {
+        allocated_ref<as_values::AST_elem> ret =
+            allocator.template allocate<as_values::AST_elem>();
+        ret.get(allocator).template get_<as_values::Ensure>().is_this_elem =
+            true;
+        auto &ref = ret.get(allocator).template get_<as_values::Ensure>().t;
+        ref.Hndl = parse_expression(split[0]);
+        trim(ref.label.label, op_args);
+        return ret;
+      }
       // ensure
-    case 'V': {
-      allocated_ref<as_values::AST_elem> ret =
-          allocator.template allocate<as_values::AST_elem>();
-      ret.get(allocator).template get_<as_values::IsValid>().is_this_elem =
-          true;
-      auto &ref = ret.get(allocator).template get_<as_values::IsValid>().t;
-      ref.Hndl = parse_expression(split[0]);
-      return ret;
-    }
+    } else if (prefix_equal("isValid", specific_op)) {
+
+      {
+        allocated_ref<as_values::AST_elem> ret =
+            allocator.template allocate<as_values::AST_elem>();
+        ret.get(allocator).template get_<as_values::IsValid>().is_this_elem =
+            true;
+        auto &ref = ret.get(allocator).template get_<as_values::IsValid>().t;
+        ref.Hndl = parse_expression(split[0]);
+        return ret;
+      }
       // isValid
+    } else {
+      throw parse_error{
+          "Internal Error: ran off the end finding builtin operations."};
     }
-    throw parse_error{
-        "Internal Error: ran off the end finding builtin operations."};
   }
 
   constexpr allocated_ref<as_values::AST_elem> parse_args(const str_t &str) {
@@ -390,10 +397,6 @@ template <typename string> struct parse {
       else
         return parse_varref(atom);
     }
-    throw parse_error{
-        std::string{
-            "Parse Error:  Could not find Expression to match input of "} +
-        str};
   }
 
   constexpr allocated_ref<as_values::AST_elem> parse_binding(const str_t &str) {
@@ -568,12 +571,13 @@ template <typename string> struct parse {
         ;
         (void)sr;
         return ret;
+      } else {
+        throw parse_error{
+            std::string{
+                "Parse Error:  Could not find Statement to match input of "} +
+            str};
       }
     }
-    throw parse_error{
-        std::string{
-            "Parse Error:  Could not find Statement to match input of "} +
-        str};
   }
 
   constexpr allocated_ref<as_values::AST_elem>

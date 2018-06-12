@@ -97,7 +97,7 @@ int main() {
   // b2 = 2341, var b3 = *b2.field.more.field->field.isValid(), if (true ||
   // false) {return b1} else {return b2}, while (iterator.isValid()) {iterator =
   // iterator->next}, return b1);
-  parse<wrapper> p;
+  constexpr parse<wrapper> p;
   pretty_print(std::cout, p.allocator.top, p.allocator);
   std::cout << std::endl << "Original string: " << wrapper{}.str << std::endl;
 
