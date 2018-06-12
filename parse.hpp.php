@@ -208,7 +208,6 @@ template <typename string> struct parse {
     if (prefix_equal("*",str)){
       <?php echo parse_expr("deref","str","*")?>
       {assert(false && "then where is it?");}
-      assert(false,"I think this is exactly inside out.");
     }
     else if (contains_outside_parens(".",str)){
       str_nc pretrim_splits[2] = {{0}};

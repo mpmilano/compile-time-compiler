@@ -353,7 +353,6 @@ template <typename string> struct parse {
       } else {
         assert(false && "then where is it?");
       }
-      assert(false, "I think this is exactly inside out.");
     } else if (contains_outside_parens(".", str)) {
       str_nc pretrim_splits[2] = {{0}};
       last_split(".", str, pretrim_splits);
